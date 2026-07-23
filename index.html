@@ -16,7 +16,17 @@
 .exam-actions{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:18px}
 .back-btn{background:#e9ecf1;color:#222}
 .result-score{text-align:center;font-size:52px;font-weight:800;margin:15px 0}
-.result-detail{text-align:center;color:#666;line-height:1.8}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+.result-detail{text-align:center;color:#666;line-height:1.8}
+.wrong-title{margin:28px 0 12px;font-size:20px}
+.wrong-list{display:grid;gap:12px}
+.wrong-item{padding:16px;border:1px solid #e1e5eb;border-radius:14px;background:#fafbfc}
+.wrong-number{font-size:13px;color:#777;margin-bottom:8px}
+.wrong-question{font-weight:800;font-size:18px;line-height:1.45;margin-bottom:10px}
+.wrong-row{font-size:14px;line-height:1.65}
+.wrong-row strong{display:inline-block;min-width:72px}
+.wrong-answer{color:#c33}
+.correct-answer{color:#397747}
+.perfect-box{margin-top:24px;padding:18px;border-radius:14px;background:#f2f8f3;text-align:center;color:#397747;font-weight:700}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -77,6 +87,9 @@
 <h1>시험 결과</h1>
 <div id="resultScore" class="result-score">0점</div>
 <div id="resultDetail" class="result-detail"></div>
+<h2 id="wrongTitle" class="wrong-title hidden">틀린 문제</h2>
+<div id="wrongList" class="wrong-list"></div>
+<div id="perfectBox" class="perfect-box hidden">모든 문제를 맞혔습니다!</div>
 <button style="margin-top:22px" onclick="backToSetup()">다시 시험 보기</button>
 </section>
 </main>
@@ -273,14 +286,61 @@ function nextQuestion(){
   finishExam();
  }
 }
+function escapeHtml(value){
+ return String(value??'')
+  .replaceAll('&','&amp;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;')
+  .replaceAll('"','&quot;')
+  .replaceAll("'",'&#039;');
+}
 function finishExam(){
- const correct=questions.reduce((n,q,i)=>n+(answers[i]===q.correct?1:0),0);
+ const wrongItems=[];
+ let correct=0;
+
+ questions.forEach((q,i)=>{
+  if(answers[i]===q.correct){
+   correct++;
+  }else{
+   wrongItems.push({
+    number:i+1,
+    type:q.type,
+    question:q.prompt,
+    selected:answers[i]||'선택 안 함',
+    correct:q.correct,
+    day:q.day
+   });
+  }
+ });
+
  const score=Math.round(correct/questions.length*100);
+
  document.getElementById('resultScore').textContent=score+'점';
  document.getElementById('resultDetail').innerHTML=
   '총 '+questions.length+'문제 중 <strong>'+correct+'개 정답</strong><br>'+
-  (questions.length-correct)+'개 오답';
+  wrongItems.length+'개 오답';
+
+ const wrongTitle=document.getElementById('wrongTitle');
+ const wrongList=document.getElementById('wrongList');
+ const perfectBox=document.getElementById('perfectBox');
+
+ wrongList.innerHTML='';
+ wrongTitle.classList.toggle('hidden',wrongItems.length===0);
+ perfectBox.classList.toggle('hidden',wrongItems.length!==0);
+
+ wrongItems.forEach(item=>{
+  const card=document.createElement('div');
+  card.className='wrong-item';
+  card.innerHTML=
+   '<div class="wrong-number">'+item.number+'번 · Day '+escapeHtml(item.day)+' · '+escapeHtml(item.type)+'</div>'+
+   '<div class="wrong-question">'+escapeHtml(item.question)+'</div>'+
+   '<div class="wrong-row wrong-answer"><strong>내 답</strong>'+escapeHtml(item.selected)+'</div>'+
+   '<div class="wrong-row correct-answer"><strong>정답</strong>'+escapeHtml(item.correct)+'</div>';
+  wrongList.appendChild(card);
+ });
+
  show('result');
+ window.scrollTo({top:0,behavior:'smooth'});
 }
 function quitExam(){
  if(confirm('시험을 종료하고 설정 화면으로 돌아갈까요?'))show('setup');
