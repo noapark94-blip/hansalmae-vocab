@@ -26,7 +26,11 @@
 .wrong-row strong{display:inline-block;min-width:72px}
 .wrong-answer{color:#c33}
 .correct-answer{color:#397747}
-.perfect-box{margin-top:24px;padding:18px;border-radius:14px;background:#f2f8f3;text-align:center;color:#397747;font-weight:700}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+.perfect-box{margin-top:24px;padding:18px;border-radius:14px;background:#f2f8f3;text-align:center;color:#397747;font-weight:700}
+.save-status{margin-top:18px;padding:13px 14px;border-radius:12px;background:#f6f7f9;text-align:center;font-size:14px;color:#666}
+.save-status.saving{color:#555}
+.save-status.success{background:#f2f8f3;color:#397747;font-weight:700}
+.save-status.error{background:#fff2f2;color:#c33;font-weight:700}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -87,6 +91,7 @@
 <h1>시험 결과</h1>
 <div id="resultScore" class="result-score">0점</div>
 <div id="resultDetail" class="result-detail"></div>
+<div id="saveStatus" class="save-status hidden"></div>
 <h2 id="wrongTitle" class="wrong-title hidden">틀린 문제</h2>
 <div id="wrongList" class="wrong-list"></div>
 <div id="perfectBox" class="perfect-box hidden">모든 문제를 맞혔습니다!</div>
@@ -294,7 +299,7 @@ function escapeHtml(value){
   .replaceAll('"','&quot;')
   .replaceAll("'",'&#039;');
 }
-function finishExam(){
+async function finishExam(){
  const wrongItems=[];
  let correct=0;
 
@@ -341,11 +346,57 @@ function finishExam(){
 
  show('result');
  window.scrollTo({top:0,behavior:'smooth'});
+
+ await saveExamResult({
+  score,
+  correctCount:correct,
+  wrongItems
+ });
+}
+
+async function saveExamResult({score,correctCount,wrongItems}){
+ const status=document.getElementById('saveStatus');
+ status.className='save-status saving';
+ status.textContent='시험 결과를 저장하고 있습니다.';
+ status.classList.remove('hidden');
+
+ const result={
+  sheetName:document.getElementById('sheet').value,
+  startDay:Number(document.getElementById('startDay').value),
+  endDay:Number(document.getElementById('endDay').value),
+  questionMode:document.getElementById('mode').value,
+  questionCount:questions.length,
+  correctCount:correctCount,
+  wrongCount:wrongItems.length,
+  score:score,
+  wrongAnswers:wrongItems
+ };
+
+ try{
+  const response=await api({
+   action:'saveTestResult',
+   token,
+   result
+  });
+
+  if(!response.success){
+   throw new Error(response.message||'시험 결과 저장에 실패했습니다.');
+  }
+
+  status.className='save-status success';
+  status.textContent='✓ 시험 결과가 구글시트에 저장되었습니다.';
+ }catch(error){
+  status.className='save-status error';
+  status.textContent='저장 실패: '+(error.message||'알 수 없는 오류');
+ }
 }
 function quitExam(){
  if(confirm('시험을 종료하고 설정 화면으로 돌아갈까요?'))show('setup');
 }
 function backToSetup(){
+ const status=document.getElementById('saveStatus');
+ status.className='save-status hidden';
+ status.textContent='';
  show('setup');
 }
 
