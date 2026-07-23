@@ -2,34 +2,89 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>한살매 단어학습</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
       background: #f5f7fb;
-      font-family: Arial, "Noto Sans KR", sans-serif;
+      font-family:
+        Arial,
+        "Noto Sans KR",
+        sans-serif;
     }
 
     .card {
-      width: calc(100% - 40px);
+      width: 100%;
       max-width: 420px;
-      padding: 40px 24px;
+      padding: 36px 24px;
       background: white;
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      box-shadow:
+        0 8px 30px
+        rgba(0, 0, 0, 0.08);
       text-align: center;
-      box-sizing: border-box;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h1 {
+      margin:
+        0
+        0
+        10px;
+      font-size: 30px;
+    }
+
+    .description {
+      margin-bottom: 28px;
+      color: #666;
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #d9dde5;
+      border-radius: 11px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #222;
     }
 
     button {
       width: 100%;
-      margin-top: 20px;
       padding: 15px;
       border: 0;
       border-radius: 12px;
@@ -39,51 +94,465 @@
       cursor: pointer;
     }
 
-    #result {
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .secondary-button {
+      margin-top: 12px;
+      background: #eef0f4;
+      color: #222;
+    }
+
+    #loginMessage,
+    #loadingMessage {
+      min-height: 23px;
+      margin-top: 17px;
+      color: #d33;
+      font-size: 14px;
+    }
+
+    .student-name {
+      margin:
+        25px
+        0
+        7px;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .student-info {
+      margin-bottom: 28px;
+      color: #666;
+    }
+
+    .status {
       margin-top: 20px;
-      min-height: 24px;
-      color: #555;
+      color: #397747;
+      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
   <main class="card">
-    <h1>한살매 단어학습</h1>
-    <p>GitHub와 Apps Script 연결 테스트</p>
 
-    <button type="button" onclick="testServer()">
-      서버 연결 확인
-    </button>
+    <!-- 자동 로그인 확인 화면 -->
+    <section id="loadingScreen">
+      <h1>한살매 단어학습</h1>
 
-    <p id="result"></p>
+      <p class="description">
+        로그인 상태를 확인하고 있습니다.
+      </p>
+
+      <p id="loadingMessage">
+        잠시만 기다려주세요.
+      </p>
+    </section>
+
+
+    <!-- 로그인 화면 -->
+    <section
+      id="loginScreen"
+      class="hidden"
+    >
+      <h1>한살매 단어학습</h1>
+
+      <p class="description">
+        학생 계정으로 로그인해주세요.
+      </p>
+
+      <div class="input-group">
+        <label for="studentId">
+          학생 아이디
+        </label>
+
+        <input
+          id="studentId"
+          type="text"
+          autocomplete="username"
+          placeholder="학생 아이디"
+        >
+      </div>
+
+      <div class="input-group">
+        <label for="studentPassword">
+          비밀번호
+        </label>
+
+        <input
+          id="studentPassword"
+          type="password"
+          autocomplete="current-password"
+          placeholder="비밀번호"
+        >
+      </div>
+
+      <button
+        id="loginButton"
+        type="button"
+        onclick="loginStudent()"
+      >
+        로그인
+      </button>
+
+      <p id="loginMessage"></p>
+    </section>
+
+
+    <!-- 로그인 성공 화면 -->
+    <section
+      id="mainScreen"
+      class="hidden"
+    >
+      <h1>한살매 단어학습</h1>
+
+      <p class="student-name">
+        <span id="studentName"></span> 학생
+      </p>
+
+      <p class="student-info">
+        <span id="studentGrade"></span>
+        ·
+        <span id="studentIdText"></span>
+      </p>
+
+      <p class="status">
+        로그인이 정상적으로 유지되고 있습니다.
+      </p>
+
+      <button
+        type="button"
+        class="secondary-button"
+        onclick="logoutStudent()"
+      >
+        로그아웃
+      </button>
+    </section>
+
   </main>
+
 
   <script>
     const API_URL =
       'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
 
-    async function testServer() {
-      const resultElement =
-        document.getElementById('result');
+    const TOKEN_STORAGE_KEY =
+      'hansalmaeStudentToken';
 
-      resultElement.textContent =
-        '서버에 연결 중입니다...';
+    let currentToken = '';
+    let currentStudent = null;
 
-      try {
-        const response = await fetch(
-          API_URL + '?action=health'
+
+    /**
+     * Apps Script API 요청
+     */
+    async function callApi(data) {
+      const response =
+        await fetch(
+          API_URL,
+          {
+            method: 'POST',
+
+            /*
+             * text/plain으로 보내면
+             * 브라우저의 불필요한 사전 요청을 피할 수 있습니다.
+             */
+            headers: {
+              'Content-Type':
+                'text/plain;charset=utf-8'
+            },
+
+            body:
+              JSON.stringify(data)
+          }
         );
 
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          '서버 응답 오류: ' +
+          response.status
+        );
+      }
 
-        resultElement.textContent =
-          data.message;
+      return await response.json();
+    }
+
+
+    /**
+     * 로그인
+     */
+    async function loginStudent() {
+      const idInput =
+        document.getElementById(
+          'studentId'
+        );
+
+      const passwordInput =
+        document.getElementById(
+          'studentPassword'
+        );
+
+      const loginButton =
+        document.getElementById(
+          'loginButton'
+        );
+
+      const messageElement =
+        document.getElementById(
+          'loginMessage'
+        );
+
+      const studentId =
+        idInput.value.trim();
+
+      const password =
+        passwordInput.value.trim();
+
+      if (!studentId || !password) {
+        messageElement.textContent =
+          '학생 아이디와 비밀번호를 입력해주세요.';
+
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent =
+        '로그인 중...';
+
+      messageElement.textContent = '';
+
+      try {
+        const result =
+          await callApi({
+            action: 'login',
+            studentId: studentId,
+            password: password
+          });
+
+        if (
+          !result ||
+          !result.success ||
+          !result.token ||
+          !result.student
+        ) {
+          messageElement.textContent =
+            result && result.message
+              ? result.message
+              : '로그인에 실패했습니다.';
+
+          return;
+        }
+
+        currentToken =
+          result.token;
+
+        currentStudent =
+          result.student;
+
+        localStorage.setItem(
+          TOKEN_STORAGE_KEY,
+          currentToken
+        );
+
+        passwordInput.value = '';
+
+        showMainScreen(
+          currentStudent
+        );
+
       } catch (error) {
-        resultElement.textContent =
-          '서버 연결 실패: ' + error.message;
+        console.error(error);
+
+        messageElement.textContent =
+          '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.';
+
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent =
+          '로그인';
       }
     }
+
+
+    /**
+     * 저장된 토큰으로 자동 로그인 확인
+     */
+    async function restoreLogin() {
+      const savedToken =
+        localStorage.getItem(
+          TOKEN_STORAGE_KEY
+        );
+
+      if (!savedToken) {
+        showLoginScreen();
+        return;
+      }
+
+      try {
+        const result =
+          await callApi({
+            action: 'checkSession',
+            token: savedToken
+          });
+
+        if (
+          result &&
+          result.success &&
+          result.student
+        ) {
+          currentToken =
+            savedToken;
+
+          currentStudent =
+            result.student;
+
+          showMainScreen(
+            currentStudent
+          );
+
+          return;
+        }
+
+        localStorage.removeItem(
+          TOKEN_STORAGE_KEY
+        );
+
+        showLoginScreen();
+
+      } catch (error) {
+        console.error(error);
+
+        /*
+         * 일시적인 통신 오류일 수 있으므로
+         * 토큰을 바로 삭제하지 않습니다.
+         */
+        showLoginScreen(
+          '서버 연결을 확인할 수 없습니다. 다시 로그인해주세요.'
+        );
+      }
+    }
+
+
+    /**
+     * 로그아웃
+     */
+    async function logoutStudent() {
+      const token =
+        currentToken ||
+        localStorage.getItem(
+          TOKEN_STORAGE_KEY
+        );
+
+      localStorage.removeItem(
+        TOKEN_STORAGE_KEY
+      );
+
+      currentToken = '';
+      currentStudent = null;
+
+      showLoginScreen();
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        await callApi({
+          action: 'logout',
+          token: token
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+
+    /**
+     * 로그인 화면 표시
+     */
+    function showLoginScreen(message) {
+      document
+        .getElementById('loadingScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('mainScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('loginScreen')
+        .classList
+        .remove('hidden');
+
+      document
+        .getElementById('loginMessage')
+        .textContent =
+          message || '';
+    }
+
+
+    /**
+     * 로그인 성공 화면 표시
+     */
+    function showMainScreen(student) {
+      document
+        .getElementById('loadingScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('loginScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('mainScreen')
+        .classList
+        .remove('hidden');
+
+      document
+        .getElementById('studentName')
+        .textContent =
+          student.studentName || '';
+
+      document
+        .getElementById('studentGrade')
+        .textContent =
+          student.grade || '';
+
+      document
+        .getElementById('studentIdText')
+        .textContent =
+          student.studentId || '';
+    }
+
+
+    /**
+     * 비밀번호 입력칸에서 Enter 로그인
+     */
+    document
+      .getElementById('studentPassword')
+      .addEventListener(
+        'keydown',
+        function (event) {
+          if (event.key === 'Enter') {
+            loginStudent();
+          }
+        }
+      );
+
+
+    /**
+     * 페이지가 열리면 자동 로그인 확인
+     */
+    window.addEventListener(
+      'DOMContentLoaded',
+      restoreLogin
+    );
   </script>
 </body>
 </html>
