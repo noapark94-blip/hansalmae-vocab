@@ -5,7 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>한살매 단어학습</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:20px;background:#f5f7fb;font-family:Arial,"Noto Sans KR",sans-serif;color:#202124}.app{max-width:520px;margin:auto}.card{background:#fff;padding:30px 24px;border-radius:20px;box-shadow:0 8px 30px #00000014}.hidden{display:none!important}h1{text-align:center;margin:0 0 10px;font-size:30px}h2{margin:0 0 20px}.desc{text-align:center;color:#666;margin-bottom:28px}.group{margin-bottom:15px}label{display:block;margin-bottom:7px;font-weight:700;font-size:14px}input,select,button{width:100%;padding:14px;border-radius:11px;font-size:16px}input,select{border:1px solid #d9dde5;background:#fff}button{border:0;background:#222;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.55}.student{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f6f7f9;padding:16px;border-radius:14px;margin-bottom:24px}.name{font-size:20px;font-weight:700;margin:0 0 4px}.meta{margin:0;color:#666;font-size:14px}.logout{width:auto;background:#e9ecf1;color:#222;padding:10px 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.msg{min-height:22px;color:#c33;font-size:14px}.ok{color:#397747}.summary{margin-top:20px;padding:18px;border-radius:14px;background:#f6f7f9;line-height:1.8}.summary strong{display:inline-block;min-width:95px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:20px;background:#f5f7fb;font-family:Arial,"Noto Sans KR",sans-serif;color:#202124}.app{max-width:520px;margin:auto}.card{background:#fff;padding:30px 24px;border-radius:20px;box-shadow:0 8px 30px #00000014}.hidden{display:none!important}h1{text-align:center;margin:0 0 10px;font-size:30px}h2{margin:0 0 20px}.desc{text-align:center;color:#666;margin-bottom:28px}.group{margin-bottom:15px}label{display:block;margin-bottom:7px;font-weight:700;font-size:14px}input,select,button{width:100%;padding:14px;border-radius:11px;font-size:16px}input,select{border:1px solid #d9dde5;background:#fff}button{border:0;background:#222;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.55}.student{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f6f7f9;padding:16px;border-radius:14px;margin-bottom:24px}.name{font-size:20px;font-weight:700;margin:0 0 4px}.meta{margin:0;color:#666;font-size:14px}.logout{width:auto;background:#e9ecf1;color:#222;padding:10px 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.msg{min-height:22px;color:#c33;font-size:14px}.ok{color:#397747}.summary{margin-top:20px;padding:18px;border-radius:14px;background:#f6f7f9;line-height:1.8}.summary strong{display:inline-block;min-width:95px}
+.exam-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;color:#666;font-weight:700}
+.progress{height:8px;background:#e9ecf1;border-radius:999px;overflow:hidden;margin-bottom:24px}
+.progress>div{height:100%;background:#222;width:0}
+.question-type{font-size:13px;color:#777;margin-bottom:10px}
+.question{font-size:27px;font-weight:800;line-height:1.45;margin:0 0 24px;word-break:keep-all}
+.choice{margin-bottom:10px;background:#fff;color:#222;border:1px solid #d9dde5;text-align:left}
+.choice:hover{border-color:#222}.choice.selected{background:#222;color:#fff;border-color:#222}
+.exam-actions{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:18px}
+.back-btn{background:#e9ecf1;color:#222}
+.result-score{text-align:center;font-size:52px;font-weight:800;margin:15px 0}
+.result-detail{text-align:center;color:#666;line-height:1.8}@media(max-width:420px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -32,14 +43,40 @@
 <div class="group"><label>문제 유형</label><select id="mode"><option value="random">랜덤</option><option value="engToKor">영어 → 뜻</option><option value="korToEng">뜻 → 영어</option><option value="example">예문</option></select></div>
 <button id="loadBtn" onclick="loadWords()">시험 데이터 불러오기</button>
 <p id="setupMsg" class="msg"></p>
-<div id="summary" class="summary hidden"><div><strong>단어 종류</strong><span id="sumSheet"></span></div><div><strong>Day 범위</strong><span id="sumDays"></span></div><div><strong>불러온 단어</strong><span id="sumWords"></span></div><div><strong>출제 예정</strong><span id="sumCount"></span></div></div>
+<div id="summary" class="summary hidden">
+<div><strong>단어 종류</strong><span id="sumSheet"></span></div>
+<div><strong>Day 범위</strong><span id="sumDays"></span></div>
+<div><strong>불러온 단어</strong><span id="sumWords"></span></div>
+<div><strong>출제 예정</strong><span id="sumCount"></span></div>
+<button style="margin-top:16px" onclick="startExam()">시험 시작</button>
+</div>
+</section>
+
+<section id="exam" class="card hidden">
+<div class="exam-top"><span id="examNumber">1 / 30</span><span id="examDay"></span></div>
+<div class="progress"><div id="progressBar"></div></div>
+<div id="questionType" class="question-type"></div>
+<p id="questionText" class="question"></p>
+<div id="choices"></div>
+<p id="examMsg" class="msg"></p>
+<div class="exam-actions">
+<button class="back-btn" onclick="quitExam()">나가기</button>
+<button id="nextBtn" onclick="nextQuestion()">다음 문제</button>
+</div>
+</section>
+
+<section id="result" class="card hidden">
+<h1>시험 결과</h1>
+<div id="resultScore" class="result-score">0점</div>
+<div id="resultDetail" class="result-detail"></div>
+<button style="margin-top:22px" onclick="backToSetup()">다시 시험 보기</button>
 </section>
 </main>
 
 <script>
 const API_URL='https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
 const KEY='hansalmaeStudentToken';
-let token='',student=null,days=[],words=[];
+let token='',student=null,days=[],words=[],questions=[],currentIndex=0,answers=[];
 
 async function api(data){
  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
@@ -47,7 +84,7 @@ async function api(data){
  return r.json();
 }
 function show(name){
- ['loading','login','setup'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==name));
+ ['loading','login','setup','exam','result'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==name));
 }
 async function loginStudent(){
  const id=document.getElementById('studentId').value.trim(),pw=document.getElementById('password').value.trim(),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
@@ -126,6 +163,104 @@ async function loadWords(){
   msg.className='msg ok';msg.textContent='단어 데이터를 정상적으로 불러왔습니다.';
  }catch(e){msg.textContent=e.message}finally{btn.disabled=false;btn.textContent='시험 데이터 불러오기'}
 }
+
+function shuffle(list){
+ const a=[...list];
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+ return a;
+}
+function uniqueValues(list){
+ return [...new Set(list.filter(v=>String(v||'').trim()).map(v=>String(v).trim()))];
+}
+function makeChoices(correct,pool){
+ const others=shuffle(uniqueValues(pool).filter(v=>v!==correct)).slice(0,3);
+ return shuffle([correct,...others]);
+}
+function makeQuestion(item,mode){
+ let actualMode=mode;
+ if(mode==='random'){
+  const possible=['engToKor','korToEng'];
+  if(item.example&&item.exampleAnswer)possible.push('example');
+  actualMode=possible[Math.floor(Math.random()*possible.length)];
+ }
+ if(actualMode==='korToEng'){
+  return {type:'뜻 → 영어',prompt:item.meaning,correct:item.word,choices:makeChoices(item.word,words.map(w=>w.word)),day:item.day};
+ }
+ if(actualMode==='example'){
+  const answer=item.exampleAnswer||item.word;
+  let prompt=item.example||'';
+  if(answer&&prompt.toLowerCase().includes(answer.toLowerCase())){
+   prompt=prompt.replace(new RegExp(answer.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'________');
+  }else{
+   prompt=prompt+'  ( ________ )';
+  }
+  return {type:'예문 빈칸',prompt,correct:answer,choices:makeChoices(answer,words.map(w=>w.exampleAnswer||w.word)),day:item.day};
+ }
+ return {type:'영어 → 뜻',prompt:item.word,correct:item.meaning,choices:makeChoices(item.meaning,words.map(w=>w.meaning)),day:item.day};
+}
+function startExam(){
+ const count=Math.min(Number(document.getElementById('count').value),words.length);
+ const mode=document.getElementById('mode').value;
+ questions=shuffle(words).slice(0,count).map(item=>makeQuestion(item,mode));
+ currentIndex=0;
+ answers=new Array(questions.length).fill(null);
+ show('exam');
+ renderQuestion();
+}
+function renderQuestion(){
+ const q=questions[currentIndex];
+ document.getElementById('examNumber').textContent=(currentIndex+1)+' / '+questions.length;
+ document.getElementById('examDay').textContent='Day '+q.day;
+ document.getElementById('progressBar').style.width=((currentIndex+1)/questions.length*100)+'%';
+ document.getElementById('questionType').textContent=q.type;
+ document.getElementById('questionText').textContent=q.prompt;
+ document.getElementById('examMsg').textContent='';
+ const box=document.getElementById('choices');
+ box.innerHTML='';
+ q.choices.forEach((choice,i)=>{
+  const b=document.createElement('button');
+  b.className='choice'+(answers[currentIndex]===choice?' selected':'');
+  b.textContent=(i+1)+'. '+choice;
+  b.onclick=()=>selectChoice(choice);
+  box.appendChild(b);
+ });
+ document.getElementById('nextBtn').textContent=currentIndex===questions.length-1?'시험 완료':'다음 문제';
+}
+function selectChoice(choice){
+ answers[currentIndex]=choice;
+ renderQuestion();
+}
+function nextQuestion(){
+ if(!answers[currentIndex]){
+  document.getElementById('examMsg').textContent='정답을 선택해주세요.';
+  return;
+ }
+ if(currentIndex<questions.length-1){
+  currentIndex++;
+  renderQuestion();
+ }else{
+  finishExam();
+ }
+}
+function finishExam(){
+ const correct=questions.reduce((n,q,i)=>n+(answers[i]===q.correct?1:0),0);
+ const score=Math.round(correct/questions.length*100);
+ document.getElementById('resultScore').textContent=score+'점';
+ document.getElementById('resultDetail').innerHTML=
+  '총 '+questions.length+'문제 중 <strong>'+correct+'개 정답</strong><br>'+
+  (questions.length-correct)+'개 오답';
+ show('result');
+}
+function quitExam(){
+ if(confirm('시험을 종료하고 설정 화면으로 돌아갈까요?'))show('setup');
+}
+function backToSetup(){
+ show('setup');
+}
+
 document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')loginStudent()});
 window.addEventListener('DOMContentLoaded',restore);
 </script>
