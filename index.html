@@ -44,11 +44,19 @@
 <button id="loadBtn" onclick="loadWords()">시험 데이터 불러오기</button>
 <p id="setupMsg" class="msg"></p>
 <div id="summary" class="summary hidden">
-<div><strong>단어 종류</strong><span id="sumSheet"></span></div>
-<div><strong>Day 범위</strong><span id="sumDays"></span></div>
-<div><strong>불러온 단어</strong><span id="sumWords"></span></div>
-<div><strong>출제 예정</strong><span id="sumCount"></span></div>
-<button style="margin-top:16px" onclick="startExam()">시험 시작</button>
+  <div><strong>단어 종류</strong><span id="sumSheet"></span></div>
+  <div><strong>Day 범위</strong><span id="sumDays"></span></div>
+  <div><strong>불러온 단어</strong><span id="sumWords"></span></div>
+  <div><strong>출제 예정</strong><span id="sumCount"></span></div>
+
+  <button
+    id="startExamBtn"
+    type="button"
+    style="margin-top:18px"
+    onclick="startExam()"
+  >
+    시험 시작
+  </button>
 </div>
 </section>
 
@@ -79,9 +87,23 @@ const KEY='hansalmaeStudentToken';
 let token='',student=null,days=[],words=[],questions=[],currentIndex=0,answers=[];
 
 async function api(data){
- const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
- if(!r.ok)throw new Error('서버 응답 오류: '+r.status);
- return r.json();
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),12000);
+ try{
+  const r=await fetch(API_URL,{
+   method:'POST',
+   headers:{'Content-Type':'text/plain;charset=utf-8'},
+   body:JSON.stringify(data),
+   signal:controller.signal
+  });
+  if(!r.ok)throw new Error('서버 응답 오류: '+r.status);
+  return await r.json();
+ }catch(e){
+  if(e.name==='AbortError')throw new Error('로그인 확인 시간이 초과되었습니다. 다시 로그인해주세요.');
+  throw e;
+ }finally{
+  clearTimeout(timer);
+ }
 }
 function show(name){
  ['loading','login','setup','exam','result'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==name));
@@ -103,7 +125,13 @@ async function restore(){
   const r=await api({action:'checkSession',token});
   if(!r.success)throw new Error(r.message||'로그인 만료');
   student=r.student;openSetup();await loadSheets();
- }catch(e){localStorage.removeItem(KEY);show('login');document.getElementById('loginMsg').textContent=e.message}
+ }catch(e){
+  localStorage.removeItem(KEY);
+  token='';
+  student=null;
+  show('login');
+  document.getElementById('loginMsg').textContent=e.message||'다시 로그인해주세요.';
+ }
 }
 function openSetup(){
  show('setup');
