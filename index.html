@@ -1,558 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>한살매 단어학습</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      background: #f5f7fb;
-      font-family:
-        Arial,
-        "Noto Sans KR",
-        sans-serif;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 420px;
-      padding: 36px 24px;
-      background: white;
-      border-radius: 20px;
-      box-shadow:
-        0 8px 30px
-        rgba(0, 0, 0, 0.08);
-      text-align: center;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    h1 {
-      margin:
-        0
-        0
-        10px;
-      font-size: 30px;
-    }
-
-    .description {
-      margin-bottom: 28px;
-      color: #666;
-    }
-
-    .input-group {
-      margin-bottom: 14px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #d9dde5;
-      border-radius: 11px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #222;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      border: 0;
-      border-radius: 12px;
-      background: #222;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: default;
-    }
-
-    .secondary-button {
-      margin-top: 12px;
-      background: #eef0f4;
-      color: #222;
-    }
-
-    #loginMessage,
-    #loadingMessage {
-      min-height: 23px;
-      margin-top: 17px;
-      color: #d33;
-      font-size: 14px;
-    }
-
-    .student-name {
-      margin:
-        25px
-        0
-        7px;
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    .student-info {
-      margin-bottom: 28px;
-      color: #666;
-    }
-
-    .status {
-      margin-top: 20px;
-      color: #397747;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>한살매 단어학습</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:20px;background:#f5f7fb;font-family:Arial,"Noto Sans KR",sans-serif;color:#202124}.app{max-width:520px;margin:auto}.card{background:#fff;padding:30px 24px;border-radius:20px;box-shadow:0 8px 30px #00000014}.hidden{display:none!important}h1{text-align:center;margin:0 0 10px;font-size:30px}h2{margin:0 0 20px}.desc{text-align:center;color:#666;margin-bottom:28px}.group{margin-bottom:15px}label{display:block;margin-bottom:7px;font-weight:700;font-size:14px}input,select,button{width:100%;padding:14px;border-radius:11px;font-size:16px}input,select{border:1px solid #d9dde5;background:#fff}button{border:0;background:#222;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.55}.student{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f6f7f9;padding:16px;border-radius:14px;margin-bottom:24px}.name{font-size:20px;font-weight:700;margin:0 0 4px}.meta{margin:0;color:#666;font-size:14px}.logout{width:auto;background:#e9ecf1;color:#222;padding:10px 14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.msg{min-height:22px;color:#c33;font-size:14px}.ok{color:#397747}.summary{margin-top:20px;padding:18px;border-radius:14px;background:#f6f7f9;line-height:1.8}.summary strong{display:inline-block;min-width:95px}@media(max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
 </head>
-
 <body>
-  <main class="card">
-
-    <!-- 자동 로그인 확인 화면 -->
-    <section id="loadingScreen">
-      <h1>한살매 단어학습</h1>
-
-      <p class="description">
-        로그인 상태를 확인하고 있습니다.
-      </p>
-
-      <p id="loadingMessage">
-        잠시만 기다려주세요.
-      </p>
-    </section>
-
-
-    <!-- 로그인 화면 -->
-    <section
-      id="loginScreen"
-      class="hidden"
-    >
-      <h1>한살매 단어학습</h1>
-
-      <p class="description">
-        학생 계정으로 로그인해주세요.
-      </p>
-
-      <div class="input-group">
-        <label for="studentId">
-          학생 아이디
-        </label>
-
-        <input
-          id="studentId"
-          type="text"
-          autocomplete="username"
-          placeholder="학생 아이디"
-        >
-      </div>
-
-      <div class="input-group">
-        <label for="studentPassword">
-          비밀번호
-        </label>
-
-        <input
-          id="studentPassword"
-          type="password"
-          autocomplete="current-password"
-          placeholder="비밀번호"
-        >
-      </div>
-
-      <button
-        id="loginButton"
-        type="button"
-        onclick="loginStudent()"
-      >
-        로그인
-      </button>
-
-      <p id="loginMessage"></p>
-    </section>
-
-
-    <!-- 로그인 성공 화면 -->
-    <section
-      id="mainScreen"
-      class="hidden"
-    >
-      <h1>한살매 단어학습</h1>
-
-      <p class="student-name">
-        <span id="studentName"></span> 학생
-      </p>
-
-      <p class="student-info">
-        <span id="studentGrade"></span>
-        ·
-        <span id="studentIdText"></span>
-      </p>
-
-      <p class="status">
-        로그인이 정상적으로 유지되고 있습니다.
-      </p>
-
-      <button
-        type="button"
-        class="secondary-button"
-        onclick="logoutStudent()"
-      >
-        로그아웃
-      </button>
-    </section>
-
-  </main>
-
-
-  <script>
-    const API_URL =
-      'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
-
-    const TOKEN_STORAGE_KEY =
-      'hansalmaeStudentToken';
-
-    let currentToken = '';
-    let currentStudent = null;
-
-
-    /**
-     * Apps Script API 요청
-     */
-    async function callApi(data) {
-      const response =
-        await fetch(
-          API_URL,
-          {
-            method: 'POST',
-
-            /*
-             * text/plain으로 보내면
-             * 브라우저의 불필요한 사전 요청을 피할 수 있습니다.
-             */
-            headers: {
-              'Content-Type':
-                'text/plain;charset=utf-8'
-            },
-
-            body:
-              JSON.stringify(data)
-          }
-        );
-
-      if (!response.ok) {
-        throw new Error(
-          '서버 응답 오류: ' +
-          response.status
-        );
-      }
-
-      return await response.json();
-    }
-
-
-    /**
-     * 로그인
-     */
-    async function loginStudent() {
-      const idInput =
-        document.getElementById(
-          'studentId'
-        );
-
-      const passwordInput =
-        document.getElementById(
-          'studentPassword'
-        );
-
-      const loginButton =
-        document.getElementById(
-          'loginButton'
-        );
-
-      const messageElement =
-        document.getElementById(
-          'loginMessage'
-        );
-
-      const studentId =
-        idInput.value.trim();
-
-      const password =
-        passwordInput.value.trim();
-
-      if (!studentId || !password) {
-        messageElement.textContent =
-          '학생 아이디와 비밀번호를 입력해주세요.';
-
-        return;
-      }
-
-      loginButton.disabled = true;
-      loginButton.textContent =
-        '로그인 중...';
-
-      messageElement.textContent = '';
-
-      try {
-        const result =
-          await callApi({
-            action: 'login',
-            studentId: studentId,
-            password: password
-          });
-
-        if (
-          !result ||
-          !result.success ||
-          !result.token ||
-          !result.student
-        ) {
-          messageElement.textContent =
-            result && result.message
-              ? result.message
-              : '로그인에 실패했습니다.';
-
-          return;
-        }
-
-        currentToken =
-          result.token;
-
-        currentStudent =
-          result.student;
-
-        localStorage.setItem(
-          TOKEN_STORAGE_KEY,
-          currentToken
-        );
-
-        passwordInput.value = '';
-
-        showMainScreen(
-          currentStudent
-        );
-
-      } catch (error) {
-        console.error(error);
-
-        messageElement.textContent =
-          '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.';
-
-      } finally {
-        loginButton.disabled = false;
-        loginButton.textContent =
-          '로그인';
-      }
-    }
-
-
-    /**
-     * 저장된 토큰으로 자동 로그인 확인
-     */
-    async function restoreLogin() {
-      const savedToken =
-        localStorage.getItem(
-          TOKEN_STORAGE_KEY
-        );
-
-      if (!savedToken) {
-        showLoginScreen();
-        return;
-      }
-
-      try {
-        const result =
-          await callApi({
-            action: 'checkSession',
-            token: savedToken
-          });
-
-        if (
-          result &&
-          result.success &&
-          result.student
-        ) {
-          currentToken =
-            savedToken;
-
-          currentStudent =
-            result.student;
-
-          showMainScreen(
-            currentStudent
-          );
-
-          return;
-        }
-
-        localStorage.removeItem(
-          TOKEN_STORAGE_KEY
-        );
-
-        showLoginScreen();
-
-      } catch (error) {
-        console.error(error);
-
-        /*
-         * 일시적인 통신 오류일 수 있으므로
-         * 토큰을 바로 삭제하지 않습니다.
-         */
-        showLoginScreen(
-          '서버 연결을 확인할 수 없습니다. 다시 로그인해주세요.'
-        );
-      }
-    }
-
-
-    /**
-     * 로그아웃
-     */
-    async function logoutStudent() {
-      const token =
-        currentToken ||
-        localStorage.getItem(
-          TOKEN_STORAGE_KEY
-        );
-
-      localStorage.removeItem(
-        TOKEN_STORAGE_KEY
-      );
-
-      currentToken = '';
-      currentStudent = null;
-
-      showLoginScreen();
-
-      if (!token) {
-        return;
-      }
-
-      try {
-        await callApi({
-          action: 'logout',
-          token: token
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-
-    /**
-     * 로그인 화면 표시
-     */
-    function showLoginScreen(message) {
-      document
-        .getElementById('loadingScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('mainScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('loginScreen')
-        .classList
-        .remove('hidden');
-
-      document
-        .getElementById('loginMessage')
-        .textContent =
-          message || '';
-    }
-
-
-    /**
-     * 로그인 성공 화면 표시
-     */
-    function showMainScreen(student) {
-      document
-        .getElementById('loadingScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('loginScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('mainScreen')
-        .classList
-        .remove('hidden');
-
-      document
-        .getElementById('studentName')
-        .textContent =
-          student.studentName || '';
-
-      document
-        .getElementById('studentGrade')
-        .textContent =
-          student.grade || '';
-
-      document
-        .getElementById('studentIdText')
-        .textContent =
-          student.studentId || '';
-    }
-
-
-    /**
-     * 비밀번호 입력칸에서 Enter 로그인
-     */
-    document
-      .getElementById('studentPassword')
-      .addEventListener(
-        'keydown',
-        function (event) {
-          if (event.key === 'Enter') {
-            loginStudent();
-          }
-        }
-      );
-
-
-    /**
-     * 페이지가 열리면 자동 로그인 확인
-     */
-    window.addEventListener(
-      'DOMContentLoaded',
-      restoreLogin
-    );
-  </script>
+<main class="app">
+<section id="loading" class="card"><h1>한살매 단어학습</h1><p class="desc">로그인 상태를 확인하고 있습니다.</p></section>
+
+<section id="login" class="card hidden">
+<h1>한살매 단어학습</h1><p class="desc">학생 계정으로 로그인해주세요.</p>
+<div class="group"><label>학생 아이디</label><input id="studentId" autocomplete="username"></div>
+<div class="group"><label>비밀번호</label><input id="password" type="password" autocomplete="current-password"></div>
+<button id="loginBtn" onclick="loginStudent()">로그인</button>
+<p id="loginMsg" class="msg"></p>
+</section>
+
+<section id="setup" class="card hidden">
+<div class="student"><div><p id="studentName" class="name"></p><p class="meta"><span id="grade"></span> · <span id="idText"></span></p></div><button class="logout" onclick="logoutStudent()">로그아웃</button></div>
+<h2>단어시험 설정</h2>
+<div class="group"><label>단어 종류</label><select id="sheet" onchange="loadDays()"><option>불러오는 중...</option></select></div>
+<div class="grid">
+<div class="group"><label>시작 Day</label><select id="startDay" onchange="syncEnd()"><option value="">선택</option></select></div>
+<div class="group"><label>마지막 Day</label><select id="endDay"><option value="">선택</option></select></div>
+</div>
+<div class="group"><label>문제 수</label><select id="count"><option>30</option><option>50</option><option>80</option><option>100</option><option>150</option></select></div>
+<div class="group"><label>문제 유형</label><select id="mode"><option value="random">랜덤</option><option value="engToKor">영어 → 뜻</option><option value="korToEng">뜻 → 영어</option><option value="example">예문</option></select></div>
+<button id="loadBtn" onclick="loadWords()">시험 데이터 불러오기</button>
+<p id="setupMsg" class="msg"></p>
+<div id="summary" class="summary hidden"><div><strong>단어 종류</strong><span id="sumSheet"></span></div><div><strong>Day 범위</strong><span id="sumDays"></span></div><div><strong>불러온 단어</strong><span id="sumWords"></span></div><div><strong>출제 예정</strong><span id="sumCount"></span></div></div>
+</section>
+</main>
+
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
+const KEY='hansalmaeStudentToken';
+let token='',student=null,days=[],words=[];
+
+async function api(data){
+ const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
+ if(!r.ok)throw new Error('서버 응답 오류: '+r.status);
+ return r.json();
+}
+function show(name){
+ ['loading','login','setup'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==name));
+}
+async function loginStudent(){
+ const id=document.getElementById('studentId').value.trim(),pw=document.getElementById('password').value.trim(),btn=document.getElementById('loginBtn'),msg=document.getElementById('loginMsg');
+ if(!id||!pw){msg.textContent='학생 아이디와 비밀번호를 입력해주세요.';return}
+ btn.disabled=true;btn.textContent='로그인 중...';msg.textContent='';
+ try{
+  const r=await api({action:'login',studentId:id,password:pw});
+  if(!r.success)throw new Error(r.message||'로그인 실패');
+  token=r.token;student=r.student;localStorage.setItem(KEY,token);openSetup();await loadSheets();
+ }catch(e){msg.textContent=e.message}finally{btn.disabled=false;btn.textContent='로그인'}
+}
+async function restore(){
+ token=localStorage.getItem(KEY)||'';
+ if(!token){show('login');return}
+ try{
+  const r=await api({action:'checkSession',token});
+  if(!r.success)throw new Error(r.message||'로그인 만료');
+  student=r.student;openSetup();await loadSheets();
+ }catch(e){localStorage.removeItem(KEY);show('login');document.getElementById('loginMsg').textContent=e.message}
+}
+function openSetup(){
+ show('setup');
+ document.getElementById('studentName').textContent=(student.studentName||'')+' 학생';
+ document.getElementById('grade').textContent=student.grade||'';
+ document.getElementById('idText').textContent=student.studentId||'';
+}
+async function logoutStudent(){
+ const old=token;localStorage.removeItem(KEY);token='';student=null;show('login');
+ try{if(old)await api({action:'logout',token:old})}catch(e){}
+}
+async function loadSheets(){
+ const s=document.getElementById('sheet'),msg=document.getElementById('setupMsg');
+ s.innerHTML='<option value="">불러오는 중...</option>';msg.textContent='';
+ try{
+  const r=await api({action:'getSheetNames',token});
+  if(!r.success)throw new Error(r.message);
+  s.innerHTML='<option value="">단어 종류 선택</option>';
+  (r.sheetNames||[]).forEach(n=>s.add(new Option(n.replace('단어DB','').trim()||n,n)));
+ }catch(e){s.innerHTML='<option>불러오기 실패</option>';msg.textContent=e.message}
+}
+async function loadDays(){
+ const sheet=document.getElementById('sheet').value,msg=document.getElementById('setupMsg');
+ days=[];fill('startDay',[]);fill('endDay',[]);document.getElementById('summary').classList.add('hidden');if(!sheet)return;
+ try{
+  const r=await api({action:'getDays',token,sheetName:sheet});
+  if(!r.success)throw new Error(r.message);
+  days=(r.days||[]).map(Number).filter(Number.isFinite).sort((a,b)=>a-b);
+  fill('startDay',days);fill('endDay',days);
+  if(days.length){document.getElementById('startDay').value=days[0];syncEnd()}
+ }catch(e){msg.textContent=e.message}
+}
+function fill(id,list){
+ const s=document.getElementById(id);s.innerHTML='<option value="">선택</option>';
+ list.forEach(d=>s.add(new Option('Day '+d,d)));
+}
+function syncEnd(){
+ const start=Number(document.getElementById('startDay').value),valid=days.filter(d=>!start||d>=start);
+ fill('endDay',valid);if(valid.length)document.getElementById('endDay').value=valid[valid.length-1];
+}
+async function loadWords(){
+ const sheet=document.getElementById('sheet').value,startDay=Number(document.getElementById('startDay').value),endDay=Number(document.getElementById('endDay').value),count=Number(document.getElementById('count').value),btn=document.getElementById('loadBtn'),msg=document.getElementById('setupMsg');
+ msg.className='msg';msg.textContent='';document.getElementById('summary').classList.add('hidden');
+ if(!sheet){msg.textContent='단어 종류를 선택해주세요.';return}
+ if(!startDay||!endDay||endDay<startDay){msg.textContent='Day 범위를 올바르게 선택해주세요.';return}
+ btn.disabled=true;btn.textContent='불러오는 중...';
+ try{
+  const r=await api({action:'getWords',token,sheetName:sheet,startDay,endDay});
+  if(!r.success)throw new Error(r.message);
+  words=Array.isArray(r.words)?r.words:[];
+  if(!words.length)throw new Error('선택한 범위에 단어가 없습니다.');
+  document.getElementById('sumSheet').textContent=sheet.replace('단어DB','').trim()||sheet;
+  document.getElementById('sumDays').textContent='Day '+startDay+' ~ Day '+endDay;
+  document.getElementById('sumWords').textContent=words.length+'개';
+  document.getElementById('sumCount').textContent=Math.min(count,words.length)+'문제';
+  document.getElementById('summary').classList.remove('hidden');
+  msg.className='msg ok';msg.textContent='단어 데이터를 정상적으로 불러왔습니다.';
+ }catch(e){msg.textContent=e.message}finally{btn.disabled=false;btn.textContent='시험 데이터 불러오기'}
+}
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')loginStudent()});
+window.addEventListener('DOMContentLoaded',restore);
+</script>
 </body>
 </html>
