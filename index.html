@@ -2227,6 +2227,180 @@
       }
     }
 
+
+    /* 선생님 배정 시험 및 알림 */
+    .assigned-alert {
+      display: none;
+      margin: 14px 0;
+      padding: 14px 16px;
+      border: 1px solid #e6bfd3;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #fff7fb, #f5e4ed);
+      color: #651446;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(101, 20, 70, 0.08);
+    }
+
+    .assigned-alert.show {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .assigned-alert-count {
+      flex: 0 0 auto;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #8f145f;
+      color: white;
+      font-weight: 800;
+      line-height: 28px;
+      text-align: center;
+    }
+
+    .assigned-exam-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .assigned-exam-card {
+      padding: 18px;
+      border: 1px solid #ead6e1;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(79,18,55,.06);
+    }
+
+    .assigned-exam-title {
+      margin: 0 0 8px;
+      color: #4d1237;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .assigned-exam-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 10px 0 14px;
+      color: #806c77;
+      font-size: 14px;
+    }
+
+    .assigned-exam-meta span {
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f7e9f0;
+    }
+
+    .assigned-exam-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .teacher-exam-question {
+      padding: 22px;
+      border: 1px solid #ead6e1;
+      border-radius: 20px;
+      background: white;
+    }
+
+    .teacher-exam-input {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border: 1px solid #ead6e1;
+      border-radius: 14px;
+      font-size: 17px;
+    }
+
+    .teacher-exam-options {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .teacher-exam-option {
+      width: 100%;
+      margin: 0;
+      padding: 14px;
+      border: 1px solid #ead6e1;
+      background: #fffafd;
+      color: #4d1237;
+      box-shadow: none;
+      text-align: left;
+    }
+
+    .teacher-exam-option.selected {
+      border-color: #8f145f;
+      background: #f3dce8;
+    }
+
+    .notification-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(42, 18, 33, .48);
+    }
+
+    .notification-modal-backdrop.show {
+      display: flex;
+    }
+
+    .notification-modal {
+      width: min(520px, 100%);
+      max-height: 80vh;
+      overflow: auto;
+      padding: 20px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 24px 60px rgba(42,18,33,.25);
+    }
+
+    .notification-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .notification-close {
+      width: 42px;
+      height: 42px;
+      margin: 0;
+      padding: 0;
+      border-radius: 50%;
+      background: #f7e9f0;
+      color: #651446;
+      box-shadow: none;
+      font-size: 24px;
+      line-height: 42px;
+    }
+
+    .notification-item {
+      padding: 14px;
+      border: 1px solid #ead6e1;
+      border-radius: 14px;
+      margin-top: 10px;
+      background: #fffafd;
+    }
+
+    .notification-item.unread {
+      border-color: #d998ba;
+      background: #f9eaf2;
+    }
+
   </style>
 
 
@@ -2659,6 +2833,14 @@
           </button>
 
           <button
+            id="assignedExamMenuButton"
+            class="menu-button"
+            onclick="showAssignedExams()"
+          >
+            선생님 시험
+          </button>
+
+          <button
             id="vocabMenuButton"
             class="menu-button"
             onclick="showVocabHome()"
@@ -2689,6 +2871,36 @@
             로그아웃
           </button>
         </div>
+      </div>
+
+
+      <div id="assignedNotificationAlert" class="assigned-alert" onclick="openNotificationModal()">
+        <div>
+          <strong>🔔 새 시험 알림</strong>
+          <div id="assignedNotificationText" style="margin-top:4px;font-size:14px;">
+            선생님이 등록한 시험이 있습니다.
+          </div>
+        </div>
+        <span id="assignedNotificationCount" class="assigned-alert-count">0</span>
+      </div>
+
+      <div id="assignedExamScreen" class="card hidden">
+        <h2>선생님이 출제한 시험</h2>
+        <p style="color:#806c77;">배정받은 시험을 여기서 확인하고 응시할 수 있습니다.</p>
+        <div id="assignedExamLoading" class="loading"></div>
+        <div id="assignedExamList" class="assigned-exam-list"></div>
+      </div>
+
+      <div id="teacherExamTakingScreen" class="card hidden">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+          <div>
+            <div id="teacherExamProgress" style="color:#806c77;font-size:14px;"></div>
+            <h2 id="teacherExamTitle" style="margin:5px 0 0;"></h2>
+          </div>
+          <button type="button" class="secondary-button" style="width:auto;margin:0;" onclick="leaveTeacherExamView()">목록으로</button>
+        </div>
+        <div id="teacherExamQuestionArea" class="teacher-exam-question" style="margin-top:18px;"></div>
+        <button id="teacherExamNextButton" type="button" onclick="nextTeacherExamQuestion()">다음 문제</button>
       </div>
 
 
@@ -3388,6 +3600,17 @@
     </div>
   </div>
 
+
+
+  <div id="notificationModal" class="notification-modal-backdrop">
+    <div class="notification-modal">
+      <div class="notification-modal-head">
+        <h2 style="margin:0;">시험 알림</h2>
+        <button type="button" class="notification-close" onclick="closeNotificationModal()" aria-label="닫기">×</button>
+      </div>
+      <div id="notificationList"></div>
+    </div>
+  </div>
 
   <script>
     let sheetNamesCache = [];
@@ -4187,6 +4410,10 @@
       }
 
       currentStudent = student;
+
+      setTimeout(function () {
+        loadAssignedExamNotifications();
+      }, 250);
 
       document
         .getElementById('studentName')
@@ -6013,10 +6240,363 @@
     }
 
 
+
+    let assignedExamData = [];
+    let teacherExamSession = null;
+    let teacherExamAnswers = {};
+    let teacherExamIndex = 0;
+    let assignedNotifications = [];
+
+    function hideMainLearningScreensForAssignedExam() {
+      [
+        'startScreen', 'testScreen', 'resultScreen', 'vocabScreen',
+        'rankingScreen', 'myPageScreen', 'wrongNotebookScreen',
+        'personalVocabularyScreen', 'personalTestSetupScreen',
+        'smartReviewScreen', 'wrongTestSetupScreen'
+      ].forEach(function (id) {
+        const element = document.getElementById(id);
+        if (element) element.classList.add('hidden');
+      });
+    }
+
+    function showAssignedExams() {
+      hideExtraStudyScreens();
+      hideMainLearningScreensForAssignedExam();
+      document.getElementById('teacherExamTakingScreen').classList.add('hidden');
+      document.getElementById('assignedExamScreen').classList.remove('hidden');
+      setActiveMenu('assigned');
+      loadAssignedExams();
+      window.scrollTo(0, 0);
+    }
+
+    function loadAssignedExams() {
+      if (!currentStudent || !currentStudent.studentId) return;
+
+      const loading = document.getElementById('assignedExamLoading');
+      loading.textContent = '배정된 시험을 불러오는 중입니다.';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          loading.textContent = '';
+          assignedExamData = result && Array.isArray(result.exams)
+            ? result.exams
+            : [];
+          renderAssignedExams();
+        })
+        .withFailureHandler(function (error) {
+          loading.textContent = '';
+          alert('시험 목록을 불러오지 못했습니다.\n' +
+            (error && error.message ? error.message : error));
+        })
+        .studentGetAssignedExams(currentStudent.studentId);
+    }
+
+    function renderAssignedExams() {
+      const list = document.getElementById('assignedExamList');
+
+      if (!assignedExamData.length) {
+        list.innerHTML = '<div style="padding:28px;text-align:center;color:#806c77;">현재 배정된 시험이 없습니다.</div>';
+        return;
+      }
+
+      list.innerHTML = assignedExamData.map(function (exam) {
+        const disabled = exam.availability !== '응시가능';
+        const label = exam.availability === '완료'
+          ? '응시 완료'
+          : exam.availability === '마감'
+            ? '마감됨'
+            : exam.availability === '시작전'
+              ? '시작 전'
+              : (exam.status === '완료' ? '재시험 보기' : '시험 보기');
+
+        return [
+          '<article class="assigned-exam-card">',
+          '<h3 class="assigned-exam-title">' + escapeTeacherExamHtml(exam.title || '단어시험') + '</h3>',
+          '<div class="assigned-exam-meta">',
+          '<span>' + escapeTeacherExamHtml(String(exam.questionCount || 0)) + '문제</span>',
+          '<span>기준 ' + escapeTeacherExamHtml(String(exam.passingScore || 80)) + '점</span>',
+          '<span>' + escapeTeacherExamHtml(exam.status || '미응시') + '</span>',
+          exam.bestScore !== null ? '<span>최고 ' + escapeTeacherExamHtml(String(exam.bestScore)) + '점</span>' : '',
+          exam.deadlineAt ? '<span>마감 ' + escapeTeacherExamHtml(formatTeacherExamDate(exam.deadlineAt)) + '</span>' : '',
+          '</div>',
+          '<div class="assigned-exam-actions">',
+          '<button type="button" ' + (disabled ? 'disabled' : '') +
+            ' onclick="startAssignedTeacherExam(\'' + escapeTeacherExamAttr(exam.examId) + '\')">' +
+            escapeTeacherExamHtml(label) + '</button>',
+          '</div>',
+          '</article>'
+        ].join('');
+      }).join('');
+    }
+
+    function startAssignedTeacherExam(examId) {
+      if (!currentStudent || !currentStudent.studentId) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (!result || !result.success) {
+            alert(result && result.message ? result.message : '시험을 시작하지 못했습니다.');
+            return;
+          }
+
+          teacherExamSession = result;
+          teacherExamAnswers = {};
+          teacherExamIndex = 0;
+
+          hideMainLearningScreensForAssignedExam();
+          document.getElementById('assignedExamScreen').classList.add('hidden');
+          document.getElementById('teacherExamTakingScreen').classList.remove('hidden');
+          document.getElementById('teacherExamTitle').textContent =
+            result.exam && result.exam.title ? result.exam.title : '선생님 시험';
+          renderTeacherExamQuestion();
+          window.scrollTo(0, 0);
+        })
+        .withFailureHandler(function (error) {
+          alert('시험을 시작하지 못했습니다.\n' +
+            (error && error.message ? error.message : error));
+        })
+        .studentStartTeacherExam(currentStudent.studentId, examId);
+    }
+
+    function renderTeacherExamQuestion() {
+      if (!teacherExamSession || !Array.isArray(teacherExamSession.questions)) return;
+
+      const questions = teacherExamSession.questions;
+      const question = questions[teacherExamIndex];
+      const area = document.getElementById('teacherExamQuestionArea');
+      const nextButton = document.getElementById('teacherExamNextButton');
+
+      document.getElementById('teacherExamProgress').textContent =
+        (teacherExamIndex + 1) + ' / ' + questions.length;
+
+      let html = '<div style="font-size:14px;color:#806c77;margin-bottom:8px;">문제 ' +
+        (teacherExamIndex + 1) + '</div>';
+      html += '<div style="font-size:24px;font-weight:900;color:#4d1237;line-height:1.45;">' +
+        escapeTeacherExamHtml(question.prompt || '') + '</div>';
+
+      if (question.example) {
+        html += '<div style="margin-top:14px;padding:14px;border-radius:14px;background:#f7e9f0;line-height:1.6;">' +
+          escapeTeacherExamHtml(question.example) + '</div>';
+      }
+
+      if (question.mode === 'example' && Array.isArray(question.options)) {
+        html += '<div class="teacher-exam-options">';
+        question.options.forEach(function (option) {
+          const selected = teacherExamAnswers[question.questionId] === option;
+          html += '<button type="button" class="teacher-exam-option ' +
+            (selected ? 'selected' : '') +
+            '" onclick="selectTeacherExamOption(\'' +
+            escapeTeacherExamAttr(question.questionId) + '\',\'' +
+            escapeTeacherExamAttr(option) + '\')">' +
+            escapeTeacherExamHtml(option) + '</button>';
+        });
+        html += '</div>';
+      } else {
+        html += '<input id="teacherExamAnswerInput" class="teacher-exam-input" type="text" ' +
+          'autocomplete="off" placeholder="정답을 입력하세요." value="' +
+          escapeTeacherExamAttr(teacherExamAnswers[question.questionId] || '') + '">';
+      }
+
+      area.innerHTML = html;
+      nextButton.textContent =
+        teacherExamIndex === questions.length - 1 ? '시험 제출하기' : '다음 문제';
+    }
+
+    function selectTeacherExamOption(questionId, option) {
+      teacherExamAnswers[questionId] = option;
+      renderTeacherExamQuestion();
+    }
+
+    function saveCurrentTeacherExamAnswer() {
+      if (!teacherExamSession) return;
+      const question = teacherExamSession.questions[teacherExamIndex];
+      const input = document.getElementById('teacherExamAnswerInput');
+      if (input) {
+        teacherExamAnswers[question.questionId] = input.value.trim();
+      }
+    }
+
+    function nextTeacherExamQuestion() {
+      if (!teacherExamSession) return;
+
+      saveCurrentTeacherExamAnswer();
+      const question = teacherExamSession.questions[teacherExamIndex];
+      if (!teacherExamAnswers[question.questionId]) {
+        alert('정답을 입력하거나 선택해주세요.');
+        return;
+      }
+
+      if (teacherExamIndex < teacherExamSession.questions.length - 1) {
+        teacherExamIndex++;
+        renderTeacherExamQuestion();
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      submitAssignedTeacherExam();
+    }
+
+    function submitAssignedTeacherExam() {
+      if (!window.confirm('시험을 제출할까요? 제출 후 채점됩니다.')) return;
+
+      const answers = teacherExamSession.questions.map(function (question) {
+        return {
+          questionId: question.questionId,
+          answer: teacherExamAnswers[question.questionId] || ''
+        };
+      });
+
+      const payload = {
+        studentId: currentStudent.studentId,
+        examId: teacherExamSession.exam.examId,
+        attempt: teacherExamSession.exam.attempt,
+        answers: answers
+      };
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          const score = result && result.result ? result.result.score : 0;
+          alert('시험이 제출되었습니다.\n점수: ' + score + '점');
+          teacherExamSession = null;
+          teacherExamAnswers = {};
+          showAssignedExams();
+          loadAssignedExamNotifications();
+        })
+        .withFailureHandler(function (error) {
+          alert('시험 제출에 실패했습니다.\n' +
+            (error && error.message ? error.message : error));
+        })
+        .studentSubmitTeacherExam(payload);
+    }
+
+    function leaveTeacherExamView() {
+      if (!teacherExamSession) {
+        showAssignedExams();
+        return;
+      }
+      if (window.confirm('시험 목록으로 돌아갈까요?\n입력한 답은 아직 제출되지 않습니다.')) {
+        showAssignedExams();
+      }
+    }
+
+    function loadAssignedExamNotifications() {
+      if (!currentStudent || !currentStudent.studentId) return;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          assignedNotifications =
+            result && Array.isArray(result.notifications)
+              ? result.notifications
+              : [];
+
+          const unread = Number(result && result.unreadCount) || 0;
+          const alertBox = document.getElementById('assignedNotificationAlert');
+          document.getElementById('assignedNotificationCount').textContent = unread;
+
+          const latestUnread = assignedNotifications.find(function (item) {
+            return !item.read;
+          });
+
+          if (unread > 0) {
+            document.getElementById('assignedNotificationText').textContent =
+              latestUnread && latestUnread.title
+                ? latestUnread.title
+                : '선생님이 새 시험을 등록했습니다.';
+            alertBox.classList.add('show');
+          } else {
+            alertBox.classList.remove('show');
+          }
+        })
+        .withFailureHandler(function () {
+          // 알림 조회 실패가 학생의 다른 학습을 막지 않도록 조용히 처리합니다.
+        })
+        .studentGetNotifications(currentStudent.studentId);
+    }
+
+    function openNotificationModal() {
+      renderNotificationList();
+      document.getElementById('notificationModal').classList.add('show');
+    }
+
+    function closeNotificationModal() {
+      document.getElementById('notificationModal').classList.remove('show');
+    }
+
+    function renderNotificationList() {
+      const list = document.getElementById('notificationList');
+
+      if (!assignedNotifications.length) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#806c77;">알림이 없습니다.</div>';
+        return;
+      }
+
+      list.innerHTML = assignedNotifications.map(function (item) {
+        return '<div class="notification-item ' + (!item.read ? 'unread' : '') +
+          '" onclick="readAssignedNotification(\'' +
+          escapeTeacherExamAttr(item.notificationId) + '\')">' +
+          '<strong>' + escapeTeacherExamHtml(item.title || '시험 알림') + '</strong>' +
+          '<div style="margin-top:6px;line-height:1.5;color:#806c77;">' +
+          escapeTeacherExamHtml(item.content || '') + '</div>' +
+          '<div style="margin-top:7px;font-size:12px;color:#9a8993;">' +
+          escapeTeacherExamHtml(formatTeacherExamDate(item.createdAt)) + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function readAssignedNotification(notificationId) {
+      const item = assignedNotifications.find(function (notice) {
+        return notice.notificationId === notificationId;
+      });
+
+      if (item && !item.read) {
+        google.script.run
+          .withSuccessHandler(function () {
+            item.read = true;
+            loadAssignedExamNotifications();
+          })
+          .withFailureHandler(function () {})
+          .studentMarkNotificationRead(currentStudent.studentId, notificationId);
+      }
+
+      closeNotificationModal();
+      showAssignedExams();
+    }
+
+    function formatTeacherExamDate(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString('ko-KR', {
+        month: 'numeric', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function escapeTeacherExamHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeTeacherExamAttr(value) {
+      return escapeTeacherExamHtml(value)
+        .replace(/`/g, '&#096;')
+        .replace(/\\/g, '&#092;');
+    }
+
+
     function setActiveMenu(menu) {
       const testButton =
         document.getElementById(
           'testMenuButton'
+        );
+
+      const assignedExamButton =
+        document.getElementById(
+          'assignedExamMenuButton'
         );
 
       const vocabButton =
@@ -6035,12 +6615,16 @@
         );
 
       testButton.classList.remove('active');
+      assignedExamButton.classList.remove('active');
       vocabButton.classList.remove('active');
       myPageButton.classList.remove('active');
       rankingButton.classList.remove('active');
 
       if (menu === 'test') {
         testButton.classList.add('active');
+
+      } else if (menu === 'assigned') {
+        assignedExamButton.classList.add('active');
 
       } else if (menu === 'vocab') {
         vocabButton.classList.add('active');
@@ -7768,6 +8352,14 @@ google.script.run
           });
       }
     }, { once: true });
+
+  
+    document.addEventListener('click', function (event) {
+      const modal = document.getElementById('notificationModal');
+      if (modal && event.target === modal) {
+        closeNotificationModal();
+      }
+    });
 
   </script>
 </body>
