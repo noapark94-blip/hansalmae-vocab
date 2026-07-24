@@ -443,6 +443,61 @@
       gap: 8px;
     }
 
+    .cancelled-pill {
+      background: #f3f0f5;
+      color: #7b6f82;
+    }
+
+    .exam-card.cancelled {
+      opacity: .76;
+      background: #faf9fb;
+    }
+
+    .word-detail-list {
+      display: grid;
+      gap: 10px;
+      max-height: 56vh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .word-detail-item {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fafafe;
+    }
+
+    .word-detail-number {
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .word-detail-english {
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    .word-detail-meaning {
+      color: #393747;
+    }
+
+    .word-detail-example {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .cancel-btn:disabled,
+    .reminder-btn:disabled {
+      cursor: not-allowed;
+      opacity: .5;
+    }
+
     .loading-overlay {
       position: fixed;
       inset: 0;
@@ -830,6 +885,17 @@ protect	보호하다"></textarea>
     </div>
   </div>
 
+  <div id="detailModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="detailModalTitle">시험 내용</h2>
+        <button id="closeDetailModalBtn" class="close-btn" type="button">×</button>
+      </div>
+      <div id="detailMeta" class="summary-grid"></div>
+      <div id="detailWordList" class="word-detail-list"></div>
+    </div>
+  </div>
+
   <script>
     const API_URL =
       'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
@@ -1207,15 +1273,19 @@ protect	보호하다"></textarea>
       $('#examList').innerHTML = exams.map((exam) => {
         const examId = String(exam['시험ID'] || '');
         const title = String(exam['시험제목'] || '제목 없음');
+        const status = String(exam['상태'] || '공개');
+        const cancelled = status === '취소';
 
         return `
-          <article class="exam-card">
+          <article class="exam-card ${cancelled ? 'cancelled' : ''}">
             <div class="exam-head">
               <div>
                 <h3 class="exam-title">${escapeHtml(title)}</h3>
                 <div class="exam-id">${escapeHtml(examId)}</div>
               </div>
-              <span class="status-pill">${escapeHtml(exam['상태'] || '공개')}</span>
+              <span class="status-pill ${cancelled ? 'cancelled-pill' : ''}">
+                ${escapeHtml(status)}
+              </span>
             </div>
 
             <div class="exam-info">
@@ -1238,20 +1308,29 @@ protect	보호하다"></textarea>
             </div>
 
             <div class="exam-actions">
-              <button
-                type="button"
-                class="outline-btn status-btn"
+              <button type="button" class="outline-btn detail-btn"
+                data-exam-id="${escapeHtml(examId)}">시험 내용</button>
+              <button type="button" class="outline-btn status-btn"
+                data-exam-id="${escapeHtml(examId)}">응시 현황</button>
+              <button type="button" class="danger-btn reminder-btn"
                 data-exam-id="${escapeHtml(examId)}"
-              >응시 현황</button>
-              <button
-                type="button"
-                class="danger-btn reminder-btn"
+                ${cancelled ? 'disabled' : ''}>미완료 알림</button>
+              <button type="button" class="danger-btn cancel-btn"
                 data-exam-id="${escapeHtml(examId)}"
-              >미완료 알림</button>
+                data-title="${escapeHtml(title)}"
+                ${cancelled ? 'disabled' : ''}>
+                ${cancelled ? '취소됨' : '출제 취소'}
+              </button>
             </div>
           </article>
         `;
       }).join('');
+
+      $$('.detail-btn').forEach((button) => {
+        button.addEventListener('click', () =>
+          showExamDetails(button.dataset.examId)
+        );
+      });
 
       $$('.status-btn').forEach((button) => {
         button.addEventListener('click', () =>
@@ -1264,6 +1343,97 @@ protect	보호하다"></textarea>
           sendReminder(button.dataset.examId)
         );
       });
+
+      $$('.cancel-btn').forEach((button) => {
+        button.addEventListener('click', () =>
+          cancelExam(button.dataset.examId, button.dataset.title)
+        );
+      });
+    }
+
+    async function showExamDetails(examId) {
+      try {
+        setLoading(true, '시험 내용을 불러오는 중입니다.');
+        const result = await apiCall('teacherGetExamDetails', examId);
+        renderExamDetails(result);
+        $('#detailModal').classList.add('show');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderExamDetails(result) {
+      const exam = result.exam || {};
+      const words = result.words || [];
+
+      $('#detailModalTitle').textContent =
+        String(exam['시험제목'] || '시험 내용');
+
+      const dayText =
+        exam['시작Day'] || exam['마지막Day']
+          ? `${exam['시작Day'] || '-'} ~ ${exam['마지막Day'] || '-'}`
+          : '-';
+
+      const summaries = [
+        ['출제 방식', exam['출제방식'] || '-'],
+        ['DB', exam['DB명'] || '-'],
+        ['Day', dayText],
+        ['등록 단어', `${words.length}개`]
+      ];
+
+      $('#detailMeta').innerHTML = summaries.map(([label, value]) => `
+        <div class="summary-item">
+          <div class="summary-number" style="font-size:16px;">
+            ${escapeHtml(value)}
+          </div>
+          <div class="summary-label">${escapeHtml(label)}</div>
+        </div>
+      `).join('');
+
+      $('#detailWordList').innerHTML = words.length
+        ? words.map((word, index) => `
+            <div class="word-detail-item">
+              <div class="word-detail-number">${index + 1}</div>
+              <div>
+                <div class="word-detail-english">
+                  ${escapeHtml(word['영어'] || '-')}
+                </div>
+                <div class="word-detail-meaning">
+                  ${escapeHtml(word['뜻'] || '-')}
+                </div>
+                ${word['예문'] ? `
+                  <div class="word-detail-example">
+                    ${escapeHtml(word['예문'])}
+                    ${word['해석'] ? `<br>${escapeHtml(word['해석'])}` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')
+        : '<div class="empty">등록된 시험 단어가 없습니다.</div>';
+    }
+
+    async function cancelExam(examId, title) {
+      const ok = window.confirm(
+        `"${title || '이 시험'}"의 출제를 취소하시겠습니까?\n\n` +
+        '학생 시험 목록과 읽지 않은 알림에서 즉시 사라집니다.\n' +
+        '이미 제출된 시험 결과는 보존됩니다.'
+      );
+
+      if (!ok) return;
+
+      try {
+        setLoading(true, '시험 출제를 취소하는 중입니다.');
+        const result = await apiCall('teacherCancelExam', examId);
+        showToast(result.message, 'success');
+        await loadExamList();
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
     }
 
     async function showExamStatus(examId) {
@@ -1343,6 +1513,10 @@ protect	보호하다"></textarea>
 
     function closeStatusModal() {
       $('#statusModal').classList.remove('show');
+    }
+
+    function closeDetailModal() {
+      $('#detailModal').classList.remove('show');
     }
 
     function setDefaultDates() {
