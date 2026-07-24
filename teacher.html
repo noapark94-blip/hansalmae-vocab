@@ -1,1 +1,1417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#6f4cff" />
+  <title>한살매 선생님 시험 관리</title>
+  <style>
+    :root {
+      --primary: #6f4cff;
+      --primary-dark: #5634e8;
+      --primary-soft: #f0ecff;
+      --bg: #f7f7fb;
+      --card: #ffffff;
+      --text: #232330;
+      --muted: #77778a;
+      --line: #e8e7ef;
+      --success: #16885f;
+      --warning: #bd7613;
+      --danger: #d84646;
+      --shadow: 0 12px 34px rgba(43, 35, 91, 0.09);
+      --radius: 20px;
+    }
 
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(111, 76, 255, 0.11), transparent 31rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans KR", sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 30px 0 70px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), #9a77ff);
+      box-shadow: 0 9px 24px rgba(111, 76, 255, 0.27);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 31px);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255,255,255,.8);
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+    }
+
+    .tab-btn {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 15px;
+      border-radius: 11px;
+      font-weight: 800;
+    }
+
+    .tab-btn.active {
+      color: white;
+      background: var(--primary);
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(232, 231, 239, 0.95);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .card + .card { margin-top: 20px; }
+
+    .card-title {
+      margin: 0 0 18px;
+      font-size: 18px;
+      letter-spacing: -0.025em;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 0 12px;
+      font-weight: 900;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .required::after {
+      content: " *";
+      color: var(--danger);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      border-radius: 13px;
+      padding: 12px 13px;
+      outline: none;
+      transition: .18s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(111, 76, 255, .11);
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .row.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .choice {
+      position: relative;
+    }
+
+    .choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .choice span {
+      min-height: 50px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      color: var(--muted);
+      font-weight: 850;
+      padding: 8px;
+      transition: .18s ease;
+    }
+
+    .choice input:checked + span {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px var(--primary);
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .hidden { display: none !important; }
+
+    .switches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin: 7px 0 20px;
+    }
+
+    .switch-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .switch-item input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .student-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      margin-bottom: 12px;
+    }
+
+    .student-actions {
+      display: flex;
+      gap: 7px;
+    }
+
+    .small-btn {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text);
+      padding: 9px 11px;
+      border-radius: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .student-list {
+      max-height: 430px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px;
+    }
+
+    .student-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .student-item:hover { background: var(--primary-soft); }
+
+    .student-item input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .student-meta {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .student-name {
+      font-weight: 850;
+    }
+
+    .student-sub {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .primary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), #8f69ff);
+      padding: 14px 18px;
+      font-weight: 900;
+      box-shadow: 0 10px 22px rgba(111, 76, 255, .23);
+    }
+
+    .primary-btn:disabled {
+      cursor: not-allowed;
+      opacity: .58;
+      box-shadow: none;
+    }
+
+    .outline-btn {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      background: white;
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-weight: 850;
+    }
+
+    .danger-btn {
+      border: 0;
+      color: white;
+      background: var(--danger);
+      border-radius: 11px;
+      padding: 9px 12px;
+      font-weight: 850;
+    }
+
+    .empty {
+      padding: 42px 15px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .exam-list {
+      display: grid;
+      gap: 13px;
+    }
+
+    .exam-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+      padding: 17px;
+    }
+
+    .exam-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .exam-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .exam-id {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      word-break: break-all;
+    }
+
+    .status-pill {
+      white-space: nowrap;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #eaf8f2;
+      color: var(--success);
+    }
+
+    .exam-info {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+      margin: 15px 0;
+    }
+
+    .info-box {
+      background: #f8f8fc;
+      border-radius: 11px;
+      padding: 10px;
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 850;
+      word-break: break-word;
+    }
+
+    .exam-actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(25, 22, 45, .34);
+      backdrop-filter: blur(3px);
+      z-index: 1000;
+    }
+
+    .loading-overlay.show { display: grid; }
+
+    .loading-box {
+      background: white;
+      border-radius: 18px;
+      padding: 24px 28px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      font-weight: 850;
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      border: 4px solid var(--primary-soft);
+      border-top-color: var(--primary);
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      transform: translate(-50%, 25px);
+      max-width: min(520px, calc(100% - 30px));
+      padding: 13px 18px;
+      border-radius: 13px;
+      color: white;
+      background: #292735;
+      font-weight: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s ease;
+      z-index: 1200;
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(20, 18, 36, .46);
+      z-index: 1100;
+    }
+
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      width: min(760px, 100%);
+      max-height: 88vh;
+      overflow: auto;
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .modal-head h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #f0eff5;
+      font-size: 21px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .summary-item {
+      border-radius: 13px;
+      background: #f8f8fc;
+      padding: 13px;
+      text-align: center;
+    }
+
+    .summary-number {
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .status-table th,
+    .status-table td {
+      padding: 11px 9px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .status-table th {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 850px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .tabs { width: 100%; }
+      .tab-btn { flex: 1; }
+
+      .grid { grid-template-columns: 1fr; }
+      .row, .row.three { grid-template-columns: 1fr; }
+      .choice-grid { grid-template-columns: 1fr; }
+      .exam-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">한</div>
+        <div>
+          <h1>선생님 시험 관리</h1>
+          <p class="subtitle">단어시험을 만들고 학생별 응시 현황을 확인합니다.</p>
+        </div>
+      </div>
+
+      <nav class="tabs" aria-label="관리 메뉴">
+        <button class="tab-btn active" data-tab="createPanel">시험 만들기</button>
+        <button class="tab-btn" data-tab="listPanel">시험 목록</button>
+      </nav>
+    </header>
+
+    <section id="createPanel" class="panel active">
+      <form id="examForm">
+        <div class="grid">
+          <div>
+            <article class="card">
+              <h2 class="card-title">1. 기본 설정</h2>
+
+              <div class="field">
+                <label for="title" class="required">시험 제목</label>
+                <input id="title" type="text" maxlength="80"
+                  placeholder="예: 중2 7월 4주차 단어시험" required />
+              </div>
+
+              <div class="field">
+                <label class="required">출제 방식</label>
+                <div id="sourceTypeChoices" class="choice-grid">
+                  <label class="choice">
+                    <input type="radio" name="sourceType" value="DB" checked />
+                    <span>DB에서 출제</span>
+                  </label>
+                  <label class="choice">
+                    <input type="radio" name="sourceType" value="직접입력" />
+                    <span>직접 단어 입력</span>
+                  </label>
+                  <label class="choice">
+                    <input type="radio" name="sourceType" value="혼합" />
+                    <span>DB + 직접 입력</span>
+                  </label>
+                </div>
+              </div>
+
+              <div id="dbSection">
+                <div class="row three">
+                  <div class="field">
+                    <label for="dbName" class="required">단어 DB</label>
+                    <select id="dbName"></select>
+                  </div>
+                  <div class="field">
+                    <label for="startDay" class="required">시작 Day</label>
+                    <input id="startDay" type="number" min="1" value="1" />
+                  </div>
+                  <div class="field">
+                    <label for="endDay" class="required">마지막 Day</label>
+                    <input id="endDay" type="number" min="1" value="1" />
+                  </div>
+                </div>
+              </div>
+
+              <div id="directSection" class="hidden">
+                <div class="field">
+                  <label for="directWordsText" class="required">직접 입력 단어</label>
+                  <textarea id="directWordsText"
+                    placeholder="apple	사과
+benefit	이익
+protect	보호하다"></textarea>
+                  <div class="help">
+                    한 줄에 한 단어씩 입력하세요. 영어와 뜻은 탭, 쉼표 또는 | 기호로 구분할 수 있습니다.
+                    예문과 해석까지 넣으려면 영어 | 뜻 | 예문 | 해석 순서로 입력하세요.
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="questionCount" class="required">문제 수</label>
+                  <input id="questionCount" type="number" min="1" value="30" />
+                </div>
+                <div class="field">
+                  <label for="questionMode" class="required">문제 유형</label>
+                  <select id="questionMode"></select>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <h2 class="card-title">2. 시험 일정 및 조건</h2>
+
+              <div class="row">
+                <div class="field">
+                  <label for="startAt">시작 일시</label>
+                  <input id="startAt" type="datetime-local" />
+                </div>
+                <div class="field">
+                  <label for="deadlineAt">마감 일시</label>
+                  <input id="deadlineAt" type="datetime-local" />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="passingScore">기준 점수</label>
+                  <input id="passingScore" type="number" min="0" max="100" value="80" />
+                </div>
+                <div class="field">
+                  <label for="creator">생성자</label>
+                  <input id="creator" type="text" value="관리자" />
+                </div>
+              </div>
+
+              <div class="switches">
+                <label class="switch-item">
+                  <input id="allowRetake" type="checkbox" checked />
+                  재시험 허용
+                </label>
+                <label class="switch-item">
+                  <input id="givePoint" type="checkbox" checked />
+                  포인트 지급
+                </label>
+              </div>
+            </article>
+          </div>
+
+          <aside>
+            <article class="card">
+              <div class="section-title">
+                <span>3. 시험 대상</span>
+                <span id="selectedCount" class="count-badge">0명 선택</span>
+              </div>
+
+              <div class="field">
+                <label for="targetType">대상 선택 방식</label>
+                <select id="targetType">
+                  <option value="학생선택">학생 직접 선택</option>
+                  <option value="학년">학년 전체</option>
+                  <option value="전체">전체 학생</option>
+                </select>
+              </div>
+
+              <div id="gradeSection" class="field hidden">
+                <label for="targetGrade">대상 학년</label>
+                <select id="targetGrade"></select>
+              </div>
+
+              <div id="studentSelectSection">
+                <div class="student-toolbar">
+                  <input id="studentSearch" type="search"
+                    placeholder="학생 이름 또는 아이디 검색" />
+                  <div class="student-actions">
+                    <button type="button" id="selectAllBtn" class="small-btn">전체 선택</button>
+                    <button type="button" id="clearAllBtn" class="small-btn">해제</button>
+                  </div>
+                </div>
+                <div id="studentList" class="student-list">
+                  <div class="empty">학생 정보를 불러오는 중입니다.</div>
+                </div>
+              </div>
+
+              <button id="createBtn" class="primary-btn" type="submit">
+                시험 생성하기
+              </button>
+            </article>
+          </aside>
+        </div>
+      </form>
+    </section>
+
+    <section id="listPanel" class="panel">
+      <article class="card">
+        <div class="section-title">
+          <h2 class="card-title" style="margin:0;">생성한 시험</h2>
+          <button id="refreshExamsBtn" type="button" class="outline-btn">새로고침</button>
+        </div>
+        <div id="examList" class="exam-list">
+          <div class="empty">시험 목록을 불러오는 중입니다.</div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <div id="loadingText">처리 중입니다.</div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="statusModal" class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>학생 응시 현황</h2>
+        <button id="closeModalBtn" class="close-btn" type="button">×</button>
+      </div>
+
+      <div id="statusSummary" class="summary-grid"></div>
+
+      <div style="overflow:auto;">
+        <table class="status-table">
+          <thead>
+            <tr>
+              <th>학생</th>
+              <th>학년</th>
+              <th>상태</th>
+              <th>응시 회차</th>
+              <th>최고점</th>
+              <th>확인</th>
+            </tr>
+          </thead>
+          <tbody id="statusTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL =
+      'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
+
+    let setupData = {
+      dbSheets: [],
+      students: [],
+      questionModes: []
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      bindEvents();
+      setDefaultDates();
+
+      try {
+        setLoading(true, '기본 정보를 불러오는 중입니다.');
+        const result = await apiCall('teacherGetSetupData');
+        setupData = result;
+        renderSetupData();
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function bindEvents() {
+      $$('.tab-btn').forEach((button) => {
+        button.addEventListener('click', () => openTab(button.dataset.tab));
+      });
+
+      $$('input[name="sourceType"]').forEach((radio) => {
+        radio.addEventListener('change', updateSourceSections);
+      });
+
+      $('#targetType').addEventListener('change', updateTargetSections);
+      $('#targetGrade').addEventListener('change', updateSelectedCount);
+      $('#studentSearch').addEventListener('input', renderStudents);
+      $('#selectAllBtn').addEventListener('click', selectAllVisibleStudents);
+      $('#clearAllBtn').addEventListener('click', clearAllStudents);
+      $('#examForm').addEventListener('submit', createExam);
+      $('#refreshExamsBtn').addEventListener('click', loadExamList);
+      $('#closeModalBtn').addEventListener('click', closeStatusModal);
+
+      $('#statusModal').addEventListener('click', (event) => {
+        if (event.target.id === 'statusModal') closeStatusModal();
+      });
+    }
+
+    async function apiCall(functionName, ...args) {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'call',
+          functionName,
+          args
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('서버 연결에 실패했습니다. HTTP ' + response.status);
+      }
+
+      const text = await response.text();
+      let envelope;
+
+      try {
+        envelope = JSON.parse(text);
+      } catch (error) {
+        throw new Error('서버 응답을 읽을 수 없습니다.');
+      }
+
+      if (!envelope.success) {
+        throw new Error(envelope.message || '서버 요청에 실패했습니다.');
+      }
+
+      const result = envelope.result;
+
+      if (result && result.success === false) {
+        throw new Error(result.message || '요청 처리에 실패했습니다.');
+      }
+
+      return result;
+    }
+
+    function renderSetupData() {
+      $('#dbName').innerHTML = setupData.dbSheets
+        .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+        .join('');
+
+      $('#questionMode').innerHTML = setupData.questionModes
+        .map((mode) =>
+          `<option value="${escapeHtml(mode.value)}">${escapeHtml(mode.label)}</option>`)
+        .join('');
+
+      const grades = [...new Set(
+        setupData.students.map((student) => student.grade).filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b, 'ko', { numeric: true }));
+
+      $('#targetGrade').innerHTML = grades.length
+        ? grades.map((grade) =>
+            `<option value="${escapeHtml(grade)}">${escapeHtml(grade)}</option>`)
+          .join('')
+        : '<option value="">학년 정보 없음</option>';
+
+      renderStudents();
+      updateSourceSections();
+      updateTargetSections();
+    }
+
+    function renderStudents() {
+      const keyword = $('#studentSearch').value.trim().toLowerCase();
+
+      const filtered = setupData.students.filter((student) => {
+        const searchable =
+          `${student.studentName} ${student.studentId} ${student.grade}`.toLowerCase();
+        return !keyword || searchable.includes(keyword);
+      });
+
+      if (!filtered.length) {
+        $('#studentList').innerHTML =
+          '<div class="empty">조건에 맞는 학생이 없습니다.</div>';
+        updateSelectedCount();
+        return;
+      }
+
+      const previouslySelected = new Set(
+        $$('.student-check:checked').map((input) => input.value)
+      );
+
+      $('#studentList').innerHTML = filtered.map((student) => `
+        <label class="student-item">
+          <input
+            class="student-check"
+            type="checkbox"
+            value="${escapeHtml(student.studentId)}"
+            ${previouslySelected.has(student.studentId) ? 'checked' : ''}
+          />
+          <div class="student-meta">
+            <div class="student-name">${escapeHtml(student.studentName)}</div>
+            <div class="student-sub">
+              ${escapeHtml(student.grade || '학년 미입력')} ·
+              ${escapeHtml(student.studentId)}
+            </div>
+          </div>
+        </label>
+      `).join('');
+
+      $$('.student-check').forEach((checkbox) => {
+        checkbox.addEventListener('change', updateSelectedCount);
+      });
+
+      updateSelectedCount();
+    }
+
+    function updateSourceSections() {
+      const sourceType =
+        $('input[name="sourceType"]:checked')?.value || 'DB';
+
+      const useDb = sourceType === 'DB' || sourceType === '혼합';
+      const useDirect = sourceType === '직접입력' || sourceType === '혼합';
+
+      $('#dbSection').classList.toggle('hidden', !useDb);
+      $('#directSection').classList.toggle('hidden', !useDirect);
+    }
+
+    function updateTargetSections() {
+      const targetType = $('#targetType').value;
+
+      $('#gradeSection').classList.toggle('hidden', targetType !== '학년');
+      $('#studentSelectSection').classList.toggle(
+        'hidden',
+        targetType !== '학생선택'
+      );
+
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const targetType = $('#targetType').value;
+      let count = 0;
+
+      if (targetType === '전체') {
+        count = setupData.students.length;
+      } else if (targetType === '학년') {
+        const grade = $('#targetGrade').value;
+        count = setupData.students.filter(
+          (student) => String(student.grade) === String(grade)
+        ).length;
+      } else {
+        count = $$('.student-check:checked').length;
+      }
+
+      $('#selectedCount').textContent = `${count}명 선택`;
+    }
+
+    function selectAllVisibleStudents() {
+      $$('.student-check').forEach((checkbox) => {
+        checkbox.checked = true;
+      });
+      updateSelectedCount();
+    }
+
+    function clearAllStudents() {
+      $$('.student-check').forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      updateSelectedCount();
+    }
+
+    function getPayload() {
+      const sourceType =
+        $('input[name="sourceType"]:checked')?.value || 'DB';
+      const targetType = $('#targetType').value;
+
+      return {
+        title: $('#title').value.trim(),
+        sourceType,
+        dbName:
+          sourceType === '직접입력'
+            ? ''
+            : $('#dbName').value,
+        startDay:
+          sourceType === '직접입력'
+            ? ''
+            : Number($('#startDay').value),
+        endDay:
+          sourceType === '직접입력'
+            ? ''
+            : Number($('#endDay').value),
+        directWordsText:
+          sourceType === 'DB'
+            ? ''
+            : $('#directWordsText').value.trim(),
+        questionCount: Number($('#questionCount').value),
+        questionMode: $('#questionMode').value,
+        targetType,
+        targetGrade:
+          targetType === '학년'
+            ? $('#targetGrade').value
+            : '',
+        targetStudentIds:
+          targetType === '학생선택'
+            ? $$('.student-check:checked').map((input) => input.value)
+            : [],
+        startAt: $('#startAt').value,
+        deadlineAt: $('#deadlineAt').value,
+        passingScore: Number($('#passingScore').value),
+        allowRetake: $('#allowRetake').checked,
+        givePoint: $('#givePoint').checked,
+        creator: $('#creator').value.trim() || '관리자'
+      };
+    }
+
+    function validatePayload(payload) {
+      if (!payload.title) {
+        throw new Error('시험 제목을 입력해 주세요.');
+      }
+
+      if (
+        (payload.sourceType === 'DB' || payload.sourceType === '혼합') &&
+        (!payload.dbName || !payload.startDay || !payload.endDay)
+      ) {
+        throw new Error('DB와 Day 범위를 확인해 주세요.');
+      }
+
+      if (
+        payload.startDay &&
+        payload.endDay &&
+        Number(payload.startDay) > Number(payload.endDay)
+      ) {
+        throw new Error('시작 Day는 마지막 Day보다 클 수 없습니다.');
+      }
+
+      if (
+        (payload.sourceType === '직접입력' || payload.sourceType === '혼합') &&
+        !payload.directWordsText
+      ) {
+        throw new Error('직접 입력 단어를 입력해 주세요.');
+      }
+
+      if (!payload.questionCount || payload.questionCount < 1) {
+        throw new Error('문제 수를 1개 이상 입력해 주세요.');
+      }
+
+      if (
+        payload.targetType === '학생선택' &&
+        payload.targetStudentIds.length === 0
+      ) {
+        throw new Error('시험 대상 학생을 선택해 주세요.');
+      }
+
+      if (payload.targetType === '학년' && !payload.targetGrade) {
+        throw new Error('대상 학년을 선택해 주세요.');
+      }
+
+      if (
+        payload.startAt &&
+        payload.deadlineAt &&
+        new Date(payload.startAt) >= new Date(payload.deadlineAt)
+      ) {
+        throw new Error('마감 일시는 시작 일시보다 뒤여야 합니다.');
+      }
+    }
+
+    async function createExam(event) {
+      event.preventDefault();
+
+      try {
+        const payload = getPayload();
+        validatePayload(payload);
+
+        const ok = window.confirm(
+          `${payload.title}\n\n선택한 내용으로 시험을 생성할까요?`
+        );
+        if (!ok) return;
+
+        setLoading(true, '시험을 생성하는 중입니다.');
+        $('#createBtn').disabled = true;
+
+        const result = await apiCall('teacherCreateExam', payload);
+
+        showToast(
+          `${result.message} 대상 ${result.targetCount}명, 문제 ${result.questionCount}개`,
+          'success'
+        );
+
+        resetFormAfterCreate();
+        await loadExamList();
+        openTab('listPanel');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        $('#createBtn').disabled = false;
+        setLoading(false);
+      }
+    }
+
+    function resetFormAfterCreate() {
+      $('#title').value = '';
+      $('#directWordsText').value = '';
+      clearAllStudents();
+    }
+
+    async function loadExamList() {
+      try {
+        setLoading(true, '시험 목록을 불러오는 중입니다.');
+        const result = await apiCall('teacherListExams');
+        renderExamList(result.exams || []);
+      } catch (error) {
+        $('#examList').innerHTML =
+          `<div class="empty">${escapeHtml(error.message)}</div>`;
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderExamList(exams) {
+      if (!exams.length) {
+        $('#examList').innerHTML =
+          '<div class="empty">아직 생성된 시험이 없습니다.</div>';
+        return;
+      }
+
+      $('#examList').innerHTML = exams.map((exam) => {
+        const examId = String(exam['시험ID'] || '');
+        const title = String(exam['시험제목'] || '제목 없음');
+
+        return `
+          <article class="exam-card">
+            <div class="exam-head">
+              <div>
+                <h3 class="exam-title">${escapeHtml(title)}</h3>
+                <div class="exam-id">${escapeHtml(examId)}</div>
+              </div>
+              <span class="status-pill">${escapeHtml(exam['상태'] || '공개')}</span>
+            </div>
+
+            <div class="exam-info">
+              <div class="info-box">
+                <div class="info-label">출제 방식</div>
+                <div class="info-value">${escapeHtml(exam['출제방식'] || '-')}</div>
+              </div>
+              <div class="info-box">
+                <div class="info-label">문제 수</div>
+                <div class="info-value">${escapeHtml(exam['문제수'] || 0)}개</div>
+              </div>
+              <div class="info-box">
+                <div class="info-label">기준 점수</div>
+                <div class="info-value">${escapeHtml(exam['기준점수'] || 80)}점</div>
+              </div>
+              <div class="info-box">
+                <div class="info-label">마감</div>
+                <div class="info-value">${escapeHtml(formatDate(exam['마감일시']))}</div>
+              </div>
+            </div>
+
+            <div class="exam-actions">
+              <button
+                type="button"
+                class="outline-btn status-btn"
+                data-exam-id="${escapeHtml(examId)}"
+              >응시 현황</button>
+              <button
+                type="button"
+                class="danger-btn reminder-btn"
+                data-exam-id="${escapeHtml(examId)}"
+              >미완료 알림</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      $$('.status-btn').forEach((button) => {
+        button.addEventListener('click', () =>
+          showExamStatus(button.dataset.examId)
+        );
+      });
+
+      $$('.reminder-btn').forEach((button) => {
+        button.addEventListener('click', () =>
+          sendReminder(button.dataset.examId)
+        );
+      });
+    }
+
+    async function showExamStatus(examId) {
+      try {
+        setLoading(true, '응시 현황을 불러오는 중입니다.');
+        const result = await apiCall('teacherGetExamStatus', examId);
+        renderStatusModal(result);
+        $('#statusModal').classList.add('show');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderStatusModal(result) {
+      const summaries = [
+        ['전체', result.totalCount || 0],
+        ['완료', result.completedCount || 0],
+        ['시험 중', result.inProgressCount || 0],
+        ['미응시', result.notStartedCount || 0]
+      ];
+
+      $('#statusSummary').innerHTML = summaries.map(([label, value]) => `
+        <div class="summary-item">
+          <div class="summary-number">${escapeHtml(value)}</div>
+          <div class="summary-label">${escapeHtml(label)}</div>
+        </div>
+      `).join('');
+
+      const students = result.students || [];
+
+      $('#statusTableBody').innerHTML = students.length
+        ? students.map((student) => `
+            <tr>
+              <td>${escapeHtml(student['학생이름'] || '-')}</td>
+              <td>${escapeHtml(student['학년'] || '-')}</td>
+              <td>${escapeHtml(student['응시상태'] || '미응시')}</td>
+              <td>${escapeHtml(student['응시회차'] || 0)}</td>
+              <td>${escapeHtml(student['최고점'] === '' ? '-' : student['최고점'])}</td>
+              <td>${student['선생님확인'] === true ? '확인' : '-'}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="6" style="text-align:center;color:#77778a;">대상 학생이 없습니다.</td></tr>';
+    }
+
+    async function sendReminder(examId) {
+      const ok = window.confirm(
+        '완료하지 않은 학생에게 앱 내부 알림을 다시 보낼까요?'
+      );
+      if (!ok) return;
+
+      try {
+        setLoading(true, '알림을 생성하는 중입니다.');
+        const result = await apiCall('teacherSendReminder', examId);
+        showToast(result.message, 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function openTab(panelId) {
+      $$('.tab-btn').forEach((button) => {
+        button.classList.toggle('active', button.dataset.tab === panelId);
+      });
+
+      $$('.panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.id === panelId);
+      });
+
+      if (panelId === 'listPanel') {
+        loadExamList();
+      }
+    }
+
+    function closeStatusModal() {
+      $('#statusModal').classList.remove('show');
+    }
+
+    function setDefaultDates() {
+      const now = new Date();
+      const deadline = new Date(now);
+      deadline.setDate(deadline.getDate() + 1);
+      deadline.setHours(22, 0, 0, 0);
+
+      $('#startAt').value = toLocalInputValue(now);
+      $('#deadlineAt').value = toLocalInputValue(deadline);
+    }
+
+    function toLocalInputValue(date) {
+      const pad = (value) => String(value).padStart(2, '0');
+
+      return [
+        date.getFullYear(),
+        '-',
+        pad(date.getMonth() + 1),
+        '-',
+        pad(date.getDate()),
+        'T',
+        pad(date.getHours()),
+        ':',
+        pad(date.getMinutes())
+      ].join('');
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+
+      return new Intl.DateTimeFormat('ko-KR', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    }
+
+    function setLoading(show, text = '처리 중입니다.') {
+      $('#loadingText').textContent = text;
+      $('#loadingOverlay').classList.toggle('show', show);
+    }
+
+    let toastTimer;
+
+    function showToast(message, type = '') {
+      clearTimeout(toastTimer);
+
+      const toast = $('#toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3300);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+  </script>
+</body>
+</html>
