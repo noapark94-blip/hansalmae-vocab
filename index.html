@@ -177,6 +177,45 @@
     }
 
 
+    /* 선생님 로그인 화면 */
+
+    .teacher-login-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 26px 0 6px;
+      color: #a08a96;
+      font-size: 14px;
+    }
+
+    .teacher-login-divider::before,
+    .teacher-login-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #ead7e1;
+    }
+
+    .teacher-login-button {
+      background: linear-gradient(180deg, #fff8fb, #f5e6ee);
+      color: #7d1655;
+      border: 1px solid #ebc7d9;
+      box-shadow: none;
+    }
+
+    .teacher-login-button:hover {
+      background: #f1dce7;
+      color: #4d1237;
+      box-shadow: none;
+    }
+
+    .teacher-code-input {
+      text-align: center;
+      letter-spacing: 12px;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
     /* 회원가입 화면 */
 
     .login-divider {
@@ -2355,6 +2394,70 @@
         선생님에게 안내받은 학생가입코드가 필요합니다.
       </div>
 
+      <div class="teacher-login-divider">
+        선생님이신가요?
+      </div>
+
+      <button
+        class="teacher-login-button"
+        type="button"
+        onclick="showTeacherLoginScreen()"
+      >
+        선생님 로그인
+      </button>
+
+    </div>
+
+
+    <!-- 선생님 로그인 화면 -->
+    <div
+      id="teacherLoginScreen"
+      class="card signup-card hidden"
+    >
+      <img class="brand-mark" src="./icon-512.png" alt="한살매 로고">
+
+      <h1>선생님 로그인</h1>
+
+      <div class="subtitle">
+        관리자 코드 4자리를 입력하세요.
+      </div>
+
+      <label for="teacherAdminCode">
+        관리자 코드
+      </label>
+
+      <input
+        type="password"
+        id="teacherAdminCode"
+        class="teacher-code-input"
+        inputmode="numeric"
+        maxlength="4"
+        autocomplete="one-time-code"
+        placeholder="••••"
+        oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
+        onkeydown="handleTeacherLoginEnter(event)"
+      >
+
+      <button
+        id="teacherLoginButton"
+        type="button"
+        onclick="submitTeacherLogin()"
+      >
+        관리 화면 들어가기
+      </button>
+
+      <div
+        id="teacherLoginMessage"
+        class="loading"
+      ></div>
+
+      <button
+        class="secondary-button"
+        type="button"
+        onclick="showLoginScreen()"
+      >
+        돌아가기
+      </button>
     </div>
 
 
@@ -3575,6 +3678,72 @@
     let signupCheckedId = '';
 
 
+    function showTeacherLoginScreen() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('signupScreen').classList.add('hidden');
+      document.getElementById('teacherLoginScreen').classList.remove('hidden');
+
+      document.getElementById('loginMessage').textContent = '';
+      document.getElementById('teacherLoginMessage').textContent = '';
+      document.getElementById('teacherAdminCode').value = '';
+
+      window.setTimeout(function () {
+        document.getElementById('teacherAdminCode').focus();
+      }, 50);
+
+      window.scrollTo(0, 0);
+    }
+
+
+    function handleTeacherLoginEnter(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submitTeacherLogin();
+      }
+    }
+
+
+    function submitTeacherLogin() {
+      const codeInput = document.getElementById('teacherAdminCode');
+      const button = document.getElementById('teacherLoginButton');
+      const message = document.getElementById('teacherLoginMessage');
+      const code = String(codeInput.value || '').trim();
+
+      if (!/^\d{4}$/.test(code)) {
+        message.textContent = '관리자 코드 4자리를 입력해주세요.';
+        codeInput.focus();
+        return;
+      }
+
+      button.disabled = true;
+      message.textContent = '관리자 코드를 확인하는 중입니다.';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          button.disabled = false;
+
+          if (result !== true) {
+            message.textContent = '관리자 코드가 올바르지 않습니다.';
+            codeInput.value = '';
+            codeInput.focus();
+            return;
+          }
+
+          message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
+          sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
+          window.location.href = './teacher.html';
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
+          message.textContent =
+            error && error.message
+              ? error.message
+              : '관리자 코드를 확인하지 못했습니다.';
+        })
+        .checkAdminCode(code);
+    }
+
+
     function showSignupScreen() {
       document
         .getElementById('loginScreen')
@@ -3599,24 +3768,21 @@
 
 
     function showLoginScreen() {
-      document
-        .getElementById('signupScreen')
-        .classList
-        .add('hidden');
+      document.getElementById('signupScreen').classList.add('hidden');
+      document.getElementById('teacherLoginScreen').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
 
-      document
-        .getElementById('loginScreen')
-        .classList
-        .remove('hidden');
+      const signupMessage = document.getElementById('signupMessage');
+      if (signupMessage) {
+        signupMessage.textContent = '';
+      }
 
-      document
-        .getElementById('signupMessage')
-        .textContent = '';
+      const teacherMessage = document.getElementById('teacherLoginMessage');
+      if (teacherMessage) {
+        teacherMessage.textContent = '';
+      }
 
-      document
-        .getElementById('studentId')
-        .focus();
-
+      document.getElementById('studentId').focus();
       window.scrollTo(0, 0);
     }
 
@@ -7448,25 +7614,39 @@ google.script.run
       }
     }
 
+    function removeAppSplash() {
+      const splash = document.getElementById('appSplash');
+      if (!splash || splash.dataset.closing === 'true') return;
+
+      splash.dataset.closing = 'true';
+      splash.classList.add('splash-hidden');
+
+      window.setTimeout(function () {
+        if (splash.parentNode) {
+          splash.parentNode.removeChild(splash);
+        }
+      }, 400);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        window.setTimeout(removeAppSplash, 350);
+      }, { once: true });
+    } else {
+      window.setTimeout(removeAppSplash, 350);
+    }
+
+    window.setTimeout(removeAppSplash, 1800);
+
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js')
+          .register('./service-worker.js?v=10')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
       }
-
-      const splash = document.getElementById('appSplash');
-      if (splash) {
-        window.setTimeout(function () {
-          splash.classList.add('splash-hidden');
-          window.setTimeout(function () {
-            splash.remove();
-          }, 400);
-        }, 850);
-      }
-    });
+    }, { once: true });
 
   </script>
 </body>
