@@ -2031,8 +2031,10 @@
       }
 
       .topbar {
-        top: 6px;
+        position: static;
+        top: auto;
         border-radius: 18px;
+        margin-bottom: 14px;
       }
 
       .topbar-title {
@@ -2040,11 +2042,31 @@
       }
 
       .topbar-menu {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 3px 2px 7px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .topbar-menu::-webkit-scrollbar {
+        display: none;
+      }
+
+      .topbar-menu button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: max-content;
+        padding: 10px 14px;
+        margin: 0;
+        font-size: 14px;
+        scroll-snap-align: start;
       }
 
       .topbar-menu .logout-button {
-        grid-column: 1 / -1;
+        grid-column: auto;
       }
 
       .question {
