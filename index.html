@@ -1552,6 +1552,447 @@
       color: #c43f62;
     }
 
+
+
+    /* =========================================================
+       한살매 프리미엄 앱 UI
+       로고 컬러 기반 · iOS 카드 스타일 · 모바일 최적화
+       ========================================================= */
+    :root {
+      --hsm-900: #4d1237;
+      --hsm-800: #651446;
+      --hsm-700: #7d1655;
+      --hsm-600: #941a65;
+      --hsm-500: #ac347b;
+      --hsm-300: #d998ba;
+      --hsm-200: #ebc7d9;
+      --hsm-100: #f7e9f0;
+      --hsm-050: #fff8fb;
+      --ink-900: #251b22;
+      --ink-700: #57444f;
+      --ink-500: #806c77;
+      --line: #ead6e1;
+      --gold: #d39b34;
+      --success: #2f9c67;
+      --danger: #d54f72;
+      --shadow-sm: 0 8px 20px rgba(79, 18, 55, 0.08);
+      --shadow-md: 0 18px 45px rgba(79, 18, 55, 0.13);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 15px;
+    }
+
+    html {
+      background: #f7eef3;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(216, 151, 186, 0.28), transparent 34%),
+        radial-gradient(circle at 92% 8%, rgba(172, 52, 123, 0.12), transparent 30%),
+        linear-gradient(180deg, #fffafd 0%, #f7eef3 50%, #f2e8ee 100%);
+      color: var(--ink-900);
+      font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 980px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 26, 101, 0.09);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(18px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--hsm-800), var(--hsm-500), var(--hsm-300));
+      opacity: 0.95;
+    }
+
+    .login-card,
+    .signup-card {
+      max-width: 600px;
+      margin-top: 44px;
+      padding-top: 32px;
+    }
+
+    .brand-mark {
+      display: block;
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 18px;
+      border-radius: 24px;
+      box-shadow: 0 14px 30px rgba(79, 18, 55, 0.18);
+    }
+
+    h1 {
+      color: var(--hsm-800);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+    }
+
+    h2 {
+      color: var(--hsm-900);
+      font-size: 28px;
+      font-weight: 850;
+      letter-spacing: -0.7px;
+    }
+
+    .subtitle {
+      color: var(--ink-500);
+      font-weight: 500;
+    }
+
+    label {
+      color: var(--ink-900);
+      font-weight: 800;
+    }
+
+    input,
+    select {
+      min-height: 56px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fffdfE;
+      color: var(--ink-900);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+      transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    input:hover,
+    select:hover {
+      border-color: var(--hsm-300);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--hsm-600);
+      box-shadow: 0 0 0 4px rgba(148, 26, 101, 0.12);
+    }
+
+    input[readonly] {
+      background: #f8f1f5;
+      color: var(--ink-700);
+    }
+
+    button {
+      min-height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--hsm-800), var(--hsm-500));
+      box-shadow: 0 10px 22px rgba(125, 22, 85, 0.22);
+      transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: linear-gradient(135deg, var(--hsm-900), var(--hsm-600));
+      box-shadow: 0 13px 26px rgba(125, 22, 85, 0.27);
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.995);
+    }
+
+    .secondary-button,
+    .menu-button,
+    .ranking-tab,
+    .wrong-note-filter button {
+      background: linear-gradient(180deg, #fff8fb, #f5e6ee);
+      color: var(--hsm-700);
+      border: 1px solid var(--hsm-200);
+      box-shadow: none;
+    }
+
+    .secondary-button:hover,
+    .menu-button:hover,
+    .ranking-tab:hover,
+    .wrong-note-filter button:hover {
+      background: #f1dce7;
+      color: var(--hsm-900);
+      box-shadow: none;
+    }
+
+    .menu-button.active,
+    .ranking-tab.active,
+    .wrong-note-filter button.active {
+      background: linear-gradient(135deg, var(--hsm-800), var(--hsm-500));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(125, 22, 85, 0.20);
+    }
+
+    .logout-button,
+    .danger-button {
+      background: linear-gradient(135deg, #7b6470, #5f4754);
+      box-shadow: 0 8px 18px rgba(62, 42, 52, 0.16);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      border: 1px solid rgba(148, 26, 101, 0.10);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--hsm-800);
+      font-weight: 900;
+    }
+
+    .topbar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      box-shadow: 0 7px 15px rgba(79, 18, 55, 0.14);
+    }
+
+    .progress-wrap {
+      height: 12px;
+      background: #eddde5;
+      box-shadow: inset 0 2px 5px rgba(79, 18, 55, 0.06);
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, var(--hsm-800), var(--hsm-500), #d36ca4);
+      box-shadow: 0 0 16px rgba(172, 52, 123, 0.35);
+    }
+
+    .question-type {
+      border: 1px solid var(--hsm-200);
+      background: linear-gradient(180deg, #fff7fb, #f4e4ec);
+      color: var(--hsm-700);
+    }
+
+    .question {
+      color: var(--ink-900);
+      letter-spacing: -0.4px;
+    }
+
+    .choice {
+      border: 1.5px solid var(--line);
+      border-radius: 17px;
+      box-shadow: 0 5px 14px rgba(79, 18, 55, 0.05);
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .choice:hover {
+      transform: translateY(-1px);
+      border-color: var(--hsm-500);
+      background: var(--hsm-050);
+    }
+
+    .choice.correct {
+      border-color: var(--success);
+      background: #eaf8f1;
+    }
+
+    .choice.wrong {
+      border-color: var(--danger);
+      background: #fff0f4;
+    }
+
+    .result-score {
+      color: var(--hsm-700);
+      text-shadow: 0 8px 20px rgba(125, 22, 85, 0.14);
+    }
+
+    .my-summary-card,
+    .learning-shortcut,
+    .history-item,
+    .word-card,
+    .wrong-note-item,
+    .personal-item,
+    .ranking-item {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #fffafd);
+      box-shadow: 0 7px 18px rgba(79, 18, 55, 0.055);
+    }
+
+    .my-summary-card {
+      background: linear-gradient(145deg, #fffafd, #f9eaf2);
+    }
+
+    .my-summary-value,
+    .word-English,
+    .wrong-note-word,
+    .personal-word,
+    .shortcut-title,
+    .history-date {
+      color: var(--hsm-700);
+    }
+
+    .learning-shortcut {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .learning-shortcut::after {
+      content: "›";
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--hsm-300);
+      font-size: 34px;
+      font-weight: 300;
+    }
+
+    .learning-shortcut:hover {
+      border-color: var(--hsm-400, #c95b98);
+      background: #fff7fb;
+    }
+
+    .filter-check,
+    .wrong-test-guide,
+    .ranking-rule,
+    .empty-message {
+      border: 1px solid #eddce5;
+      background: linear-gradient(180deg, #fffafd, #f9eff4);
+    }
+
+    .ranking-item.top-three {
+      border-color: #e3c681;
+      background: linear-gradient(145deg, #fffdf6, #fff8e8);
+    }
+
+    .ranking-medal {
+      filter: drop-shadow(0 5px 8px rgba(157, 105, 20, 0.14));
+    }
+
+    .ranking-point,
+    .history-point,
+    .shortcut-count,
+    .wrong-note-meta {
+      color: var(--gold);
+    }
+
+    .word-card.checked {
+      border-color: var(--hsm-300);
+      background: linear-gradient(180deg, #fffafd, #fff2f8);
+    }
+
+    .word-save-button {
+      background: linear-gradient(180deg, #fff6dc, #f9e5ae);
+      color: #8b620e;
+      border: 1px solid #efd38e;
+      box-shadow: none;
+    }
+
+    .smart-review-reason {
+      background: #f3dce8;
+      color: var(--hsm-700);
+    }
+
+    #installAppButton {
+      background: linear-gradient(180deg, #fff5fa, #f3dce8);
+      color: var(--hsm-700);
+      border: 1px solid var(--hsm-200);
+      box-shadow: none;
+    }
+
+    #installAppButton:hover {
+      background: #efd4e2;
+    }
+
+    .login-divider {
+      color: #a18a96;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      background: #ead7e1;
+    }
+
+    #appSplash {
+      background:
+        radial-gradient(circle at top, rgba(222, 163, 195, 0.35), transparent 36%),
+        linear-gradient(180deg, #fffafd 0%, #f3e5ec 100%);
+    }
+
+    .splash-logo {
+      border-radius: 28px;
+      box-shadow: 0 18px 42px rgba(79, 18, 55, 0.20);
+    }
+
+    .splash-title {
+      color: var(--hsm-900);
+      font-weight: 900;
+    }
+
+    .splash-loading {
+      border-color: rgba(148, 26, 101, 0.16);
+      border-top-color: var(--hsm-600);
+    }
+
+    @media (max-width: 650px) {
+      body {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 28px 18px;
+        border-radius: 24px;
+      }
+
+      .login-card,
+      .signup-card {
+        margin-top: 16px;
+      }
+
+      .brand-mark {
+        width: 82px;
+        height: 82px;
+        border-radius: 22px;
+      }
+
+      h1 {
+        font-size: 31px;
+      }
+
+      .topbar {
+        top: 6px;
+        border-radius: 18px;
+      }
+
+      .topbar-title {
+        justify-content: center;
+      }
+
+      .topbar-menu {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar-menu .logout-button {
+        grid-column: 1 / -1;
+      }
+
+      .question {
+        font-size: 24px;
+      }
+
+      .learning-shortcut::after {
+        right: 14px;
+      }
+    }
+
   </style>
 
 
@@ -1695,6 +2136,8 @@
       id="loginScreen"
       class="card login-card"
     >
+      <img class="brand-mark" src="./icon-512.png" alt="한살매 로고">
+
       <h1>한살매 단어 학습</h1>
 
       <div class="subtitle">
@@ -1771,6 +2214,8 @@
       id="signupScreen"
       class="card signup-card hidden"
     >
+      <img class="brand-mark" src="./icon-512.png" alt="한살매 로고">
+
       <h1>학생 회원가입</h1>
 
       <div class="subtitle">
@@ -1898,7 +2343,8 @@
 
       <div class="topbar">
         <div class="topbar-title">
-          한살매 단어 학습
+          <img class="topbar-logo" src="./icon-192.png" alt="한살매 로고">
+          <span>한살매 단어 학습</span>
           <span
             id="loggedInStudent"
             style="display:block; margin-top:4px; color:#666; font-size:14px; font-weight:normal;"
@@ -6877,4 +7323,5 @@ google.script.run
 
 </body>
 </html>
-<!-- GitHub Pages rebuild: PWA splash/install -->
+
+<!-- HSM premium UI v1 -->
