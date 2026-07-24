@@ -3703,7 +3703,58 @@
     }
 
 
-    function submitTeacherLogin() {
+    const TEACHER_AUTH_URL =
+      'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
+
+
+    function verifyTeacherCodeViaJsonp(code) {
+      return new Promise(function (resolve, reject) {
+        const callbackName =
+          '__hsmTeacherAuth_' + Date.now() + '_' +
+          Math.random().toString(36).slice(2);
+
+        const script = document.createElement('script');
+        const timeoutId = window.setTimeout(function () {
+          cleanup();
+          reject(new Error('서버 응답 시간이 초과되었습니다.'));
+        }, 12000);
+
+        function cleanup() {
+          window.clearTimeout(timeoutId);
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+          try {
+            delete window[callbackName];
+          } catch (error) {
+            window[callbackName] = undefined;
+          }
+        }
+
+        window[callbackName] = function (result) {
+          cleanup();
+          resolve(result || {});
+        };
+
+        script.onerror = function () {
+          cleanup();
+          reject(new Error('관리자 확인 서버에 연결하지 못했습니다.'));
+        };
+
+        const params = new URLSearchParams({
+          action: 'checkAdminCode',
+          code: code,
+          callback: callbackName,
+          t: String(Date.now())
+        });
+
+        script.src = TEACHER_AUTH_URL + '?' + params.toString();
+        document.head.appendChild(script);
+      });
+    }
+
+
+    async function submitTeacherLogin() {
       const codeInput = document.getElementById('teacherAdminCode');
       const button = document.getElementById('teacherLoginButton');
       const message = document.getElementById('teacherLoginMessage');
@@ -3718,29 +3769,28 @@
       button.disabled = true;
       message.textContent = '관리자 코드를 확인하는 중입니다.';
 
-      google.script.run
-        .withSuccessHandler(function (result) {
-          button.disabled = false;
+      try {
+        const result = await verifyTeacherCodeViaJsonp(code);
 
-          if (result !== true) {
-            message.textContent = '관리자 코드가 올바르지 않습니다.';
-            codeInput.value = '';
-            codeInput.focus();
-            return;
-          }
-
-          message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
-          sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
-          window.location.href = './teacher.html';
-        })
-        .withFailureHandler(function (error) {
-          button.disabled = false;
+        if (!result.success) {
           message.textContent =
-            error && error.message
-              ? error.message
-              : '관리자 코드를 확인하지 못했습니다.';
-        })
-        .checkAdminCode(code);
+            result.message || '관리자 코드가 올바르지 않습니다.';
+          codeInput.value = '';
+          codeInput.focus();
+          return;
+        }
+
+        message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
+        sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
+        window.location.href = './teacher.html';
+      } catch (error) {
+        message.textContent =
+          error && error.message
+            ? error.message
+            : '관리자 코드를 확인하지 못했습니다.';
+      } finally {
+        button.disabled = false;
+      }
     }
 
 
