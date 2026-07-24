@@ -3759,53 +3759,22 @@
     }
 
 
-    const TEACHER_AUTH_URL =
-      'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
-
-
-    function verifyTeacherCodeViaJsonp(code) {
+    function verifyTeacherCode(code) {
       return new Promise(function (resolve, reject) {
-        const callbackName =
-          '__hsmTeacherAuth_' + Date.now() + '_' +
-          Math.random().toString(36).slice(2);
-
-        const script = document.createElement('script');
-        const timeoutId = window.setTimeout(function () {
-          cleanup();
-          reject(new Error('서버 응답 시간이 초과되었습니다.'));
-        }, 12000);
-
-        function cleanup() {
-          window.clearTimeout(timeoutId);
-          if (script.parentNode) {
-            script.parentNode.removeChild(script);
-          }
-          try {
-            delete window[callbackName];
-          } catch (error) {
-            window[callbackName] = undefined;
-          }
-        }
-
-        window[callbackName] = function (result) {
-          cleanup();
-          resolve(result || {});
-        };
-
-        script.onerror = function () {
-          cleanup();
-          reject(new Error('관리자 확인 서버에 연결하지 못했습니다.'));
-        };
-
-        const params = new URLSearchParams({
-          action: 'checkAdminCode',
-          code: code,
-          callback: callbackName,
-          t: String(Date.now())
-        });
-
-        script.src = TEACHER_AUTH_URL + '?' + params.toString();
-        document.head.appendChild(script);
+        google.script.run
+          .withSuccessHandler(function (result) {
+            resolve(Boolean(result));
+          })
+          .withFailureHandler(function (error) {
+            reject(
+              new Error(
+                error && error.message
+                  ? error.message
+                  : '관리자 확인 서버에 연결하지 못했습니다.'
+              )
+            );
+          })
+          .checkAdminCode(code);
       });
     }
 
@@ -3826,11 +3795,11 @@
       message.textContent = '관리자 코드를 확인하는 중입니다.';
 
       try {
-        const result = await verifyTeacherCodeViaJsonp(code);
+        const isValid = await verifyTeacherCode(code);
 
-        if (!result.success) {
+        if (!isValid) {
           message.textContent =
-            result.message || '관리자 코드가 올바르지 않습니다.';
+            '관리자 코드가 올바르지 않습니다.';
           codeInput.value = '';
           codeInput.focus();
           return;
