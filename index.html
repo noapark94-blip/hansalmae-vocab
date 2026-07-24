@@ -440,6 +440,30 @@
       font-weight: normal;
     }
 
+    .test-exit-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .test-exit-button {
+      width: auto;
+      min-width: 130px;
+      margin: 0;
+      padding: 12px 18px;
+      border: 1px solid #ebc7d9;
+      background: linear-gradient(180deg, #fff8fb, #f5e6ee);
+      color: #7d1655;
+      box-shadow: none;
+      font-size: 16px;
+    }
+
+    .test-exit-button:hover {
+      background: #f1dce7;
+      color: #4d1237;
+      box-shadow: none;
+    }
+
     /* 결과 화면 */
 
     .result-score {
@@ -2783,6 +2807,16 @@
           id="feedback"
           class="feedback"
         ></div>
+
+        <div class="test-exit-row">
+          <button
+            type="button"
+            class="test-exit-button"
+            onclick="stopCurrentTest()"
+          >
+            그만보기
+          </button>
+        </div>
       </div>
 
 
@@ -3703,7 +3737,58 @@
     }
 
 
-    function submitTeacherLogin() {
+    const TEACHER_AUTH_URL =
+      'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
+
+
+    function verifyTeacherCodeViaJsonp(code) {
+      return new Promise(function (resolve, reject) {
+        const callbackName =
+          '__hsmTeacherAuth_' + Date.now() + '_' +
+          Math.random().toString(36).slice(2);
+
+        const script = document.createElement('script');
+        const timeoutId = window.setTimeout(function () {
+          cleanup();
+          reject(new Error('서버 응답 시간이 초과되었습니다.'));
+        }, 12000);
+
+        function cleanup() {
+          window.clearTimeout(timeoutId);
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+          try {
+            delete window[callbackName];
+          } catch (error) {
+            window[callbackName] = undefined;
+          }
+        }
+
+        window[callbackName] = function (result) {
+          cleanup();
+          resolve(result || {});
+        };
+
+        script.onerror = function () {
+          cleanup();
+          reject(new Error('관리자 확인 서버에 연결하지 못했습니다.'));
+        };
+
+        const params = new URLSearchParams({
+          action: 'checkAdminCode',
+          code: code,
+          callback: callbackName,
+          t: String(Date.now())
+        });
+
+        script.src = TEACHER_AUTH_URL + '?' + params.toString();
+        document.head.appendChild(script);
+      });
+    }
+
+
+    async function submitTeacherLogin() {
       const codeInput = document.getElementById('teacherAdminCode');
       const button = document.getElementById('teacherLoginButton');
       const message = document.getElementById('teacherLoginMessage');
@@ -3718,29 +3803,28 @@
       button.disabled = true;
       message.textContent = '관리자 코드를 확인하는 중입니다.';
 
-      google.script.run
-        .withSuccessHandler(function (result) {
-          button.disabled = false;
+      try {
+        const result = await verifyTeacherCodeViaJsonp(code);
 
-          if (result !== true) {
-            message.textContent = '관리자 코드가 올바르지 않습니다.';
-            codeInput.value = '';
-            codeInput.focus();
-            return;
-          }
-
-          message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
-          sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
-          window.location.href = './teacher.html';
-        })
-        .withFailureHandler(function (error) {
-          button.disabled = false;
+        if (!result.success) {
           message.textContent =
-            error && error.message
-              ? error.message
-              : '관리자 코드를 확인하지 못했습니다.';
-        })
-        .checkAdminCode(code);
+            result.message || '관리자 코드가 올바르지 않습니다.';
+          codeInput.value = '';
+          codeInput.focus();
+          return;
+        }
+
+        message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
+        sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
+        window.location.href = './teacher.html';
+      } catch (error) {
+        message.textContent =
+          error && error.message
+            ? error.message
+            : '관리자 코드를 확인하지 못했습니다.';
+      } finally {
+        button.disabled = false;
+      }
     }
 
 
@@ -4330,42 +4414,46 @@
 
     function showTestHome() {
       hideExtraStudyScreens();
-      document
-        .getElementById('wrongNotebookScreen')
-        .classList
-        .add('hidden');
 
-      document
-        .getElementById('myPageScreen')
-        .classList
-        .add('hidden');
+      [
+        'wrongNotebookScreen',
+        'myPageScreen',
+        'vocabScreen',
+        'rankingScreen',
+        'personalVocabularyScreen',
+        'personalTestSetupScreen',
+        'smartReviewScreen',
+        'wrongTestSetupScreen'
+      ].forEach(function (id) {
+        const element = document.getElementById(id);
+        if (element) {
+          element.classList.add('hidden');
+        }
+      });
 
       setActiveMenu('test');
 
-      document
-        .getElementById('vocabScreen')
-        .classList
-        .add('hidden');
+      const hasActiveTest =
+        Array.isArray(questions) &&
+        questions.length > 0 &&
+        Number.isInteger(currentIndex) &&
+        currentIndex >= 0 &&
+        currentIndex < questions.length;
 
-      document
-        .getElementById('rankingScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('testScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('resultScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('startScreen')
-        .classList
-        .remove('hidden');
+      if (hasActiveTest) {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('resultScreen').classList.add('hidden');
+        document.getElementById('testScreen').classList.remove('hidden');
+      } else if (
+        !document.getElementById('resultScreen').classList.contains('hidden')
+      ) {
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('testScreen').classList.add('hidden');
+      } else {
+        document.getElementById('testScreen').classList.add('hidden');
+        document.getElementById('resultScreen').classList.add('hidden');
+        document.getElementById('startScreen').classList.remove('hidden');
+      }
 
       window.scrollTo(0, 0);
     }
@@ -6586,6 +6674,48 @@
       });
 
       renderVocabulary();
+    }
+
+
+    function stopCurrentTest() {
+      const confirmed = window.confirm(
+        '현재 단어 테스트를 그만볼까요?\n\n' +
+        '지금까지의 진행 내용은 삭제되고 처음 화면으로 돌아갑니다.'
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      clearTestProgress();
+
+      questions = [];
+      allWords = [];
+      currentIndex = 0;
+      score = 0;
+      wrongAnswers = [];
+      answered = false;
+
+      currentTestContext = {
+        source: 'normal',
+        sheetName: '',
+        startDay: 0,
+        endDay: 0,
+        questionMode: ''
+      };
+
+      document.getElementById('choices').innerHTML = '';
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('questionNumber').textContent = '';
+      document.getElementById('scoreText').textContent = '';
+
+      document.getElementById('testScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+
+      setActiveMenu('test');
+      window.scrollTo(0, 0);
     }
 
 
