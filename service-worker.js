@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hansalmae-vocab-pwa-v9';
+const CACHE_NAME = 'hansalmae-vocab-pwa-v10';
 
 const APP_SHELL = [
   './index.html',
