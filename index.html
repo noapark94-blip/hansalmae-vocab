@@ -2142,6 +2142,73 @@
       }
     }
 
+
+    /* 선생님 배정 시험 */
+    .teacher-exam-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      margin-left: 5px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #dc4b4b;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      vertical-align: middle;
+    }
+    .teacher-exam-list { display: grid; gap: 14px; }
+    .teacher-exam-item {
+      padding: 20px;
+      border: 1px solid #e2e6ee;
+      border-radius: 16px;
+      background: #fff;
+    }
+    .teacher-exam-item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .teacher-exam-title { font-size: 20px; font-weight: bold; color: #222; }
+    .teacher-exam-status {
+      flex-shrink: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef2fb;
+      color: #285aca;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .teacher-exam-status.closed { background: #f1f2f4; color: #737b89; }
+    .teacher-exam-status.done { background: #e6f6ec; color: #248a4b; }
+    .teacher-exam-meta { margin-top: 10px; color: #666; font-size: 14px; line-height: 1.7; }
+    .teacher-exam-actions { display: flex; gap: 9px; margin-top: 15px; }
+    .teacher-exam-actions button { width: auto; margin: 0; padding: 11px 15px; font-size: 15px; }
+    .teacher-question-card {
+      margin-top: 18px;
+      padding: 22px;
+      border: 1px solid #e1e5ed;
+      border-radius: 16px;
+      background: #fff;
+    }
+    .teacher-question-number { color: #285aca; font-size: 14px; font-weight: bold; }
+    .teacher-question-prompt { margin-top: 12px; font-size: 24px; font-weight: bold; line-height: 1.55; text-align: center; }
+    .teacher-question-example { margin-top: 16px; padding: 15px; border-radius: 12px; background: #f5f7fb; line-height: 1.7; }
+    .teacher-answer-input { margin-top: 18px; }
+    .teacher-option-grid { display: grid; gap: 10px; margin-top: 18px; }
+    .teacher-option-button { margin: 0; background: #fff; color: #222; border: 2px solid #e0e4ec; text-align: left; font-weight: normal; }
+    .teacher-option-button.selected { border-color: #285aca; background: #edf2ff; color: #285aca; font-weight: bold; }
+    .teacher-exam-nav { display: flex; gap: 10px; margin-top: 18px; }
+    .teacher-exam-nav button { margin: 0; }
+    .teacher-submit-guide { margin-top: 14px; text-align: center; color: #666; font-size: 14px; }
+    .teacher-result-summary { text-align: center; font-size: 18px; line-height: 1.8; }
+    .teacher-result-detail { margin-top: 12px; padding: 15px; border-radius: 12px; background: #f5f6f9; line-height: 1.7; }
+    .teacher-result-detail.correct { background: #e8f7ed; }
+    .teacher-result-detail.wrong { background: #fdeaea; }
+
   </style>
 
 
@@ -2509,6 +2576,15 @@
             단어 테스트
           </button>
 
+
+          <button
+            id="teacherExamMenuButton"
+            class="menu-button"
+            onclick="showTeacherExamHome()"
+          >
+            선생님 시험<span id="teacherExamBadge" class="teacher-exam-badge hidden">0</span>
+          </button>
+
           <button
             id="vocabMenuButton"
             class="menu-button"
@@ -2708,6 +2784,40 @@
         <button onclick="restartTest()">
           다시 시험 보기
         </button>
+      </div>
+
+
+      <!-- 선생님이 배정한 시험 목록 -->
+      <div id="teacherExamListScreen" class="card hidden">
+        <h2>선생님 시험</h2>
+        <div class="subtitle">선생님이 배정한 시험을 확인하고 응시하세요.</div>
+        <div id="teacherExamListLoading" class="loading"></div>
+        <div id="teacherExamList" class="teacher-exam-list"></div>
+      </div>
+
+      <!-- 선생님 시험 응시 화면 -->
+      <div id="teacherExamTakeScreen" class="card hidden">
+        <div class="progress-wrap"><div id="teacherExamProgressBar" class="progress-bar"></div></div>
+        <div class="question-info">
+          <span id="teacherExamQuestionNumber"></span>
+          <span id="teacherExamAnsweredCount"></span>
+        </div>
+        <div id="teacherExamTitle" class="question-type"></div>
+        <div id="teacherExamQuestionContainer"></div>
+        <div class="teacher-exam-nav">
+          <button id="teacherExamPrevButton" class="secondary-button" onclick="moveTeacherExamQuestion(-1)">이전</button>
+          <button id="teacherExamNextButton" onclick="moveTeacherExamQuestion(1)">다음</button>
+        </div>
+        <div id="teacherExamSubmitGuide" class="teacher-submit-guide"></div>
+      </div>
+
+      <!-- 선생님 시험 결과 화면 -->
+      <div id="teacherExamResultScreen" class="card hidden">
+        <h2>선생님 시험 결과</h2>
+        <div id="teacherExamResultScore" class="result-score"></div>
+        <div id="teacherExamResultSummary" class="teacher-result-summary"></div>
+        <div id="teacherExamResultDetails" class="wrong-list"></div>
+        <button onclick="showTeacherExamHome()">시험 목록으로 돌아가기</button>
       </div>
 
 
@@ -3254,6 +3364,14 @@
     let currentStudent = null;
     let currentLoginToken = '';
 
+    let teacherExamItems = [];
+    let activeTeacherExam = null;
+    let teacherExamQuestions = [];
+    let teacherExamAnswers = {};
+    let teacherExamIndex = 0;
+    let teacherExamSubmitting = false;
+
+
 
     let wrongNotebookWords = [];
     let wrongNotebookFilter = 'active';
@@ -3437,7 +3555,10 @@
         'wrongTestSetupScreen',
         'personalVocabularyScreen',
         'personalTestSetupScreen',
-        'smartReviewScreen'
+        'smartReviewScreen',
+        'teacherExamListScreen',
+        'teacherExamTakeScreen',
+        'teacherExamResultScreen'
       ].forEach(function (id) {
         const element =
           document.getElementById(id);
@@ -3978,6 +4099,7 @@
         .remove('hidden');
 
       loadSheetNames();
+      refreshTeacherExamBadge();
 
       setTimeout(function () {
         askToResumeSavedTest();
@@ -4162,7 +4284,258 @@
     }
 
 
+    function hideTeacherExamScreens_() {
+      ['teacherExamListScreen', 'teacherExamTakeScreen', 'teacherExamResultScreen']
+        .forEach(function (id) {
+          const element = document.getElementById(id);
+          if (element) element.classList.add('hidden');
+        });
+    }
+
+    function showTeacherExamHome() {
+      hideAllTestScreens_();
+      hideTeacherExamScreens_();
+      setActiveMenu('teacherExam');
+      document.getElementById('teacherExamListScreen').classList.remove('hidden');
+      loadTeacherExams();
+      window.scrollTo(0, 0);
+    }
+
+    function refreshTeacherExamBadge() {
+      if (!currentStudent || !currentStudent.studentId) return;
+      google.script.run
+        .withSuccessHandler(function (data) {
+          const exams = data && Array.isArray(data.exams) ? data.exams : [];
+          const count = exams.filter(function (exam) { return exam.availability === '응시가능'; }).length;
+          const badge = document.getElementById('teacherExamBadge');
+          if (!badge) return;
+          badge.textContent = String(count);
+          badge.classList.toggle('hidden', count < 1);
+        })
+        .withFailureHandler(function (error) { console.error('배정 시험 확인 실패', error); })
+        .studentGetAssignedExams(currentStudent.studentId);
+    }
+
+    function loadTeacherExams() {
+      if (!currentStudent || !currentStudent.studentId) return;
+      const loading = document.getElementById('teacherExamListLoading');
+      const list = document.getElementById('teacherExamList');
+      loading.textContent = '배정된 시험을 불러오는 중입니다.';
+      list.innerHTML = '';
+      google.script.run
+        .withSuccessHandler(function (data) {
+          loading.textContent = '';
+          teacherExamItems = data && Array.isArray(data.exams) ? data.exams : [];
+          renderTeacherExamList();
+          refreshTeacherExamBadge();
+        })
+        .withFailureHandler(function (error) {
+          loading.textContent = '';
+          alert('선생님 시험을 불러오지 못했습니다.\n' + (error && error.message ? error.message : error));
+        })
+        .studentGetAssignedExams(currentStudent.studentId);
+    }
+
+    function formatTeacherExamDate_(value) {
+      if (!value) return '제한 없음';
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return String(value);
+      return date.toLocaleString('ko-KR', {year:'numeric', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    }
+
+    function renderTeacherExamList() {
+      const list = document.getElementById('teacherExamList');
+      list.innerHTML = '';
+      if (!teacherExamItems.length) {
+        list.innerHTML = '<div class="empty-message">현재 배정된 시험이 없습니다.</div>';
+        return;
+      }
+      teacherExamItems.forEach(function (exam) {
+        const item = document.createElement('div');
+        item.className = 'teacher-exam-item';
+        const canStart = exam.availability === '응시가능';
+        const statusClass = exam.availability === '완료' ? ' done' : (canStart ? '' : ' closed');
+        item.innerHTML =
+          '<div class="teacher-exam-item-top"><div class="teacher-exam-title">' + escapeHtml(exam.title || '선생님 시험') + '</div>' +
+          '<div class="teacher-exam-status' + statusClass + '">' + escapeHtml(exam.availability || exam.status || '') + '</div></div>' +
+          '<div class="teacher-exam-meta">문제 수: ' + Number(exam.questionCount || 0) + '문제 · 기준 점수: ' + Number(exam.passingScore || 80) + '점<br>' +
+          '시작: ' + escapeHtml(formatTeacherExamDate_(exam.startAt)) + '<br>마감: ' + escapeHtml(formatTeacherExamDate_(exam.deadlineAt)) +
+          (exam.attemptCount ? '<br>응시 횟수: ' + Number(exam.attemptCount) + '회' : '') +
+          (exam.bestScore !== null && exam.bestScore !== undefined ? ' · 최고점: ' + Number(exam.bestScore) + '점' : '') + '</div>';
+        const actions = document.createElement('div');
+        actions.className = 'teacher-exam-actions';
+        const button = document.createElement('button');
+        button.textContent = canStart ? (exam.status === '시험중' ? '시험 이어보기' : '시험 시작') : exam.availability;
+        button.disabled = !canStart;
+        button.onclick = function () { startTeacherExam(exam.examId); };
+        actions.appendChild(button);
+        item.appendChild(actions);
+        list.appendChild(item);
+      });
+    }
+
+    function startTeacherExam(examId) {
+      if (!currentStudent || !currentStudent.studentId || teacherExamSubmitting) return;
+      const confirmed = confirm('시험을 시작하면 응시 회차가 기록됩니다. 시작할까요?');
+      if (!confirmed) return;
+      document.getElementById('teacherExamListLoading').textContent = '시험 문제를 준비하는 중입니다.';
+      google.script.run
+        .withSuccessHandler(function (data) {
+          document.getElementById('teacherExamListLoading').textContent = '';
+          activeTeacherExam = data.exam || null;
+          teacherExamQuestions = Array.isArray(data.questions) ? data.questions : [];
+          teacherExamAnswers = {};
+          teacherExamIndex = 0;
+          if (!activeTeacherExam || !teacherExamQuestions.length) {
+            alert('출제된 문제가 없습니다.');
+            return;
+          }
+          hideAllTestScreens_();
+          hideTeacherExamScreens_();
+          document.getElementById('teacherExamTakeScreen').classList.remove('hidden');
+          renderTeacherExamQuestion();
+          window.scrollTo(0, 0);
+        })
+        .withFailureHandler(function (error) {
+          document.getElementById('teacherExamListLoading').textContent = '';
+          alert('시험을 시작하지 못했습니다.\n' + (error && error.message ? error.message : error));
+          loadTeacherExams();
+        })
+        .studentStartTeacherExam(currentStudent.studentId, examId);
+    }
+
+    function teacherExamModeText_(mode) {
+      if (mode === 'korToEng') return '한글 → 영어';
+      if (mode === 'example') return '예문 객관식';
+      return '영어 → 한글';
+    }
+
+    function renderTeacherExamQuestion() {
+      const question = teacherExamQuestions[teacherExamIndex];
+      if (!question) return;
+      const total = teacherExamQuestions.length;
+      const answeredCount = Object.keys(teacherExamAnswers).filter(function (key) { return String(teacherExamAnswers[key] || '').trim(); }).length;
+      document.getElementById('teacherExamProgressBar').style.width = (((teacherExamIndex + 1) / total) * 100) + '%';
+      document.getElementById('teacherExamQuestionNumber').textContent = (teacherExamIndex + 1) + ' / ' + total;
+      document.getElementById('teacherExamAnsweredCount').textContent = '답변 ' + answeredCount + ' / ' + total;
+      document.getElementById('teacherExamTitle').textContent = (activeTeacherExam.title || '선생님 시험') + ' · ' + teacherExamModeText_(question.mode);
+      const container = document.getElementById('teacherExamQuestionContainer');
+      container.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'teacher-question-card';
+      card.innerHTML = '<div class="teacher-question-number">' + (teacherExamIndex + 1) + '번</div>' +
+        '<div class="teacher-question-prompt">' + escapeHtml(question.prompt || '') + '</div>' +
+        (question.example ? '<div class="teacher-question-example">' + escapeHtml(question.example) + (question.translation ? '<br><span class="translation">' + escapeHtml(question.translation) + '</span>' : '') + '</div>' : '');
+      if (question.mode === 'example' && Array.isArray(question.options)) {
+        const grid = document.createElement('div');
+        grid.className = 'teacher-option-grid';
+        question.options.forEach(function (option) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'teacher-option-button' + (teacherExamAnswers[question.questionId] === option ? ' selected' : '');
+          button.textContent = option;
+          button.onclick = function () {
+            teacherExamAnswers[question.questionId] = option;
+            renderTeacherExamQuestion();
+          };
+          grid.appendChild(button);
+        });
+        card.appendChild(grid);
+      } else {
+        const input = document.createElement('input');
+        input.className = 'teacher-answer-input';
+        input.type = 'text';
+        input.autocomplete = 'off';
+        input.placeholder = question.mode === 'korToEng' ? '영어 단어를 입력하세요' : '뜻을 입력하세요';
+        input.value = teacherExamAnswers[question.questionId] || '';
+        input.oninput = function () { teacherExamAnswers[question.questionId] = input.value; updateTeacherExamAnsweredCount_(); };
+        input.onkeydown = function (event) { if (event.key === 'Enter') moveTeacherExamQuestion(1); };
+        card.appendChild(input);
+        setTimeout(function () { input.focus(); }, 0);
+      }
+      container.appendChild(card);
+      document.getElementById('teacherExamPrevButton').disabled = teacherExamIndex === 0;
+      const next = document.getElementById('teacherExamNextButton');
+      next.textContent = teacherExamIndex === total - 1 ? '답안 제출' : '다음';
+      document.getElementById('teacherExamSubmitGuide').textContent = '작성한 답은 문제를 이동해도 유지됩니다.';
+    }
+
+    function updateTeacherExamAnsweredCount_() {
+      const count = Object.keys(teacherExamAnswers).filter(function (key) { return String(teacherExamAnswers[key] || '').trim(); }).length;
+      document.getElementById('teacherExamAnsweredCount').textContent = '답변 ' + count + ' / ' + teacherExamQuestions.length;
+    }
+
+    function moveTeacherExamQuestion(direction) {
+      if (teacherExamSubmitting) return;
+      if (direction > 0 && teacherExamIndex === teacherExamQuestions.length - 1) {
+        submitTeacherExam();
+        return;
+      }
+      teacherExamIndex = Math.max(0, Math.min(teacherExamQuestions.length - 1, teacherExamIndex + direction));
+      renderTeacherExamQuestion();
+      window.scrollTo(0, 0);
+    }
+
+    function submitTeacherExam() {
+      if (!activeTeacherExam || teacherExamSubmitting) return;
+      const unanswered = teacherExamQuestions.filter(function (q) { return !String(teacherExamAnswers[q.questionId] || '').trim(); }).length;
+      const message = unanswered > 0 ? '답하지 않은 문제가 ' + unanswered + '개 있습니다. 그대로 제출할까요?' : '답안을 제출할까요? 제출 후에는 수정할 수 없습니다.';
+      if (!confirm(message)) return;
+      teacherExamSubmitting = true;
+      document.getElementById('teacherExamNextButton').disabled = true;
+      document.getElementById('teacherExamSubmitGuide').textContent = '답안을 채점하고 있습니다.';
+      const payload = {
+        studentId: currentStudent.studentId,
+        examId: activeTeacherExam.examId,
+        attempt: activeTeacherExam.attempt,
+        answers: teacherExamQuestions.map(function (q) { return { questionId: q.questionId, answer: teacherExamAnswers[q.questionId] || '' }; })
+      };
+      google.script.run
+        .withSuccessHandler(function (data) {
+          teacherExamSubmitting = false;
+          renderTeacherExamResult(data && data.result ? data.result : null);
+          refreshTeacherExamBadge();
+        })
+        .withFailureHandler(function (error) {
+          teacherExamSubmitting = false;
+          document.getElementById('teacherExamNextButton').disabled = false;
+          document.getElementById('teacherExamSubmitGuide').textContent = '';
+          alert('시험 제출에 실패했습니다.\n' + (error && error.message ? error.message : error));
+        })
+        .studentSubmitTeacherExam(payload);
+    }
+
+    function renderTeacherExamResult(result) {
+      if (!result) { alert('시험 결과를 불러오지 못했습니다.'); return; }
+      hideAllTestScreens_();
+      hideTeacherExamScreens_();
+      document.getElementById('teacherExamResultScreen').classList.remove('hidden');
+      document.getElementById('teacherExamResultScore').textContent = Number(result.score || 0) + '점';
+      document.getElementById('teacherExamResultSummary').innerHTML =
+        '<strong>' + escapeHtml(result.title || '선생님 시험') + '</strong><br>' +
+        Number(result.totalCount || 0) + '문제 중 ' + Number(result.correctCount || 0) + '문제 정답 · ' +
+        (result.passed ? '<strong style="color:#248a4b;">통과</strong>' : '<strong style="color:#c83d3d;">기준 점수 미달</strong>') +
+        '<br>최고점 ' + Number(result.bestScore || 0) + '점';
+      const details = document.getElementById('teacherExamResultDetails');
+      details.innerHTML = '<h3>문제별 확인</h3>';
+      (result.details || []).forEach(function (detail, index) {
+        const div = document.createElement('div');
+        div.className = 'teacher-result-detail ' + (detail.isCorrect ? 'correct' : 'wrong');
+        div.innerHTML = '<strong>' + (index + 1) + '. ' + escapeHtml(detail.prompt || '') + '</strong><br>' +
+          '내 답: ' + escapeHtml(detail.submittedAnswer || '(미응답)') + '<br>' +
+          '정답: ' + escapeHtml(detail.correctAnswer || '') +
+          (detail.meaning ? '<br>단어: ' + escapeHtml(detail.english || '') + ' · ' + escapeHtml(detail.meaning || '') : '');
+        details.appendChild(div);
+      });
+      activeTeacherExam = null;
+      teacherExamQuestions = [];
+      teacherExamAnswers = {};
+      window.scrollTo(0, 0);
+    }
+
+
     function showTestHome() {
+      hideTeacherExamScreens_();
       hideExtraStudyScreens();
       document
         .getElementById('wrongNotebookScreen')
@@ -4206,6 +4579,7 @@
 
 
     function showVocabHome() {
+      hideTeacherExamScreens_();
       hideExtraStudyScreens();
       document
         .getElementById('wrongNotebookScreen')
@@ -4256,6 +4630,7 @@
 
 
     function showMyPage() {
+      hideTeacherExamScreens_();
       hideExtraStudyScreens();
       setActiveMenu('mypage');
 
@@ -5769,45 +6144,18 @@
 
 
     function setActiveMenu(menu) {
-      const testButton =
-        document.getElementById(
-          'testMenuButton'
-        );
-
-      const vocabButton =
-        document.getElementById(
-          'vocabMenuButton'
-        );
-
-      const myPageButton =
-        document.getElementById(
-          'myPageMenuButton'
-        );
-
-      const rankingButton =
-        document.getElementById(
-          'rankingMenuButton'
-        );
-
-      testButton.classList.remove('active');
-      vocabButton.classList.remove('active');
-      myPageButton.classList.remove('active');
-      rankingButton.classList.remove('active');
-
-      if (menu === 'test') {
-        testButton.classList.add('active');
-
-      } else if (menu === 'vocab') {
-        vocabButton.classList.add('active');
-
-      } else if (menu === 'mypage') {
-        myPageButton.classList.add('active');
-
-      } else if (menu === 'ranking') {
-        rankingButton.classList.add('active');
-      }
+      const menuMap = {
+        test: 'testMenuButton',
+        teacherExam: 'teacherExamMenuButton',
+        vocab: 'vocabMenuButton',
+        mypage: 'myPageMenuButton',
+        ranking: 'rankingMenuButton'
+      };
+      Object.keys(menuMap).forEach(function (key) {
+        const button = document.getElementById(menuMap[key]);
+        if (button) button.classList.toggle('active', key === menu);
+      });
     }
-
 
     function showRankingCategory(category) {
       currentRankingCategory =
@@ -7489,7 +7837,10 @@ google.script.run
         'wrongTestSetupScreen',
         'personalVocabularyScreen',
         'smartReviewScreen',
-        'rankingScreen'
+        'rankingScreen',
+        'teacherExamListScreen',
+        'teacherExamTakeScreen',
+        'teacherExamResultScreen'
       ];
 
       function playEnterAnimation(element) {
