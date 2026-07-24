@@ -708,8 +708,8 @@
     }
 
     .topbar {
-      position: sticky;
-      top: 10px;
+      position: static;
+      top: auto;
       z-index: 50;
       padding: 15px 18px;
       border: 1px solid rgba(148, 26, 101, 0.10);
@@ -920,8 +920,21 @@
 
     @media (max-width: 850px) {
       .topbar {
-        top: 6px;
+        position: static;
+        top: auto;
       }
+    }
+
+    .modal-head {
+      position: relative;
+    }
+
+    .modal-head .close-btn {
+      position: relative;
+      z-index: 5;
+      flex: 0 0 auto;
+      pointer-events: auto;
+      cursor: pointer;
     }
 
   </style>
@@ -1207,6 +1220,11 @@ protect	보호하다"></textarea>
       $('#examForm').addEventListener('submit', createExam);
       $('#refreshExamsBtn').addEventListener('click', loadExamList);
       $('#closeModalBtn').addEventListener('click', closeStatusModal);
+      $('#closeDetailModalBtn').addEventListener('click', closeDetailModal);
+
+      $('#detailModal').addEventListener('click', (event) => {
+        if (event.target.id === 'detailModal') closeDetailModal();
+      });
 
       $('#statusModal').addEventListener('click', (event) => {
         if (event.target.id === 'statusModal') closeStatusModal();
