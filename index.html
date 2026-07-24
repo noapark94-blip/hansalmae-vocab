@@ -1309,6 +1309,249 @@
       background: #f9deed;
     }
 
+
+
+    /* =========================================================
+       한살매 브랜드 컬러 테마
+       기존 기능은 유지하고 전체 UI 색상만 로고에 맞게 통일
+       ========================================================= */
+    :root {
+      --hsm-dark: #541038;
+      --hsm-main: #8f145f;
+      --hsm-mid: #b63b83;
+      --hsm-light: #f4dce9;
+      --hsm-soft: #fff6fb;
+      --hsm-border: #e5b8cf;
+      --hsm-muted: #745c69;
+      --hsm-shadow: rgba(87, 17, 61, 0.12);
+      --hsm-gold: #d79a2b;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top, #fffafd 0%, #f8eef4 45%, #f2e8ee 100%);
+      color: #2f2430;
+    }
+
+    .card,
+    .topbar {
+      border: 1px solid rgba(143, 20, 95, 0.08);
+      box-shadow: 0 12px 34px var(--hsm-shadow);
+    }
+
+    h1,
+    .topbar-title,
+    .word-English,
+    .wrong-note-word,
+    .personal-word,
+    .shortcut-title,
+    .my-summary-value,
+    .history-date,
+    .result-score {
+      color: var(--hsm-main);
+    }
+
+    h2,
+    .my-section-title {
+      color: var(--hsm-dark);
+    }
+
+    .subtitle,
+    .signup-guide,
+    .vocab-count,
+    .wrong-note-summary,
+    .history-detail,
+    .shortcut-description,
+    .personal-meta,
+    .wrong-note-source,
+    .word-translation,
+    .translation {
+      color: var(--hsm-muted);
+    }
+
+    input,
+    select {
+      border-color: #ddc8d4;
+      background: #fffdfE;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--hsm-main);
+      box-shadow: 0 0 0 3px rgba(143, 20, 95, 0.13);
+    }
+
+    input::placeholder {
+      color: #9f8995;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--hsm-main), var(--hsm-mid));
+      box-shadow: 0 7px 16px rgba(143, 20, 95, 0.18);
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, var(--hsm-dark), var(--hsm-main));
+    }
+
+    button:disabled {
+      background: #c8b7c0;
+      box-shadow: none;
+    }
+
+    .secondary-button,
+    .menu-button,
+    .ranking-tab,
+    .wrong-note-filter button {
+      background: var(--hsm-light);
+      color: var(--hsm-main);
+      box-shadow: none;
+    }
+
+    .secondary-button:hover,
+    .menu-button:hover,
+    .ranking-tab:hover,
+    .wrong-note-filter button:hover {
+      background: #ebcddd;
+    }
+
+    .menu-button.active,
+    .ranking-tab.active,
+    .wrong-note-filter button.active {
+      background: linear-gradient(135deg, var(--hsm-main), var(--hsm-mid));
+      color: #ffffff;
+      box-shadow: 0 6px 15px rgba(143, 20, 95, 0.16);
+    }
+
+    .logout-button,
+    .danger-button {
+      background: #725261;
+      box-shadow: none;
+    }
+
+    .logout-button:hover,
+    .danger-button:hover {
+      background: #5d3f4d;
+    }
+
+    .progress-wrap {
+      background: #eadce4;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, var(--hsm-main), var(--hsm-mid));
+    }
+
+    .question-type {
+      background: var(--hsm-light);
+      color: var(--hsm-main);
+    }
+
+    .choice {
+      border-color: #ead7e1;
+    }
+
+    .choice:hover {
+      border-color: var(--hsm-main);
+      background: var(--hsm-soft);
+    }
+
+    .filter-check,
+    .wrong-test-guide,
+    .ranking-rule,
+    .empty-message {
+      background: #fbf4f8;
+    }
+
+    .filter-check input,
+    .word-check,
+    .personal-select-row input {
+      accent-color: var(--hsm-main);
+    }
+
+    .word-card,
+    .wrong-note-item,
+    .personal-item,
+    .history-item,
+    .learning-shortcut,
+    .ranking-item,
+    .my-summary-card {
+      border-color: #ead7e1;
+    }
+
+    .word-card.checked {
+      border-color: #d99bbb;
+      background: #fff5fa;
+    }
+
+    .learning-shortcut:hover {
+      border-color: var(--hsm-main);
+      background: var(--hsm-soft);
+    }
+
+    .my-summary-card {
+      background: #fff8fc;
+    }
+
+    .shortcut-count,
+    .ranking-point,
+    .history-point,
+    .wrong-note-meta {
+      color: var(--hsm-gold);
+    }
+
+    .ranking-item.top-three {
+      border-color: #e2c27a;
+      background: #fffaf0;
+    }
+
+    .smart-review-reason {
+      background: #f7e2ed;
+      color: var(--hsm-main);
+    }
+
+    #installAppButton {
+      background: #fff0f7;
+      color: var(--hsm-main);
+      border: 1px solid var(--hsm-border);
+      box-shadow: none;
+    }
+
+    #installAppButton:hover {
+      background: #f6dce9;
+    }
+
+    #appSplash {
+      background:
+        radial-gradient(circle at top, #fffafd 0%, #f7e8f0 100%);
+    }
+
+    .splash-title {
+      color: var(--hsm-dark);
+    }
+
+    .splash-loading {
+      border-color: rgba(143, 20, 95, 0.18);
+      border-top-color: var(--hsm-main);
+    }
+
+    .login-divider {
+      color: #a08a96;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      background: #ead7e1;
+    }
+
+    .field-message.success {
+      color: #2b8a57;
+    }
+
+    .field-message.error {
+      color: #c43f62;
+    }
+
   </style>
 
 
