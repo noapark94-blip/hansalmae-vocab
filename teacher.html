@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#6f4cff" />
+  <meta name="theme-color" content="#8f145f" />
   <title>한살매 선생님 시험 관리</title>
   <style>
     :root {
@@ -661,13 +661,276 @@
       .exam-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+  
+    /* =========================================================
+       학생용 앱과 통일한 한살매 프리미엄 테마
+       ========================================================= */
+    :root {
+      --primary: #8f145f;
+      --primary-dark: #541038;
+      --primary-soft: #f7e9f0;
+      --bg: #f7eef3;
+      --card: #ffffff;
+      --text: #251b22;
+      --muted: #806c77;
+      --line: #ead6e1;
+      --success: #2f9c67;
+      --warning: #d39b34;
+      --danger: #d54f72;
+      --shadow: 0 18px 45px rgba(79, 18, 55, 0.13);
+      --radius: 24px;
+      --hsm-900: #4d1237;
+      --hsm-800: #651446;
+      --hsm-700: #7d1655;
+      --hsm-600: #941a65;
+      --hsm-500: #ac347b;
+      --hsm-300: #d998ba;
+      --hsm-200: #ebc7d9;
+      --hsm-100: #f7e9f0;
+      --hsm-050: #fff8fb;
+    }
+
+    html {
+      background: #f7eef3;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 15% 0%, rgba(216, 151, 186, 0.28), transparent 34%),
+        radial-gradient(circle at 92% 8%, rgba(172, 52, 123, 0.12), transparent 30%),
+        linear-gradient(180deg, #fffafd 0%, #f7eef3 50%, #f2e8ee 100%);
+      color: var(--text);
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      padding-top: 22px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      padding: 15px 18px;
+      border: 1px solid rgba(148, 26, 101, 0.10);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 8px 20px rgba(79, 18, 55, 0.08);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand-mark {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 9px 22px rgba(79, 18, 55, 0.16);
+    }
+
+    h1 {
+      color: var(--hsm-900);
+      font-weight: 900;
+      letter-spacing: -1.2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .tabs {
+      background: linear-gradient(180deg, #fffafd, #f8eaf1);
+      border: 1px solid var(--hsm-200);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    .tab-btn {
+      color: var(--hsm-700);
+    }
+
+    .tab-btn:hover {
+      background: #f1dce7;
+      color: var(--hsm-900);
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--hsm-800), var(--hsm-500));
+      box-shadow: 0 7px 16px rgba(125, 22, 85, 0.20);
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 26, 101, 0.09);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--hsm-800), var(--hsm-500), var(--hsm-300));
+    }
+
+    .card-title,
+    .section-title,
+    .exam-title,
+    .modal h2 {
+      color: var(--hsm-900);
+    }
+
+    input,
+    select,
+    textarea {
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fffdfE;
+      color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+
+    input:hover,
+    select:hover,
+    textarea:hover {
+      border-color: var(--hsm-300);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--hsm-600);
+      box-shadow: 0 0 0 4px rgba(148, 26, 101, 0.12);
+    }
+
+    .choice span {
+      border-color: var(--line);
+      background: linear-gradient(180deg, #ffffff, #fffafd);
+      color: var(--muted);
+      box-shadow: 0 5px 14px rgba(79, 18, 55, 0.04);
+    }
+
+    .choice span:hover {
+      border-color: var(--hsm-300);
+      background: var(--hsm-050);
+    }
+
+    .choice input:checked + span {
+      border-color: var(--hsm-500);
+      background: linear-gradient(180deg, #fff6fb, #f2dce8);
+      color: var(--hsm-800);
+      box-shadow: 0 0 0 3px rgba(148, 26, 101, 0.09);
+    }
+
+    .primary-btn,
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--hsm-800), var(--hsm-500));
+    }
+
+    .primary-btn {
+      border-radius: 16px;
+      box-shadow: 0 10px 22px rgba(125, 22, 85, 0.22);
+    }
+
+    .primary-btn:hover {
+      background: linear-gradient(135deg, var(--hsm-900), var(--hsm-600));
+      box-shadow: 0 13px 26px rgba(125, 22, 85, 0.27);
+      transform: translateY(-1px);
+    }
+
+    .outline-btn,
+    .small-btn,
+    .close-btn {
+      border-color: var(--hsm-200);
+      background: linear-gradient(180deg, #fff8fb, #f5e6ee);
+      color: var(--hsm-700);
+    }
+
+    .outline-btn:hover,
+    .small-btn:hover,
+    .close-btn:hover {
+      border-color: var(--hsm-300);
+      background: #f1dce7;
+      color: var(--hsm-900);
+    }
+
+    .danger-btn {
+      background: linear-gradient(135deg, #a9365b, #d54f72);
+      box-shadow: 0 8px 18px rgba(170, 54, 91, 0.16);
+    }
+
+    .danger-btn:hover {
+      background: linear-gradient(135deg, #8f294a, #bd3f63);
+    }
+
+    .count-badge,
+    .status-pill {
+      border: 1px solid var(--hsm-200);
+      background: #f7e9f0;
+      color: var(--hsm-700);
+    }
+
+    .student-item,
+    .exam-card,
+    .info-box,
+    .summary-item,
+    .status-table-wrap,
+    .word-detail-item {
+      border-color: var(--line);
+      background: linear-gradient(180deg, #ffffff, #fffafd);
+      box-shadow: 0 6px 16px rgba(79, 18, 55, 0.045);
+    }
+
+    .student-item:hover,
+    .exam-card:hover {
+      border-color: var(--hsm-300);
+      background: #fff8fb;
+    }
+
+    .loading-overlay {
+      background: rgba(77, 18, 55, 0.24);
+      backdrop-filter: blur(5px);
+    }
+
+    .loading-box,
+    .modal {
+      border: 1px solid rgba(148, 26, 101, 0.10);
+      background: rgba(255,255,255,.97);
+      box-shadow: 0 24px 60px rgba(79, 18, 55, 0.20);
+    }
+
+    .spinner {
+      border-color: rgba(148, 26, 101, 0.17);
+      border-top-color: var(--hsm-600);
+    }
+
+    .toast.success {
+      background: #2f9c67;
+    }
+
+    .toast.error {
+      background: #b93d62;
+    }
+
+    @media (max-width: 850px) {
+      .topbar {
+        top: 6px;
+      }
+    }
+
   </style>
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">한</div>
+        <img class="brand-mark" src="./icon-512.png" alt="한살매 로고">
         <div>
           <h1>선생님 시험 관리</h1>
           <p class="subtitle">단어시험을 만들고 학생별 응시 현황을 확인합니다.</p>
