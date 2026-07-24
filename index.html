@@ -1993,6 +1993,155 @@
       }
     }
 
+
+
+    /* =========================================================
+       한살매 앱 모션 업그레이드
+       카드 애니메이션 · 버튼 터치 효과 · 부드러운 화면 전환
+       ========================================================= */
+
+    /* 화면이 나타날 때 실행되는 전환 효과 */
+    .app-screen-enter {
+      animation: hsmScreenEnter 0.38s cubic-bezier(.22, .75, .24, 1) both;
+    }
+
+    @keyframes hsmScreenEnter {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.985);
+        filter: blur(2px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    /* 카드가 순서대로 부드럽게 나타나는 효과 */
+    .word-card,
+    .ranking-item,
+    .history-item,
+    .wrong-note-item,
+    .personal-item,
+    .learning-shortcut,
+    .my-summary-card {
+      transition:
+        transform 0.22s cubic-bezier(.22, .75, .24, 1),
+        box-shadow 0.22s ease,
+        border-color 0.22s ease,
+        background 0.22s ease;
+    }
+
+    .word-card:hover,
+    .ranking-item:hover,
+    .history-item:hover,
+    .wrong-note-item:hover,
+    .personal-item:hover,
+    .learning-shortcut:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(79, 18, 55, 0.12);
+    }
+
+    /* 터치 기기에서 카드가 눌리는 느낌 */
+    .word-card:active,
+    .ranking-item:active,
+    .history-item:active,
+    .wrong-note-item:active,
+    .personal-item:active,
+    .learning-shortcut:active {
+      transform: scale(0.985);
+    }
+
+    /* 버튼을 실제 앱처럼 눌리는 효과 */
+    button {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.965);
+      box-shadow: 0 4px 11px rgba(79, 18, 55, 0.16);
+      filter: brightness(0.98);
+    }
+
+    /* 메뉴 버튼 전환 */
+    .menu-button,
+    .ranking-tab,
+    .wrong-note-filter button {
+      transition:
+        transform 0.18s ease,
+        background 0.22s ease,
+        color 0.22s ease,
+        box-shadow 0.22s ease;
+    }
+
+    .menu-button.active,
+    .ranking-tab.active,
+    .wrong-note-filter button.active {
+      animation: hsmTabPop 0.26s cubic-bezier(.22, .75, .24, 1);
+    }
+
+    @keyframes hsmTabPop {
+      0% { transform: scale(0.94); }
+      70% { transform: scale(1.025); }
+      100% { transform: scale(1); }
+    }
+
+    /* 시험 보기 선택 애니메이션 */
+    .choice {
+      transform-origin: center;
+    }
+
+    .choice.correct {
+      animation: hsmCorrect 0.38s ease both;
+    }
+
+    .choice.wrong {
+      animation: hsmWrong 0.34s ease both;
+    }
+
+    @keyframes hsmCorrect {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.018); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes hsmWrong {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+    }
+
+    /* 진행바가 조금 더 자연스럽게 이동 */
+    .progress-bar {
+      transition: width 0.38s cubic-bezier(.22, .75, .24, 1);
+    }
+
+    /* 로딩 문구의 부드러운 점멸 */
+    .loading:not(:empty) {
+      animation: hsmLoadingPulse 1.25s ease-in-out infinite;
+    }
+
+    @keyframes hsmLoadingPulse {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+
+    /* 접근성: 사용자가 애니메이션 축소를 설정한 경우 */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
   </style>
 
 
@@ -7321,7 +7470,80 @@ google.script.run
 
   </script>
 
+
+  <script>
+    /*
+      기존 화면 전환 함수를 수정하지 않고,
+      hidden 클래스가 제거되는 순간 자동으로 전환 효과를 실행합니다.
+    */
+    (function installHansalmaeMotion() {
+      const screenIds = [
+        'loginScreen',
+        'signupScreen',
+        'startScreen',
+        'testScreen',
+        'resultScreen',
+        'vocabScreen',
+        'myPageScreen',
+        'wrongNotebookScreen',
+        'wrongTestSetupScreen',
+        'personalVocabularyScreen',
+        'smartReviewScreen',
+        'rankingScreen'
+      ];
+
+      function playEnterAnimation(element) {
+        if (!element || element.classList.contains('hidden')) return;
+
+        element.classList.remove('app-screen-enter');
+        void element.offsetWidth;
+        element.classList.add('app-screen-enter');
+
+        window.setTimeout(function () {
+          element.classList.remove('app-screen-enter');
+        }, 500);
+      }
+
+      function observeScreen(element) {
+        if (!element) return;
+
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (
+              mutation.type === 'attributes' &&
+              mutation.attributeName === 'class' &&
+              !element.classList.contains('hidden')
+            ) {
+              playEnterAnimation(element);
+            }
+          });
+        });
+
+        observer.observe(element, {
+          attributes: true,
+          attributeFilter: ['class']
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', function () {
+        screenIds.forEach(function (id) {
+          observeScreen(document.getElementById(id));
+        });
+
+        const firstVisible = screenIds
+          .map(function (id) { return document.getElementById(id); })
+          .find(function (element) {
+            return element && !element.classList.contains('hidden');
+          });
+
+        playEnterAnimation(firstVisible);
+      });
+    })();
+  </script>
+
 </body>
 </html>
 
 <!-- HSM premium UI v1 -->
+
+<!-- HSM motion UI v1 -->
