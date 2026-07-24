@@ -10,6 +10,15 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
   >
 
+
+  <!-- PWA 설정 -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#285aca">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="한살매 단어">
+
   <style>
     * {
       box-sizing: border-box;
@@ -6471,6 +6480,22 @@ google.script.run
             : error
         )
       );
+    }
+  </script>
+
+  <!-- PWA 서비스 워커 등록 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('./service-worker.js')
+          .then(function (registration) {
+            console.log('서비스 워커 등록 완료:', registration.scope);
+          })
+          .catch(function (error) {
+            console.error('서비스 워커 등록 실패:', error);
+          });
+      });
     }
   </script>
 
