@@ -33,6 +33,9 @@
   <!-- PWA 설정 -->
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#8f145f">
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -2257,17 +2260,240 @@
 
   <!--
     GitHub Pages용 Apps Script 연결 어댑터
-    기존 google.script.run 코드를 수정하지 않고 그대로 작동시킵니다.
+    - 읽기 요청 캐시
+    - 중복 요청 합치기
+    - 요청 시간 제한
+    - 기존 google.script.run 문법 유지
   -->
   <script>
     const APPS_SCRIPT_API_URL =
       'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
 
     (function installGoogleScriptRunAdapter() {
+      const inflightRequests = new Map();
+
+      const CACHE_RULES = {
+        getSheetNames: 6 * 60 * 60 * 1000,
+        getDays: 6 * 60 * 60 * 1000,
+        getMonthlyRanking: 60 * 1000,
+        getWrongNotebookCount: 60 * 1000,
+        getPersonalVocabularyCount: 60 * 1000,
+        getVocabularyBooks: 30 * 1000,
+        studentGetAssignedExams: 20 * 1000,
+        studentGetNotifications: 20 * 1000
+      };
+
+      const CACHE_PREFIX = 'hsmApiCacheV2:';
+      const REQUEST_TIMEOUT_MS = 30000;
+
       function makeError(message) {
-        const error = new Error(message || '서버 요청 중 오류가 발생했습니다.');
+        const error = new Error(
+          message || '서버 요청 중 오류가 발생했습니다.'
+        );
         error.name = 'AppsScriptError';
         return error;
+      }
+
+      function stableKey(functionName, args) {
+        let serialized = '';
+
+        try {
+          serialized = JSON.stringify(args || []);
+        } catch (_error) {
+          serialized = String(args || '');
+        }
+
+        return functionName + '|' + serialized;
+      }
+
+      function getCached(functionName, args) {
+        const ttl = CACHE_RULES[functionName];
+
+        if (!ttl) {
+          return { found: false, value: null };
+        }
+
+        try {
+          const raw = localStorage.getItem(
+            CACHE_PREFIX + stableKey(functionName, args)
+          );
+
+          if (!raw) {
+            return { found: false, value: null };
+          }
+
+          const saved = JSON.parse(raw);
+
+          if (
+            !saved ||
+            !saved.savedAt ||
+            Date.now() - Number(saved.savedAt) > ttl
+          ) {
+            localStorage.removeItem(
+              CACHE_PREFIX + stableKey(functionName, args)
+            );
+            return { found: false, value: null };
+          }
+
+          return {
+            found: true,
+            value: saved.value
+          };
+        } catch (_error) {
+          return { found: false, value: null };
+        }
+      }
+
+      function setCached(functionName, args, value) {
+        if (!CACHE_RULES[functionName]) {
+          return;
+        }
+
+        try {
+          localStorage.setItem(
+            CACHE_PREFIX + stableKey(functionName, args),
+            JSON.stringify({
+              savedAt: Date.now(),
+              value: value
+            })
+          );
+        } catch (_error) {
+          // 저장 공간 부족 등은 무시합니다.
+        }
+      }
+
+      function clearRelatedCache(functionName) {
+        const writeFunctions = [
+          'saveTestResult',
+          'setWrongWordMastered',
+          'addPersonalVocabulary',
+          'removePersonalVocabulary',
+          'setPersonalWordMastered',
+          'createVocabularyBook',
+          'renameVocabularyBook',
+          'deleteVocabularyBook',
+          'addPersonalVocabularyToBook',
+          'movePersonalVocabularyToBook',
+          'studentSubmitTeacherExam',
+          'studentMarkNotificationRead',
+          'studentStopTeacherExam',
+          'studentDeleteTeacherExamProgress'
+        ];
+
+        if (writeFunctions.indexOf(functionName) === -1) {
+          return;
+        }
+
+        try {
+          const keysToDelete = [];
+
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+
+            if (key && key.indexOf(CACHE_PREFIX) === 0) {
+              keysToDelete.push(key);
+            }
+          }
+
+          keysToDelete.forEach(function (key) {
+            localStorage.removeItem(key);
+          });
+        } catch (_error) {
+          // 캐시 삭제 실패는 앱 사용에 영향을 주지 않습니다.
+        }
+      }
+
+      function callServer(functionName, args) {
+        const requestKey = stableKey(functionName, args);
+        const cached = getCached(functionName, args);
+
+        if (cached.found) {
+          return Promise.resolve(cached.value);
+        }
+
+        if (inflightRequests.has(requestKey)) {
+          return inflightRequests.get(requestKey);
+        }
+
+        const controller =
+          typeof AbortController !== 'undefined'
+            ? new AbortController()
+            : null;
+
+        const timeoutId = window.setTimeout(function () {
+          if (controller) {
+            controller.abort();
+          }
+        }, REQUEST_TIMEOUT_MS);
+
+        const request = fetch(APPS_SCRIPT_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify({
+            action: 'call',
+            functionName: functionName,
+            args: args
+          }),
+          redirect: 'follow',
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw makeError(
+                '서버 응답 오류: ' + response.status
+              );
+            }
+
+            return response.text();
+          })
+          .then(function (text) {
+            let payload;
+
+            try {
+              payload = JSON.parse(text);
+            } catch (_error) {
+              throw makeError(
+                '서버 응답을 읽을 수 없습니다. Apps Script 배포 주소를 확인해주세요.'
+              );
+            }
+
+            if (!payload || payload.success !== true) {
+              throw makeError(
+                payload && payload.message
+                  ? payload.message
+                  : '서버 함수 실행에 실패했습니다.'
+              );
+            }
+
+            setCached(
+              functionName,
+              args,
+              payload.result
+            );
+
+            clearRelatedCache(functionName);
+
+            return payload.result;
+          })
+          .catch(function (error) {
+            if (error && error.name === 'AbortError') {
+              throw makeError(
+                '서버 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.'
+              );
+            }
+
+            throw error;
+          })
+          .finally(function () {
+            window.clearTimeout(timeoutId);
+            inflightRequests.delete(requestKey);
+          });
+
+        inflightRequests.set(requestKey, request);
+        return request;
       }
 
       function createRunner(state) {
@@ -2281,78 +2507,66 @@
           get: function (_target, property) {
             if (property === 'withSuccessHandler') {
               return function (handler) {
-                return createRunner(Object.assign({}, options, {
-                  successHandler: typeof handler === 'function' ? handler : null
-                }));
+                return createRunner(
+                  Object.assign({}, options, {
+                    successHandler:
+                      typeof handler === 'function'
+                        ? handler
+                        : null
+                  })
+                );
               };
             }
 
             if (property === 'withFailureHandler') {
               return function (handler) {
-                return createRunner(Object.assign({}, options, {
-                  failureHandler: typeof handler === 'function' ? handler : null
-                }));
+                return createRunner(
+                  Object.assign({}, options, {
+                    failureHandler:
+                      typeof handler === 'function'
+                        ? handler
+                        : null
+                  })
+                );
               };
             }
 
             if (property === 'withUserObject') {
               return function (userObject) {
-                return createRunner(Object.assign({}, options, {
-                  userObject: userObject
-                }));
+                return createRunner(
+                  Object.assign({}, options, {
+                    userObject: userObject
+                  })
+                );
               };
             }
 
-            // Promise가 이 객체를 thenable로 오인하지 않도록 방지합니다.
             if (property === 'then') {
               return undefined;
             }
 
             return function () {
-              const functionName = String(property || '');
-              const args = Array.prototype.slice.call(arguments);
+              const functionName =
+                String(property || '');
 
-              fetch(APPS_SCRIPT_API_URL, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'text/plain;charset=utf-8'
-                },
-                body: JSON.stringify({
-                  action: 'call',
-                  functionName: functionName,
-                  args: args
-                }),
-                redirect: 'follow'
-              })
-                .then(function (response) {
-                  if (!response.ok) {
-                    throw makeError('서버 응답 오류: ' + response.status);
-                  }
-                  return response.text();
-                })
-                .then(function (text) {
-                  let payload;
-                  try {
-                    payload = JSON.parse(text);
-                  } catch (_error) {
-                    throw makeError('서버 응답을 읽을 수 없습니다. Apps Script 배포 주소를 확인해주세요.');
-                  }
+              const args =
+                Array.prototype.slice.call(arguments);
 
-                  if (!payload || payload.success !== true) {
-                    throw makeError(
-                      payload && payload.message
-                        ? payload.message
-                        : '서버 함수 실행에 실패했습니다.'
-                    );
-                  }
-
+              callServer(functionName, args)
+                .then(function (result) {
                   if (options.successHandler) {
-                    options.successHandler(payload.result, options.userObject);
+                    options.successHandler(
+                      result,
+                      options.userObject
+                    );
                   }
                 })
                 .catch(function (error) {
                   if (options.failureHandler) {
-                    options.failureHandler(error, options.userObject);
+                    options.failureHandler(
+                      error,
+                      options.userObject
+                    );
                   } else {
                     console.error(error);
                   }
@@ -2363,14 +2577,37 @@
       }
 
       window.google = window.google || {};
-      window.google.script = window.google.script || {};
+      window.google.script =
+        window.google.script || {};
 
-      Object.defineProperty(window.google.script, 'run', {
-        configurable: true,
-        get: function () {
-          return createRunner();
+      Object.defineProperty(
+        window.google.script,
+        'run',
+        {
+          configurable: true,
+          get: function () {
+            return createRunner();
+          }
         }
-      });
+      );
+
+      window.clearHansalmaeApiCache = function () {
+        try {
+          const keysToDelete = [];
+
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+
+            if (key && key.indexOf(CACHE_PREFIX) === 0) {
+              keysToDelete.push(key);
+            }
+          }
+
+          keysToDelete.forEach(function (key) {
+            localStorage.removeItem(key);
+          });
+        } catch (_error) {}
+      };
     })();
   </script>
 
@@ -7889,7 +8126,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=12')
+          .register('./service-worker.js?v=14')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
