@@ -436,6 +436,80 @@
       word-break: break-word;
     }
 
+
+    .retake-menu-wrap {
+      position: relative;
+    }
+
+    .retake-menu-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: auto;
+      margin: 0;
+    }
+
+    .retake-menu-button::after {
+      content: '▾';
+      font-size: 11px;
+      transition: transform .18s ease;
+    }
+
+    .retake-menu-wrap.open .retake-menu-button::after {
+      transform: rotate(180deg);
+    }
+
+    .retake-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 7px);
+      z-index: 60;
+      min-width: 210px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #ffffff;
+      box-shadow: 0 15px 38px rgba(55, 24, 43, .18);
+    }
+
+    .retake-menu-wrap.open .retake-dropdown {
+      display: grid;
+      gap: 5px;
+    }
+
+    .retake-dropdown button {
+      width: 100%;
+      margin: 0;
+      padding: 10px 11px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: left;
+      box-shadow: none;
+    }
+
+    .retake-dropdown button:hover:not(:disabled) {
+      background: #f8eaf2;
+      color: var(--primary);
+    }
+
+    @media (max-width: 600px) {
+      .retake-dropdown {
+        position: fixed;
+        left: 14px;
+        right: 14px;
+        top: auto;
+        bottom: 14px;
+        min-width: 0;
+        z-index: 200;
+      }
+    }
+
     .exam-actions {
       display: flex;
       justify-content: flex-end;
@@ -1664,6 +1738,39 @@ protect	보호하다"></textarea>
               <button type="button" class="danger-btn reminder-btn"
                 data-exam-id="${escapeHtml(examId)}"
                 ${cancelled ? 'disabled' : ''}>미완료 알림</button>
+
+              <div class="retake-menu-wrap">
+                <button type="button"
+                  class="outline-btn retake-menu-button"
+                  data-exam-id="${escapeHtml(examId)}"
+                  data-title="${escapeHtml(title)}"
+                  ${cancelled ? 'disabled' : ''}>
+                  재응시
+                </button>
+
+                <div class="retake-dropdown">
+                  <button type="button"
+                    class="retake-all-list-btn"
+                    data-exam-id="${escapeHtml(examId)}"
+                    data-title="${escapeHtml(title)}">
+                    전체 재응시
+                  </button>
+
+                  <button type="button"
+                    class="retake-below70-list-btn"
+                    data-exam-id="${escapeHtml(examId)}"
+                    data-title="${escapeHtml(title)}">
+                    70점 미만 재응시
+                  </button>
+
+                  <button type="button"
+                    class="retake-select-list-btn"
+                    data-exam-id="${escapeHtml(examId)}">
+                    학생 선택 재응시
+                  </button>
+                </div>
+              </div>
+
               <button type="button" class="danger-btn cancel-btn"
                 data-exam-id="${escapeHtml(examId)}"
                 data-title="${escapeHtml(title)}"
@@ -1693,12 +1800,121 @@ protect	보호하다"></textarea>
         );
       });
 
+      $$('.retake-menu-button').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+
+          const wrap = button.closest('.retake-menu-wrap');
+          const willOpen = !wrap.classList.contains('open');
+
+          closeAllRetakeMenus();
+
+          if (willOpen) {
+            wrap.classList.add('open');
+          }
+        });
+      });
+
+      $$('.retake-all-list-btn').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          closeAllRetakeMenus();
+          await requestRetakeAllFromList(
+            button.dataset.examId,
+            button.dataset.title
+          );
+        });
+      });
+
+      $$('.retake-below70-list-btn').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          closeAllRetakeMenus();
+          await requestRetakeBelow70FromList(
+            button.dataset.examId,
+            button.dataset.title
+          );
+        });
+      });
+
+      $$('.retake-select-list-btn').forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          closeAllRetakeMenus();
+          await showExamStatus(button.dataset.examId);
+        });
+      });
+
       $$('.cancel-btn').forEach((button) => {
         button.addEventListener('click', () =>
           cancelExam(button.dataset.examId, button.dataset.title)
         );
       });
     }
+
+
+    function closeAllRetakeMenus() {
+      $$('.retake-menu-wrap.open').forEach((wrap) => {
+        wrap.classList.remove('open');
+      });
+    }
+
+    async function requestRetakeAllFromList(examId, title) {
+      const ok = window.confirm(
+        `'${title || '선택한 시험'}' 대상 학생 전체에게 재응시 알림을 보낼까요?\n\n` +
+        '기존 최고점과 응시 기록은 유지됩니다.'
+      );
+
+      if (!ok) return;
+
+      try {
+        setLoading(true, '전체 재응시를 설정하는 중입니다.');
+
+        const result = await apiCall(
+          'teacherRequestRetakeAll',
+          examId
+        );
+
+        showToast(result.message, 'success');
+        await loadExamList();
+
+      } catch (error) {
+        showToast(error.message, 'error');
+
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function requestRetakeBelow70FromList(examId, title) {
+      const ok = window.confirm(
+        `'${title || '선택한 시험'}'에서 최고점이 70점 미만인 학생에게\n` +
+        '재응시 알림을 보낼까요?\n\n' +
+        '70점 이상 학생과 미응시 학생은 제외됩니다.'
+      );
+
+      if (!ok) return;
+
+      try {
+        setLoading(true, '70점 미만 학생을 처리하는 중입니다.');
+
+        const result = await apiCall(
+          'teacherRequestRetakeBelowScore',
+          examId,
+          70
+        );
+
+        showToast(result.message, 'success');
+        await loadExamList();
+
+      } catch (error) {
+        showToast(error.message, 'error');
+
+      } finally {
+        setLoading(false);
+      }
+    }
+
 
     async function showExamDetails(examId) {
       try {
@@ -2082,6 +2298,11 @@ protect	보호하다"></textarea>
         toast.classList.remove('show');
       }, 3300);
     }
+
+    document.addEventListener('click', () => {
+      closeAllRetakeMenus();
+    });
+
 
     function escapeHtml(value) {
       return String(value ?? '')
