@@ -2284,7 +2284,22 @@
       };
 
       const CACHE_PREFIX = 'hsmApiCacheV2:';
-      const REQUEST_TIMEOUT_MS = 30000;
+      const DEFAULT_REQUEST_TIMEOUT_MS = 45000;
+
+      function getRequestTimeoutMs(functionName) {
+        const longRequestTimeouts = {
+          studentSubmitTeacherExam: 180000,
+          teacherCreateExam: 180000,
+          saveTestResult: 120000,
+          addPersonalVocabularyToBook: 90000,
+          getMyLearning: 90000,
+          getWrongNotebook: 90000,
+          getPersonalVocabularyByBook: 90000
+        };
+
+        return longRequestTimeouts[functionName] ||
+          DEFAULT_REQUEST_TIMEOUT_MS;
+      }
 
       function makeError(message) {
         const error = new Error(
@@ -2420,11 +2435,14 @@
             ? new AbortController()
             : null;
 
+        const requestTimeoutMs =
+          getRequestTimeoutMs(functionName);
+
         const timeoutId = window.setTimeout(function () {
           if (controller) {
             controller.abort();
           }
-        }, REQUEST_TIMEOUT_MS);
+        }, requestTimeoutMs);
 
         const request = fetch(APPS_SCRIPT_API_URL, {
           method: 'POST',
@@ -2480,9 +2498,12 @@
           })
           .catch(function (error) {
             if (error && error.name === 'AbortError') {
-              throw makeError(
-                '서버 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.'
-              );
+              const timeoutMessage =
+                functionName === 'studentSubmitTeacherExam'
+                  ? '시험 제출 처리가 오래 걸리고 있습니다. 서버에는 제출되었을 수 있으므로 시험 목록을 새로 확인해주세요.'
+                  : '서버 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.';
+
+              throw makeError(timeoutMessage);
             }
 
             throw error;
@@ -8126,7 +8147,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=14')
+          .register('./service-worker.js?v=15')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -8646,8 +8667,15 @@ google.script.run
       }, 450);
     }
 
+    let teacherExamSubmitting_ = false;
+
     function submitAssignedTeacherExam_() {
       if (!teacherExamSession || !currentStudent) return;
+
+      if (teacherExamSubmitting_) {
+        alert('시험을 제출하고 있습니다. 잠시만 기다려주세요.');
+        return;
+      }
       const unanswered = teacherExamSession.questions.filter(function (q) {
         return !String(teacherExamAnswers[q.questionId] || '').trim();
       }).length;
@@ -8655,8 +8683,19 @@ google.script.run
       const answers = teacherExamSession.questions.map(function (q) {
         return { questionId: q.questionId, answer: String(teacherExamAnswers[q.questionId] || '') };
       });
+      teacherExamSubmitting_ = true;
+
+      const submitButtons = document.querySelectorAll(
+        '#teacherExamTakingScreen button'
+      );
+
+      submitButtons.forEach(function (button) {
+        button.disabled = true;
+      });
+
       google.script.run
         .withSuccessHandler(function (response) {
+          teacherExamSubmitting_ = false;
           const result = response && response.result ? response.result : (response || {});
           hideAllStudentMainScreens_();
           document.getElementById('teacherExamResultScreen').classList.remove('hidden');
@@ -8682,7 +8721,16 @@ google.script.run
           window.scrollTo({ top: 0, behavior: 'instant' });
         })
         .withFailureHandler(function (error) {
-          alert('시험 제출 중 오류가 발생했습니다.\n' + (error && error.message ? error.message : error));
+          teacherExamSubmitting_ = false;
+
+          submitButtons.forEach(function (button) {
+            button.disabled = false;
+          });
+
+          alert(
+            '시험 제출 중 오류가 발생했습니다.\n' +
+            (error && error.message ? error.message : error)
+          );
         })
         .studentSubmitTeacherExam({
           studentId: currentStudent.studentId,
