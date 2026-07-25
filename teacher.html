@@ -937,6 +937,46 @@
       cursor: pointer;
     }
 
+
+    .status-bulk-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin: 14px 0 18px;
+    }
+
+    .status-bulk-actions button {
+      width: auto;
+      margin: 0;
+    }
+
+    .mini-action-btn {
+      width: auto;
+      min-width: 68px;
+      margin: 0;
+      padding: 8px 11px;
+      border-radius: 10px;
+      border: 1px solid #8f145f;
+      background: #fff7fb;
+      color: #8f145f;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .mini-action-btn:hover:not(:disabled) {
+      background: #8f145f;
+      color: #ffffff;
+    }
+
+    .mini-action-btn:disabled {
+      border-color: #ddd4d9;
+      background: #f4f1f3;
+      color: #9a9096;
+      cursor: default;
+    }
+
   </style>
 </head>
 <body>
@@ -1147,6 +1187,18 @@ protect	보호하다"></textarea>
 
       <div id="statusSummary" class="summary-grid"></div>
 
+      <div class="status-bulk-actions">
+        <button id="retakeAllBtn" type="button" class="outline-btn">
+          전체 재응시
+        </button>
+        <button id="retakeBelow70Btn" type="button" class="outline-btn">
+          70점 미만 재응시
+        </button>
+        <button id="remindIncompleteBtn" type="button" class="outline-btn">
+          미응시 학생만 독촉
+        </button>
+      </div>
+
       <div style="overflow:auto;">
         <table class="status-table">
           <thead>
@@ -1160,6 +1212,7 @@ protect	보호하다"></textarea>
               <th>최고점</th>
               <th>정답/문제</th>
               <th>완료 일시</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody id="statusTableBody"></tbody>
@@ -1188,6 +1241,8 @@ protect	보호하다"></textarea>
       students: [],
       questionModes: []
     };
+
+    let currentStatusExamId = '';
 
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -1227,6 +1282,11 @@ protect	보호하다"></textarea>
       $('#examForm').addEventListener('submit', createExam);
       $('#refreshExamsBtn').addEventListener('click', loadExamList);
       $('#teacherLogoutBtn').addEventListener('click', teacherLogout);
+      $('#retakeAllBtn').addEventListener('click', requestRetakeAll);
+      $('#retakeBelow70Btn').addEventListener('click', requestRetakeBelow70);
+      $('#remindIncompleteBtn').addEventListener('click', () => {
+        if (currentStatusExamId) sendReminder(currentStatusExamId, true);
+      });
       $('#closeModalBtn').addEventListener('click', closeStatusModal);
       $('#closeDetailModalBtn').addEventListener('click', closeDetailModal);
 
@@ -1726,6 +1786,8 @@ protect	보호하다"></textarea>
     }
 
     async function showExamStatus(examId) {
+      currentStatusExamId = String(examId || '');
+
       try {
         setLoading(true, '응시 현황을 불러오는 중입니다.');
         const result = await apiCall('teacherGetExamStatus', examId);
@@ -1783,17 +1845,122 @@ protect	보호하다"></textarea>
                 <td>${escapeHtml(bestScore)}</td>
                 <td>${escapeHtml(correctText)}</td>
                 <td>${escapeHtml(formatDateTime(student['완료일시']))}</td>
+                <td>
+                  ${
+                    student['응시상태'] === '완료'
+                      ? `<button type="button"
+                           class="mini-action-btn student-retake-btn"
+                           data-student-id="${escapeHtml(student['학생ID'] || '')}"
+                           data-student-name="${escapeHtml(student['학생이름'] || '')}">
+                           재응시
+                         </button>`
+                      : `<button type="button"
+                           class="mini-action-btn student-reminder-btn"
+                           data-student-id="${escapeHtml(student['학생ID'] || '')}"
+                           disabled>
+                           ${student['응시상태'] === '시험중' ? '시험 중' : '미응시'}
+                         </button>`
+                  }
+                </td>
               </tr>
             `;
           }).join('')
-        : '<tr><td colspan="9" style="text-align:center;color:#77778a;">대상 학생이 없습니다.</td></tr>';
+        : '<tr><td colspan="10" style="text-align:center;color:#77778a;">대상 학생이 없습니다.</td></tr>';
+
+      $$('.student-retake-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          requestRetakeStudent(
+            button.dataset.studentId,
+            button.dataset.studentName
+          );
+        });
+      });
     }
 
-    async function sendReminder(examId) {
+    async function requestRetakeStudent(studentId, studentName) {
+      if (!currentStatusExamId || !studentId) return;
+
       const ok = window.confirm(
-        '완료하지 않은 학생에게 앱 내부 알림을 다시 보낼까요?'
+        `${studentName || '선택한 학생'}에게 재응시 알림을 보낼까요?\n\n` +
+        '기존 최고점과 응시 기록은 유지됩니다.'
       );
+
       if (!ok) return;
+
+      try {
+        setLoading(true, '재응시 알림을 보내는 중입니다.');
+        const result = await apiCall(
+          'teacherRequestRetakeStudent',
+          currentStatusExamId,
+          studentId
+        );
+        showToast(result.message, 'success');
+        await showExamStatus(currentStatusExamId);
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function requestRetakeAll() {
+      if (!currentStatusExamId) return;
+
+      const ok = window.confirm(
+        '시험 대상 학생 전체에게 재응시 알림을 보낼까요?\n\n' +
+        '기존 최고점과 응시 기록은 유지됩니다.'
+      );
+
+      if (!ok) return;
+
+      try {
+        setLoading(true, '전체 재응시를 설정하는 중입니다.');
+        const result = await apiCall(
+          'teacherRequestRetakeAll',
+          currentStatusExamId
+        );
+        showToast(result.message, 'success');
+        await showExamStatus(currentStatusExamId);
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function requestRetakeBelow70() {
+      if (!currentStatusExamId) return;
+
+      const ok = window.confirm(
+        '최고점이 70점 미만인 학생에게 재응시 알림을 보낼까요?\n\n' +
+        '70점 이상 학생과 미응시 학생은 제외됩니다.'
+      );
+
+      if (!ok) return;
+
+      try {
+        setLoading(true, '70점 미만 학생을 처리하는 중입니다.');
+        const result = await apiCall(
+          'teacherRequestRetakeBelowScore',
+          currentStatusExamId,
+          70
+        );
+        showToast(result.message, 'success');
+        await showExamStatus(currentStatusExamId);
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function sendReminder(examId, skipConfirm = false) {
+      if (!skipConfirm) {
+        const ok = window.confirm(
+          '완료하지 않은 학생에게 앱 내부 알림을 다시 보낼까요?'
+        );
+        if (!ok) return;
+      }
 
       try {
         setLoading(true, '알림을 생성하는 중입니다.');
@@ -1850,6 +2017,7 @@ protect	보호하다"></textarea>
 
     function closeStatusModal() {
       $('#statusModal').classList.remove('show');
+      currentStatusExamId = '';
     }
 
     function closeDetailModal() {
