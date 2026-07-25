@@ -23,6 +23,8 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#8f145f" />
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
   <!-- teacher retake inline menu v3 -->
 <style>
     :root {
@@ -1397,10 +1399,65 @@ protect	보호하다"></textarea>
       });
     }
 
+    const teacherApiInflight = new Map();
+    const teacherApiCache = new Map();
+    const TEACHER_API_TIMEOUT_MS = 30000;
+
+    const TEACHER_API_CACHE_TTL = {
+      teacherGetSetupData: 5 * 60 * 1000,
+      teacherListExams: 20 * 1000,
+      teacherGetExamDetails: 30 * 1000,
+      teacherGetExamStatus: 10 * 1000
+    };
+
+    function teacherApiKey(functionName, args) {
+      let serialized = '';
+
+      try {
+        serialized = JSON.stringify(args || []);
+      } catch (_error) {
+        serialized = String(args || '');
+      }
+
+      return functionName + '|' + serialized;
+    }
+
+    function clearTeacherReadCache() {
+      teacherApiCache.clear();
+    }
+
     async function apiCall(functionName, ...args) {
-      const response = await fetch(API_URL, {
+      const key = teacherApiKey(functionName, args);
+      const ttl = TEACHER_API_CACHE_TTL[functionName] || 0;
+      const cached = teacherApiCache.get(key);
+
+      if (
+        ttl > 0 &&
+        cached &&
+        Date.now() - cached.savedAt < ttl
+      ) {
+        return cached.value;
+      }
+
+      if (teacherApiInflight.has(key)) {
+        return teacherApiInflight.get(key);
+      }
+
+      const controller =
+        typeof AbortController !== 'undefined'
+          ? new AbortController()
+          : null;
+
+      const timeoutId = window.setTimeout(() => {
+        if (controller) {
+          controller.abort();
+        }
+      }, TEACHER_API_TIMEOUT_MS);
+
+      const request = fetch(API_URL, {
         method: 'POST',
         redirect: 'follow',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8'
         },
@@ -1408,33 +1465,64 @@ protect	보호하다"></textarea>
           action: 'call',
           functionName,
           args
+        }),
+        signal: controller ? controller.signal : undefined
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(
+              '서버 연결에 실패했습니다. HTTP ' +
+              response.status
+            );
+          }
+
+          const text = await response.text();
+          let envelope;
+
+          try {
+            envelope = JSON.parse(text);
+          } catch (_error) {
+            throw new Error(
+              '서버 응답을 읽을 수 없습니다.'
+            );
+          }
+
+          if (!envelope.success) {
+            throw new Error(
+              envelope.message ||
+              '서버 요청에 실패했습니다.'
+            );
+          }
+
+          const result = envelope.result;
+
+          if (ttl > 0) {
+            teacherApiCache.set(key, {
+              savedAt: Date.now(),
+              value: result
+            });
+          } else {
+            clearTeacherReadCache();
+          }
+
+          return result;
         })
-      });
+        .catch((error) => {
+          if (error && error.name === 'AbortError') {
+            throw new Error(
+              '서버 응답이 너무 늦습니다. 잠시 후 다시 시도해주세요.'
+            );
+          }
 
-      if (!response.ok) {
-        throw new Error('서버 연결에 실패했습니다. HTTP ' + response.status);
-      }
+          throw error;
+        })
+        .finally(() => {
+          window.clearTimeout(timeoutId);
+          teacherApiInflight.delete(key);
+        });
 
-      const text = await response.text();
-      let envelope;
-
-      try {
-        envelope = JSON.parse(text);
-      } catch (error) {
-        throw new Error('서버 응답을 읽을 수 없습니다.');
-      }
-
-      if (!envelope.success) {
-        throw new Error(envelope.message || '서버 요청에 실패했습니다.');
-      }
-
-      const result = envelope.result;
-
-      if (result && result.success === false) {
-        throw new Error(result.message || '요청 처리에 실패했습니다.');
-      }
-
-      return result;
+      teacherApiInflight.set(key, request);
+      return request;
     }
 
     function renderSetupData() {
