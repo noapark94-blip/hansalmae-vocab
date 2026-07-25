@@ -950,6 +950,10 @@
         </div>
       </div>
 
+      <button id="teacherLogoutBtn" class="ghost-btn" type="button" style="width:auto;margin:0 0 10px auto;display:block;">
+        로그아웃
+      </button>
+
       <nav class="tabs" aria-label="관리 메뉴">
         <button class="tab-btn active" data-tab="createPanel">시험 만들기</button>
         <button class="tab-btn" data-tab="listPanel">시험 목록</button>
@@ -1148,11 +1152,14 @@ protect	보호하다"></textarea>
           <thead>
             <tr>
               <th>학생</th>
+              <th>아이디</th>
               <th>학년</th>
               <th>상태</th>
               <th>응시 회차</th>
+              <th>최근 점수</th>
               <th>최고점</th>
-              <th>확인</th>
+              <th>정답/문제</th>
+              <th>완료 일시</th>
             </tr>
           </thead>
           <tbody id="statusTableBody"></tbody>
@@ -1219,6 +1226,7 @@ protect	보호하다"></textarea>
       $('#clearAllBtn').addEventListener('click', clearAllStudents);
       $('#examForm').addEventListener('submit', createExam);
       $('#refreshExamsBtn').addEventListener('click', loadExamList);
+      $('#teacherLogoutBtn').addEventListener('click', teacherLogout);
       $('#closeModalBtn').addEventListener('click', closeStatusModal);
       $('#closeDetailModalBtn').addEventListener('click', closeDetailModal);
 
@@ -1748,17 +1756,37 @@ protect	보호하다"></textarea>
       const students = result.students || [];
 
       $('#statusTableBody').innerHTML = students.length
-        ? students.map((student) => `
-            <tr>
-              <td>${escapeHtml(student['학생이름'] || '-')}</td>
-              <td>${escapeHtml(student['학년'] || '-')}</td>
-              <td>${escapeHtml(student['응시상태'] || '미응시')}</td>
-              <td>${escapeHtml(student['응시회차'] || 0)}</td>
-              <td>${escapeHtml(student['최고점'] === '' ? '-' : student['최고점'])}</td>
-              <td>${student['선생님확인'] === true ? '확인' : '-'}</td>
-            </tr>
-          `).join('')
-        : '<tr><td colspan="6" style="text-align:center;color:#77778a;">대상 학생이 없습니다.</td></tr>';
+        ? students.map((student) => {
+            const latestScore =
+              student['최근점수'] === '' || student['최근점수'] == null
+                ? '-'
+                : `${student['최근점수']}점`;
+
+            const bestScore =
+              student['최고점'] === '' || student['최고점'] == null
+                ? '-'
+                : `${student['최고점']}점`;
+
+            const correctText =
+              student['문제수'] === '' || student['문제수'] == null
+                ? '-'
+                : `${student['정답수'] || 0}/${student['문제수'] || 0}`;
+
+            return `
+              <tr>
+                <td><strong>${escapeHtml(student['학생이름'] || '-')}</strong></td>
+                <td>${escapeHtml(student['학생ID'] || '-')}</td>
+                <td>${escapeHtml(student['학년'] || '미입력')}</td>
+                <td>${escapeHtml(student['응시상태'] || '미응시')}</td>
+                <td>${escapeHtml(student['응시회차'] || 0)}회</td>
+                <td>${escapeHtml(latestScore)}</td>
+                <td>${escapeHtml(bestScore)}</td>
+                <td>${escapeHtml(correctText)}</td>
+                <td>${escapeHtml(formatDateTime(student['완료일시']))}</td>
+              </tr>
+            `;
+          }).join('')
+        : '<tr><td colspan="9" style="text-align:center;color:#77778a;">대상 학생이 없습니다.</td></tr>';
     }
 
     async function sendReminder(examId) {
@@ -1777,6 +1805,34 @@ protect	보호하다"></textarea>
         setLoading(false);
       }
     }
+
+    function formatDateTime(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+
+      return date.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function teacherLogout() {
+      const ok = window.confirm('선생님 페이지에서 로그아웃할까요?');
+      if (!ok) return;
+
+      try {
+        sessionStorage.clear();
+        localStorage.removeItem('teacherAuthenticated');
+        localStorage.removeItem('adminAuthenticated');
+      } catch (ignore) {}
+
+      window.location.href = './index.html';
+    }
+
 
     function openTab(panelId) {
       $$('.tab-btn').forEach((button) => {
