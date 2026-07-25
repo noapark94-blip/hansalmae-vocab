@@ -2897,7 +2897,10 @@
             <div id="teacherExamProgress" style="color:#806c77;font-size:14px;"></div>
             <h2 id="teacherExamTitle" style="margin:5px 0 0;"></h2>
           </div>
-          <button type="button" class="secondary-button" style="width:auto;margin:0;" onclick="leaveTeacherExamView()">목록으로</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            <button type="button" class="secondary-button" style="width:auto;margin:0;" onclick="leaveTeacherExamView()">나갔다가 이어보기</button>
+            <button type="button" class="test-exit-button" style="width:auto;margin:0;" onclick="stopAssignedTeacherExam()">그만보기</button>
+          </div>
         </div>
         <div id="teacherExamQuestionArea" class="teacher-exam-question" style="margin-top:18px;"></div>
         <button id="teacherExamNextButton" type="button" onclick="nextTeacherExamQuestion()">다음 문제</button>
@@ -6312,6 +6315,8 @@
         return [
           '<article class="assigned-exam-card">',
           '<h3 class="assigned-exam-title">' + escapeTeacherExamHtml(exam.title || '단어시험') + '</h3>',
+          '<div style="margin-top:-2px;color:#8f145f;font-weight:800;">출제: ' +
+            escapeTeacherExamHtml(exam.creator || '관리자') + ' 선생님</div>',
           '<div class="assigned-exam-meta">',
           '<span>' + escapeTeacherExamHtml(String(exam.questionCount || 0)) + '문제</span>',
           '<span>기준 ' + escapeTeacherExamHtml(String(exam.passingScore || 80)) + '점</span>',
@@ -6340,8 +6345,17 @@
           }
 
           teacherExamSession = result;
-          teacherExamAnswers = {};
-          teacherExamIndex = 0;
+          teacherExamAnswers =
+            result.answers && typeof result.answers === 'object'
+              ? result.answers
+              : {};
+          teacherExamIndex = Math.max(
+            0,
+            Math.min(
+              Number(result.currentIndex) || 0,
+              Math.max(0, (result.questions || []).length - 1)
+            )
+          );
 
           hideMainLearningScreensForAssignedExam();
           document.getElementById('assignedExamScreen').classList.add('hidden');
@@ -6379,22 +6393,21 @@
           escapeTeacherExamHtml(question.example) + '</div>';
       }
 
-      if (question.mode === 'example' && Array.isArray(question.options)) {
+      if (Array.isArray(question.options) && question.options.length) {
         html += '<div class="teacher-exam-options">';
-        question.options.forEach(function (option) {
+        question.options.forEach(function (option, optionIndex) {
           const selected = teacherExamAnswers[question.questionId] === option;
+          const safeQuestionId = JSON.stringify(String(question.questionId));
+          const safeOption = JSON.stringify(String(option)).replace(/</g, '\u003c');
+
           html += '<button type="button" class="teacher-exam-option ' +
             (selected ? 'selected' : '') +
-            '" onclick="selectTeacherExamOption(\'' +
-            escapeTeacherExamAttr(question.questionId) + '\',\'' +
-            escapeTeacherExamAttr(option) + '\')">' +
+            '" onclick=\'selectTeacherExamOption(' +
+            safeQuestionId + ',' + safeOption + ')\'>' +
+            '<strong style="margin-right:8px;">' + (optionIndex + 1) + '.</strong>' +
             escapeTeacherExamHtml(option) + '</button>';
         });
         html += '</div>';
-      } else {
-        html += '<input id="teacherExamAnswerInput" class="teacher-exam-input" type="text" ' +
-          'autocomplete="off" placeholder="정답을 입력하세요." value="' +
-          escapeTeacherExamAttr(teacherExamAnswers[question.questionId] || '') + '">';
       }
 
       area.innerHTML = html;
@@ -6404,6 +6417,7 @@
 
     function selectTeacherExamOption(questionId, option) {
       teacherExamAnswers[questionId] = option;
+      saveAssignedTeacherExamProgress();
       renderTeacherExamQuestion();
     }
 
@@ -6428,6 +6442,7 @@
 
       if (teacherExamIndex < teacherExamSession.questions.length - 1) {
         teacherExamIndex++;
+        saveAssignedTeacherExamProgress();
         renderTeacherExamQuestion();
         window.scrollTo(0, 0);
         return;
@@ -6474,9 +6489,68 @@
         showAssignedExams();
         return;
       }
-      if (window.confirm('시험 목록으로 돌아갈까요?\n입력한 답은 아직 제출되지 않습니다.')) {
+
+      saveAssignedTeacherExamProgress(function () {
         showAssignedExams();
+      });
+    }
+
+    function saveAssignedTeacherExamProgress(afterSave) {
+      if (!teacherExamSession || !teacherExamSession.exam || !currentStudent) {
+        if (typeof afterSave === 'function') afterSave();
+        return;
       }
+
+      const progress = {
+        exam: teacherExamSession.exam,
+        questions: teacherExamSession.questions || [],
+        answers: teacherExamAnswers || {},
+        currentIndex: teacherExamIndex
+      };
+
+      google.script.run
+        .withSuccessHandler(function () {
+          if (typeof afterSave === 'function') afterSave();
+        })
+        .withFailureHandler(function () {
+          if (typeof afterSave === 'function') afterSave();
+        })
+        .studentSaveTeacherExamProgress(
+          currentStudent.studentId,
+          teacherExamSession.exam.examId,
+          progress
+        );
+    }
+
+    function stopAssignedTeacherExam() {
+      if (!teacherExamSession || !teacherExamSession.exam) {
+        showAssignedExams();
+        return;
+      }
+
+      const ok = window.confirm(
+        '이 시험을 그만볼까요?\n\n현재 선택한 답과 이어보기 기록이 모두 삭제됩니다.'
+      );
+
+      if (!ok) return;
+
+      google.script.run
+        .withSuccessHandler(function () {
+          teacherExamSession = null;
+          teacherExamAnswers = {};
+          teacherExamIndex = 0;
+          showAssignedExams();
+        })
+        .withFailureHandler(function (error) {
+          alert(
+            '시험을 그만보지 못했습니다.\n' +
+            (error && error.message ? error.message : error)
+          );
+        })
+        .studentStopTeacherExam(
+          currentStudent.studentId,
+          teacherExamSession.exam.examId
+        );
     }
 
     function loadAssignedExamNotifications() {
