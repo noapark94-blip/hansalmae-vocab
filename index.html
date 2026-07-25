@@ -440,30 +440,6 @@
       font-weight: normal;
     }
 
-    .test-exit-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 18px;
-    }
-
-    .test-exit-button {
-      width: auto;
-      min-width: 130px;
-      margin: 0;
-      padding: 12px 18px;
-      border: 1px solid #ebc7d9;
-      background: linear-gradient(180deg, #fff8fb, #f5e6ee);
-      color: #7d1655;
-      box-shadow: none;
-      font-size: 16px;
-    }
-
-    .test-exit-button:hover {
-      background: #f1dce7;
-      color: #4d1237;
-      box-shadow: none;
-    }
-
     /* 결과 화면 */
 
     .result-score {
@@ -2031,10 +2007,8 @@
       }
 
       .topbar {
-        position: static;
-        top: auto;
+        top: 6px;
         border-radius: 18px;
-        margin-bottom: 14px;
       }
 
       .topbar-title {
@@ -2042,31 +2016,11 @@
       }
 
       .topbar-menu {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 3px 2px 7px;
-        scroll-snap-type: x proximity;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-
-      .topbar-menu::-webkit-scrollbar {
-        display: none;
-      }
-
-      .topbar-menu button {
-        flex: 0 0 auto;
-        width: auto;
-        min-width: max-content;
-        padding: 10px 14px;
-        margin: 0;
-        font-size: 14px;
-        scroll-snap-align: start;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .topbar-menu .logout-button {
-        grid-column: auto;
+        grid-column: 1 / -1;
       }
 
       .question {
@@ -2227,178 +2181,56 @@
       }
     }
 
+  
 
-    /* 선생님 배정 시험 및 알림 */
-    .assigned-alert {
-      display: none;
-      margin: 14px 0;
-      padding: 14px 16px;
-      border: 1px solid #e6bfd3;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #fff7fb, #f5e4ed);
-      color: #651446;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(101, 20, 70, 0.08);
+    /* 다중 나만의 단어장 */
+    .book-manager {
+      margin: 16px 0 20px;
+      padding: 16px;
+      border: 1px solid #e2e6ee;
+      border-radius: 15px;
+      background: #f8faff;
     }
-
-    .assigned-alert.show {
+    .book-select-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      align-items: end;
+      gap: 10px;
     }
-
-    .assigned-alert-count {
-      flex: 0 0 auto;
-      min-width: 28px;
-      height: 28px;
-      padding: 0 8px;
-      border-radius: 999px;
-      background: #8f145f;
-      color: white;
-      font-weight: 800;
-      line-height: 28px;
-      text-align: center;
+    .book-select-row > div { flex: 1; }
+    .book-select-row label { margin-top: 0; }
+    .book-select-row button {
+      width: auto;
+      min-width: 110px;
+      margin: 0;
+      padding: 14px 13px;
+      font-size: 15px;
     }
-
-    .assigned-exam-list {
-      display: grid;
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .assigned-exam-card {
-      padding: 18px;
-      border: 1px solid #ead6e1;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 8px 20px rgba(79,18,55,.06);
-    }
-
-    .assigned-exam-title {
-      margin: 0 0 8px;
-      color: #4d1237;
-      font-size: 19px;
-      font-weight: 900;
-    }
-
-    .assigned-exam-meta {
+    .book-action-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin: 10px 0 14px;
-      color: #806c77;
+      gap: 9px;
+      margin-top: 10px;
+    }
+    .book-action-row button {
+      width: auto;
+      margin: 0;
+      padding: 10px 13px;
       font-size: 14px;
     }
-
-    .assigned-exam-meta span {
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: #f7e9f0;
-    }
-
-    .assigned-exam-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .teacher-exam-question {
-      padding: 22px;
-      border: 1px solid #ead6e1;
+    .personal-book-label {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 5px 10px;
       border-radius: 20px;
-      background: white;
+      background: #eef2fb;
+      color: #285aca;
+      font-size: 13px;
+      font-weight: bold;
     }
-
-    .teacher-exam-input {
-      width: 100%;
-      min-height: 52px;
-      margin-top: 16px;
-      padding: 12px 14px;
-      border: 1px solid #ead6e1;
-      border-radius: 14px;
-      font-size: 17px;
-    }
-
-    .teacher-exam-options {
-      display: grid;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .teacher-exam-option {
-      width: 100%;
-      margin: 0;
-      padding: 14px;
-      border: 1px solid #ead6e1;
-      background: #fffafd;
-      color: #4d1237;
-      box-shadow: none;
-      text-align: left;
-    }
-
-    .teacher-exam-option.selected {
-      border-color: #8f145f;
-      background: #f3dce8;
-    }
-
-    .notification-modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 5000;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(42, 18, 33, .48);
-    }
-
-    .notification-modal-backdrop.show {
-      display: flex;
-    }
-
-    .notification-modal {
-      width: min(520px, 100%);
-      max-height: 80vh;
-      overflow: auto;
-      padding: 20px;
-      border-radius: 22px;
-      background: white;
-      box-shadow: 0 24px 60px rgba(42,18,33,.25);
-    }
-
-    .notification-modal-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .notification-close {
-      width: 42px;
-      height: 42px;
-      margin: 0;
-      padding: 0;
-      border-radius: 50%;
-      background: #f7e9f0;
-      color: #651446;
-      box-shadow: none;
-      font-size: 24px;
-      line-height: 42px;
-    }
-
-    .notification-item {
-      padding: 14px;
-      border: 1px solid #ead6e1;
-      border-radius: 14px;
-      margin-top: 10px;
-      background: #fffafd;
-    }
-
-    .notification-item.unread {
-      border-color: #d998ba;
-      background: #f9eaf2;
+    @media (max-width: 650px) {
+      .book-select-row { align-items: stretch; flex-direction: column; }
+      .book-select-row button { width: 100%; }
+      .book-action-row { display: grid; grid-template-columns: 1fr 1fr; }
+      .book-action-row button { width: 100%; }
     }
 
   </style>
@@ -2833,14 +2665,6 @@
           </button>
 
           <button
-            id="assignedExamMenuButton"
-            class="menu-button"
-            onclick="showAssignedExams()"
-          >
-            선생님 시험
-          </button>
-
-          <button
             id="vocabMenuButton"
             class="menu-button"
             onclick="showVocabHome()"
@@ -2871,39 +2695,6 @@
             로그아웃
           </button>
         </div>
-      </div>
-
-
-      <div id="assignedNotificationAlert" class="assigned-alert" onclick="openNotificationModal()">
-        <div>
-          <strong>🔔 새 시험 알림</strong>
-          <div id="assignedNotificationText" style="margin-top:4px;font-size:14px;">
-            선생님이 등록한 시험이 있습니다.
-          </div>
-        </div>
-        <span id="assignedNotificationCount" class="assigned-alert-count">0</span>
-      </div>
-
-      <div id="assignedExamScreen" class="card hidden">
-        <h2>선생님이 출제한 시험</h2>
-        <p style="color:#806c77;">배정받은 시험을 여기서 확인하고 응시할 수 있습니다.</p>
-        <div id="assignedExamLoading" class="loading"></div>
-        <div id="assignedExamList" class="assigned-exam-list"></div>
-      </div>
-
-      <div id="teacherExamTakingScreen" class="card hidden">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-          <div>
-            <div id="teacherExamProgress" style="color:#806c77;font-size:14px;"></div>
-            <h2 id="teacherExamTitle" style="margin:5px 0 0;"></h2>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-            <button type="button" class="secondary-button" style="width:auto;margin:0;" onclick="leaveTeacherExamView()">나갔다가 이어보기</button>
-            <button type="button" class="test-exit-button" style="width:auto;margin:0;" onclick="stopAssignedTeacherExam()">그만보기</button>
-          </div>
-        </div>
-        <div id="teacherExamQuestionArea" class="teacher-exam-question" style="margin-top:18px;"></div>
-        <button id="teacherExamNextButton" type="button" onclick="nextTeacherExamQuestion()">다음 문제</button>
       </div>
 
 
@@ -3044,16 +2835,6 @@
           id="feedback"
           class="feedback"
         ></div>
-
-        <div class="test-exit-row">
-          <button
-            type="button"
-            class="test-exit-button"
-            onclick="stopCurrentTest()"
-          >
-            그만보기
-          </button>
-        </div>
       </div>
 
 
@@ -3416,6 +3197,20 @@
           </div>
         </div>
 
+        <div class="book-manager">
+          <div class="book-select-row">
+            <div>
+              <label for="personalBookSelect">내 단어장</label>
+              <select id="personalBookSelect" onchange="changePersonalBook()"></select>
+            </div>
+            <button onclick="createNewPersonalBook()">＋ 새 단어장</button>
+          </div>
+          <div class="book-action-row">
+            <button class="secondary-button" onclick="renameCurrentPersonalBook()">이름 변경</button>
+            <button class="danger-button" onclick="deleteCurrentPersonalBook()">단어장 삭제</button>
+          </div>
+        </div>
+
         <div class="personal-toolbar">
           <button onclick="showPersonalTestSetup()">
             📝 암기할 단어 시험보기
@@ -3604,17 +3399,6 @@
   </div>
 
 
-
-  <div id="notificationModal" class="notification-modal-backdrop">
-    <div class="notification-modal">
-      <div class="notification-modal-head">
-        <h2 style="margin:0;">시험 알림</h2>
-        <button type="button" class="notification-close" onclick="closeNotificationModal()" aria-label="닫기">×</button>
-      </div>
-      <div id="notificationList"></div>
-    </div>
-  </div>
-
   <script>
     let sheetNamesCache = [];
 
@@ -3644,6 +3428,8 @@
     let wrongNotebookFilter = 'active';
 
     let personalVocabularyWords = [];
+    let personalVocabularyBooks = [];
+    let selectedPersonalBookId = '';
     let smartReviewWords = [];
 
     let currentTestContext = {
@@ -3985,27 +3771,7 @@
     }
 
 
-    function verifyTeacherCode(code) {
-      return new Promise(function (resolve, reject) {
-        google.script.run
-          .withSuccessHandler(function (result) {
-            resolve(Boolean(result));
-          })
-          .withFailureHandler(function (error) {
-            reject(
-              new Error(
-                error && error.message
-                  ? error.message
-                  : '관리자 확인 서버에 연결하지 못했습니다.'
-              )
-            );
-          })
-          .checkAdminCode(code);
-      });
-    }
-
-
-    async function submitTeacherLogin() {
+    function submitTeacherLogin() {
       const codeInput = document.getElementById('teacherAdminCode');
       const button = document.getElementById('teacherLoginButton');
       const message = document.getElementById('teacherLoginMessage');
@@ -4020,28 +3786,29 @@
       button.disabled = true;
       message.textContent = '관리자 코드를 확인하는 중입니다.';
 
-      try {
-        const isValid = await verifyTeacherCode(code);
+      google.script.run
+        .withSuccessHandler(function (result) {
+          button.disabled = false;
 
-        if (!isValid) {
+          if (result !== true) {
+            message.textContent = '관리자 코드가 올바르지 않습니다.';
+            codeInput.value = '';
+            codeInput.focus();
+            return;
+          }
+
+          message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
+          sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
+          window.location.href = './teacher.html';
+        })
+        .withFailureHandler(function (error) {
+          button.disabled = false;
           message.textContent =
-            '관리자 코드가 올바르지 않습니다.';
-          codeInput.value = '';
-          codeInput.focus();
-          return;
-        }
-
-        message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
-        sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
-        window.location.href = './teacher.html';
-      } catch (error) {
-        message.textContent =
-          error && error.message
-            ? error.message
-            : '관리자 코드를 확인하지 못했습니다.';
-      } finally {
-        button.disabled = false;
-      }
+            error && error.message
+              ? error.message
+              : '관리자 코드를 확인하지 못했습니다.';
+        })
+        .checkAdminCode(code);
     }
 
 
@@ -4414,10 +4181,6 @@
 
       currentStudent = student;
 
-      setTimeout(function () {
-        loadAssignedExamNotifications();
-      }, 250);
-
       document
         .getElementById('studentName')
         .value =
@@ -4635,46 +4398,42 @@
 
     function showTestHome() {
       hideExtraStudyScreens();
+      document
+        .getElementById('wrongNotebookScreen')
+        .classList
+        .add('hidden');
 
-      [
-        'wrongNotebookScreen',
-        'myPageScreen',
-        'vocabScreen',
-        'rankingScreen',
-        'personalVocabularyScreen',
-        'personalTestSetupScreen',
-        'smartReviewScreen',
-        'wrongTestSetupScreen'
-      ].forEach(function (id) {
-        const element = document.getElementById(id);
-        if (element) {
-          element.classList.add('hidden');
-        }
-      });
+      document
+        .getElementById('myPageScreen')
+        .classList
+        .add('hidden');
 
       setActiveMenu('test');
 
-      const hasActiveTest =
-        Array.isArray(questions) &&
-        questions.length > 0 &&
-        Number.isInteger(currentIndex) &&
-        currentIndex >= 0 &&
-        currentIndex < questions.length;
+      document
+        .getElementById('vocabScreen')
+        .classList
+        .add('hidden');
 
-      if (hasActiveTest) {
-        document.getElementById('startScreen').classList.add('hidden');
-        document.getElementById('resultScreen').classList.add('hidden');
-        document.getElementById('testScreen').classList.remove('hidden');
-      } else if (
-        !document.getElementById('resultScreen').classList.contains('hidden')
-      ) {
-        document.getElementById('startScreen').classList.add('hidden');
-        document.getElementById('testScreen').classList.add('hidden');
-      } else {
-        document.getElementById('testScreen').classList.add('hidden');
-        document.getElementById('resultScreen').classList.add('hidden');
-        document.getElementById('startScreen').classList.remove('hidden');
-      }
+      document
+        .getElementById('rankingScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('testScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('resultScreen')
+        .classList
+        .add('hidden');
+
+      document
+        .getElementById('startScreen')
+        .classList
+        .remove('hidden');
 
       window.scrollTo(0, 0);
     }
@@ -6243,434 +6002,10 @@
     }
 
 
-
-    let assignedExamData = [];
-    let teacherExamSession = null;
-    let teacherExamAnswers = {};
-    let teacherExamIndex = 0;
-    let assignedNotifications = [];
-
-    function hideMainLearningScreensForAssignedExam() {
-      [
-        'startScreen', 'testScreen', 'resultScreen', 'vocabScreen',
-        'rankingScreen', 'myPageScreen', 'wrongNotebookScreen',
-        'personalVocabularyScreen', 'personalTestSetupScreen',
-        'smartReviewScreen', 'wrongTestSetupScreen'
-      ].forEach(function (id) {
-        const element = document.getElementById(id);
-        if (element) element.classList.add('hidden');
-      });
-    }
-
-    function showAssignedExams() {
-      hideExtraStudyScreens();
-      hideMainLearningScreensForAssignedExam();
-      document.getElementById('teacherExamTakingScreen').classList.add('hidden');
-      document.getElementById('assignedExamScreen').classList.remove('hidden');
-      setActiveMenu('assigned');
-      loadAssignedExams();
-      window.scrollTo(0, 0);
-    }
-
-    function loadAssignedExams() {
-      if (!currentStudent || !currentStudent.studentId) return;
-
-      const loading = document.getElementById('assignedExamLoading');
-      loading.textContent = '배정된 시험을 불러오는 중입니다.';
-
-      google.script.run
-        .withSuccessHandler(function (result) {
-          loading.textContent = '';
-          assignedExamData = result && Array.isArray(result.exams)
-            ? result.exams
-            : [];
-          renderAssignedExams();
-        })
-        .withFailureHandler(function (error) {
-          loading.textContent = '';
-          alert('시험 목록을 불러오지 못했습니다.\n' +
-            (error && error.message ? error.message : error));
-        })
-        .studentGetAssignedExams(currentStudent.studentId);
-    }
-
-    function renderAssignedExams() {
-      const list = document.getElementById('assignedExamList');
-
-      if (!assignedExamData.length) {
-        list.innerHTML = '<div style="padding:28px;text-align:center;color:#806c77;">현재 배정된 시험이 없습니다.</div>';
-        return;
-      }
-
-      list.innerHTML = assignedExamData.map(function (exam) {
-        const disabled = exam.availability !== '응시가능';
-        const label = exam.availability === '완료'
-          ? '응시 완료'
-          : exam.availability === '마감'
-            ? '마감됨'
-            : exam.availability === '시작전'
-              ? '시작 전'
-              : (exam.status === '완료' ? '재시험 보기' : '시험 보기');
-
-        return [
-          '<article class="assigned-exam-card">',
-          '<h3 class="assigned-exam-title">' + escapeTeacherExamHtml(exam.title || '단어시험') + '</h3>',
-          '<div style="margin-top:-2px;color:#8f145f;font-weight:800;">출제: ' +
-            escapeTeacherExamHtml(exam.creator || '관리자') + ' 선생님</div>',
-          '<div class="assigned-exam-meta">',
-          '<span>' + escapeTeacherExamHtml(String(exam.questionCount || 0)) + '문제</span>',
-          '<span>기준 ' + escapeTeacherExamHtml(String(exam.passingScore || 80)) + '점</span>',
-          '<span>' + escapeTeacherExamHtml(exam.status || '미응시') + '</span>',
-          exam.bestScore !== null ? '<span>최고 ' + escapeTeacherExamHtml(String(exam.bestScore)) + '점</span>' : '',
-          exam.deadlineAt ? '<span>마감 ' + escapeTeacherExamHtml(formatTeacherExamDate(exam.deadlineAt)) + '</span>' : '',
-          '</div>',
-          '<div class="assigned-exam-actions">',
-          '<button type="button" ' + (disabled ? 'disabled' : '') +
-            ' onclick="startAssignedTeacherExam(\'' + escapeTeacherExamAttr(exam.examId) + '\')">' +
-            escapeTeacherExamHtml(label) + '</button>',
-          '</div>',
-          '</article>'
-        ].join('');
-      }).join('');
-    }
-
-    function startAssignedTeacherExam(examId) {
-      if (!currentStudent || !currentStudent.studentId) return;
-
-      google.script.run
-        .withSuccessHandler(function (result) {
-          if (!result || !result.success) {
-            alert(result && result.message ? result.message : '시험을 시작하지 못했습니다.');
-            return;
-          }
-
-          teacherExamSession = result;
-          teacherExamAnswers =
-            result.answers && typeof result.answers === 'object'
-              ? result.answers
-              : {};
-          teacherExamIndex = Math.max(
-            0,
-            Math.min(
-              Number(result.currentIndex) || 0,
-              Math.max(0, (result.questions || []).length - 1)
-            )
-          );
-
-          hideMainLearningScreensForAssignedExam();
-          document.getElementById('assignedExamScreen').classList.add('hidden');
-          document.getElementById('teacherExamTakingScreen').classList.remove('hidden');
-          document.getElementById('teacherExamTitle').textContent =
-            result.exam && result.exam.title ? result.exam.title : '선생님 시험';
-          renderTeacherExamQuestion();
-          window.scrollTo(0, 0);
-        })
-        .withFailureHandler(function (error) {
-          alert('시험을 시작하지 못했습니다.\n' +
-            (error && error.message ? error.message : error));
-        })
-        .studentStartTeacherExam(currentStudent.studentId, examId);
-    }
-
-    function renderTeacherExamQuestion() {
-      if (!teacherExamSession || !Array.isArray(teacherExamSession.questions)) return;
-
-      const questions = teacherExamSession.questions;
-      const question = questions[teacherExamIndex];
-      const area = document.getElementById('teacherExamQuestionArea');
-      const nextButton = document.getElementById('teacherExamNextButton');
-
-      document.getElementById('teacherExamProgress').textContent =
-        (teacherExamIndex + 1) + ' / ' + questions.length;
-
-      let html = '<div style="font-size:14px;color:#806c77;margin-bottom:8px;">문제 ' +
-        (teacherExamIndex + 1) + '</div>';
-      html += '<div style="font-size:24px;font-weight:900;color:#4d1237;line-height:1.45;">' +
-        escapeTeacherExamHtml(question.prompt || '') + '</div>';
-
-      if (question.example) {
-        html += '<div style="margin-top:14px;padding:14px;border-radius:14px;background:#f7e9f0;line-height:1.6;">' +
-          escapeTeacherExamHtml(question.example) + '</div>';
-      }
-
-      if (Array.isArray(question.options) && question.options.length) {
-        html += '<div class="teacher-exam-options">';
-        question.options.forEach(function (option, optionIndex) {
-          const selected = teacherExamAnswers[question.questionId] === option;
-          const safeQuestionId = JSON.stringify(String(question.questionId));
-          const safeOption = JSON.stringify(String(option)).replace(/</g, '\u003c');
-
-          html += '<button type="button" class="teacher-exam-option ' +
-            (selected ? 'selected' : '') +
-            '" onclick=\'selectTeacherExamOption(' +
-            safeQuestionId + ',' + safeOption + ')\'>' +
-            '<strong style="margin-right:8px;">' + (optionIndex + 1) + '.</strong>' +
-            escapeTeacherExamHtml(option) + '</button>';
-        });
-        html += '</div>';
-      }
-
-      area.innerHTML = html;
-      nextButton.textContent =
-        teacherExamIndex === questions.length - 1 ? '시험 제출하기' : '다음 문제';
-    }
-
-    function selectTeacherExamOption(questionId, option) {
-      teacherExamAnswers[questionId] = option;
-      saveAssignedTeacherExamProgress();
-      renderTeacherExamQuestion();
-    }
-
-    function saveCurrentTeacherExamAnswer() {
-      if (!teacherExamSession) return;
-      const question = teacherExamSession.questions[teacherExamIndex];
-      const input = document.getElementById('teacherExamAnswerInput');
-      if (input) {
-        teacherExamAnswers[question.questionId] = input.value.trim();
-      }
-    }
-
-    function nextTeacherExamQuestion() {
-      if (!teacherExamSession) return;
-
-      saveCurrentTeacherExamAnswer();
-      const question = teacherExamSession.questions[teacherExamIndex];
-      if (!teacherExamAnswers[question.questionId]) {
-        alert('정답을 입력하거나 선택해주세요.');
-        return;
-      }
-
-      if (teacherExamIndex < teacherExamSession.questions.length - 1) {
-        teacherExamIndex++;
-        saveAssignedTeacherExamProgress();
-        renderTeacherExamQuestion();
-        window.scrollTo(0, 0);
-        return;
-      }
-
-      submitAssignedTeacherExam();
-    }
-
-    function submitAssignedTeacherExam() {
-      if (!window.confirm('시험을 제출할까요? 제출 후 채점됩니다.')) return;
-
-      const answers = teacherExamSession.questions.map(function (question) {
-        return {
-          questionId: question.questionId,
-          answer: teacherExamAnswers[question.questionId] || ''
-        };
-      });
-
-      const payload = {
-        studentId: currentStudent.studentId,
-        examId: teacherExamSession.exam.examId,
-        attempt: teacherExamSession.exam.attempt,
-        answers: answers
-      };
-
-      google.script.run
-        .withSuccessHandler(function (result) {
-          const score = result && result.result ? result.result.score : 0;
-          alert('시험이 제출되었습니다.\n점수: ' + score + '점');
-          teacherExamSession = null;
-          teacherExamAnswers = {};
-          showAssignedExams();
-          loadAssignedExamNotifications();
-        })
-        .withFailureHandler(function (error) {
-          alert('시험 제출에 실패했습니다.\n' +
-            (error && error.message ? error.message : error));
-        })
-        .studentSubmitTeacherExam(payload);
-    }
-
-    function leaveTeacherExamView() {
-      if (!teacherExamSession) {
-        showAssignedExams();
-        return;
-      }
-
-      saveAssignedTeacherExamProgress(function () {
-        showAssignedExams();
-      });
-    }
-
-    function saveAssignedTeacherExamProgress(afterSave) {
-      if (!teacherExamSession || !teacherExamSession.exam || !currentStudent) {
-        if (typeof afterSave === 'function') afterSave();
-        return;
-      }
-
-      const progress = {
-        exam: teacherExamSession.exam,
-        questions: teacherExamSession.questions || [],
-        answers: teacherExamAnswers || {},
-        currentIndex: teacherExamIndex
-      };
-
-      google.script.run
-        .withSuccessHandler(function () {
-          if (typeof afterSave === 'function') afterSave();
-        })
-        .withFailureHandler(function () {
-          if (typeof afterSave === 'function') afterSave();
-        })
-        .studentSaveTeacherExamProgress(
-          currentStudent.studentId,
-          teacherExamSession.exam.examId,
-          progress
-        );
-    }
-
-    function stopAssignedTeacherExam() {
-      if (!teacherExamSession || !teacherExamSession.exam) {
-        showAssignedExams();
-        return;
-      }
-
-      const ok = window.confirm(
-        '이 시험을 그만볼까요?\n\n현재 선택한 답과 이어보기 기록이 모두 삭제됩니다.'
-      );
-
-      if (!ok) return;
-
-      google.script.run
-        .withSuccessHandler(function () {
-          teacherExamSession = null;
-          teacherExamAnswers = {};
-          teacherExamIndex = 0;
-          showAssignedExams();
-        })
-        .withFailureHandler(function (error) {
-          alert(
-            '시험을 그만보지 못했습니다.\n' +
-            (error && error.message ? error.message : error)
-          );
-        })
-        .studentStopTeacherExam(
-          currentStudent.studentId,
-          teacherExamSession.exam.examId
-        );
-    }
-
-    function loadAssignedExamNotifications() {
-      if (!currentStudent || !currentStudent.studentId) return;
-
-      google.script.run
-        .withSuccessHandler(function (result) {
-          assignedNotifications =
-            result && Array.isArray(result.notifications)
-              ? result.notifications
-              : [];
-
-          const unread = Number(result && result.unreadCount) || 0;
-          const alertBox = document.getElementById('assignedNotificationAlert');
-          document.getElementById('assignedNotificationCount').textContent = unread;
-
-          const latestUnread = assignedNotifications.find(function (item) {
-            return !item.read;
-          });
-
-          if (unread > 0) {
-            document.getElementById('assignedNotificationText').textContent =
-              latestUnread && latestUnread.title
-                ? latestUnread.title
-                : '선생님이 새 시험을 등록했습니다.';
-            alertBox.classList.add('show');
-          } else {
-            alertBox.classList.remove('show');
-          }
-        })
-        .withFailureHandler(function () {
-          // 알림 조회 실패가 학생의 다른 학습을 막지 않도록 조용히 처리합니다.
-        })
-        .studentGetNotifications(currentStudent.studentId);
-    }
-
-    function openNotificationModal() {
-      renderNotificationList();
-      document.getElementById('notificationModal').classList.add('show');
-    }
-
-    function closeNotificationModal() {
-      document.getElementById('notificationModal').classList.remove('show');
-    }
-
-    function renderNotificationList() {
-      const list = document.getElementById('notificationList');
-
-      if (!assignedNotifications.length) {
-        list.innerHTML = '<div style="padding:24px;text-align:center;color:#806c77;">알림이 없습니다.</div>';
-        return;
-      }
-
-      list.innerHTML = assignedNotifications.map(function (item) {
-        return '<div class="notification-item ' + (!item.read ? 'unread' : '') +
-          '" onclick="readAssignedNotification(\'' +
-          escapeTeacherExamAttr(item.notificationId) + '\')">' +
-          '<strong>' + escapeTeacherExamHtml(item.title || '시험 알림') + '</strong>' +
-          '<div style="margin-top:6px;line-height:1.5;color:#806c77;">' +
-          escapeTeacherExamHtml(item.content || '') + '</div>' +
-          '<div style="margin-top:7px;font-size:12px;color:#9a8993;">' +
-          escapeTeacherExamHtml(formatTeacherExamDate(item.createdAt)) + '</div>' +
-          '</div>';
-      }).join('');
-    }
-
-    function readAssignedNotification(notificationId) {
-      const item = assignedNotifications.find(function (notice) {
-        return notice.notificationId === notificationId;
-      });
-
-      if (item && !item.read) {
-        google.script.run
-          .withSuccessHandler(function () {
-            item.read = true;
-            loadAssignedExamNotifications();
-          })
-          .withFailureHandler(function () {})
-          .studentMarkNotificationRead(currentStudent.studentId, notificationId);
-      }
-
-      closeNotificationModal();
-      showAssignedExams();
-    }
-
-    function formatTeacherExamDate(value) {
-      if (!value) return '';
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return String(value);
-      return date.toLocaleString('ko-KR', {
-        month: 'numeric', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    }
-
-    function escapeTeacherExamHtml(value) {
-      return String(value == null ? '' : value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function escapeTeacherExamAttr(value) {
-      return escapeTeacherExamHtml(value)
-        .replace(/`/g, '&#096;')
-        .replace(/\\/g, '&#092;');
-    }
-
-
     function setActiveMenu(menu) {
       const testButton =
         document.getElementById(
           'testMenuButton'
-        );
-
-      const assignedExamButton =
-        document.getElementById(
-          'assignedExamMenuButton'
         );
 
       const vocabButton =
@@ -6689,16 +6024,12 @@
         );
 
       testButton.classList.remove('active');
-      assignedExamButton.classList.remove('active');
       vocabButton.classList.remove('active');
       myPageButton.classList.remove('active');
       rankingButton.classList.remove('active');
 
       if (menu === 'test') {
         testButton.classList.add('active');
-
-      } else if (menu === 'assigned') {
-        assignedExamButton.classList.add('active');
 
       } else if (menu === 'vocab') {
         vocabButton.classList.add('active');
@@ -7323,48 +6654,6 @@
       });
 
       renderVocabulary();
-    }
-
-
-    function stopCurrentTest() {
-      const confirmed = window.confirm(
-        '현재 단어 테스트를 그만볼까요?\n\n' +
-        '지금까지의 진행 내용은 삭제되고 처음 화면으로 돌아갑니다.'
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      clearTestProgress();
-
-      questions = [];
-      allWords = [];
-      currentIndex = 0;
-      score = 0;
-      wrongAnswers = [];
-      answered = false;
-
-      currentTestContext = {
-        source: 'normal',
-        sheetName: '',
-        startDay: 0,
-        endDay: 0,
-        questionMode: ''
-      };
-
-      document.getElementById('choices').innerHTML = '';
-      document.getElementById('feedback').innerHTML = '';
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('questionNumber').textContent = '';
-      document.getElementById('scoreText').textContent = '';
-
-      document.getElementById('testScreen').classList.add('hidden');
-      document.getElementById('resultScreen').classList.add('hidden');
-      document.getElementById('startScreen').classList.remove('hidden');
-
-      setActiveMenu('test');
-      window.scrollTo(0, 0);
     }
 
 
@@ -8428,13 +7717,262 @@ google.script.run
     }, { once: true });
 
   
-    document.addEventListener('click', function (event) {
-      const modal = document.getElementById('notificationModal');
-      if (modal && event.target === modal) {
-        closeNotificationModal();
-      }
-    });
 
-  </script>
+    /* =====================================================
+       다중 나만의 단어장 화면 기능
+       ===================================================== */
+
+    function loadPersonalBooks(onComplete) {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          personalVocabularyBooks = result && result.books ? result.books : [];
+          if (selectedPersonalBookId && !personalVocabularyBooks.some(function (b) { return b.bookId === selectedPersonalBookId; })) {
+            selectedPersonalBookId = '';
+          }
+          if (!selectedPersonalBookId && personalVocabularyBooks.length) {
+            selectedPersonalBookId = personalVocabularyBooks[0].bookId;
+          }
+          renderPersonalBookSelect();
+          if (typeof onComplete === 'function') onComplete();
+        })
+        .withFailureHandler(function (error) {
+          alert('단어장 목록을 불러오지 못했습니다.\n' + (error && error.message ? error.message : error));
+        })
+        .getVocabularyBooks(currentLoginToken);
+    }
+
+    function renderPersonalBookSelect() {
+      const select = document.getElementById('personalBookSelect');
+      if (!select) return;
+      select.innerHTML = '';
+      if (!personalVocabularyBooks.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '만든 단어장이 없습니다';
+        select.appendChild(option);
+        return;
+      }
+      personalVocabularyBooks.forEach(function (book) {
+        const option = document.createElement('option');
+        option.value = book.bookId;
+        option.textContent = book.bookName + ' (' + Number(book.wordCount || 0) + '개)';
+        option.selected = book.bookId === selectedPersonalBookId;
+        select.appendChild(option);
+      });
+    }
+
+    function changePersonalBook() {
+      selectedPersonalBookId = document.getElementById('personalBookSelect').value;
+      loadSelectedPersonalBookWords();
+    }
+
+    function createNewPersonalBook(callback) {
+      const name = prompt('새 단어장 이름을 입력하세요.');
+      if (name === null) return;
+      if (!String(name).trim()) {
+        alert('단어장 이름을 입력해주세요.');
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function (result) {
+          selectedPersonalBookId = result && result.book ? result.book.bookId : '';
+          loadPersonalBooks(function () {
+            loadSelectedPersonalBookWords();
+            if (typeof callback === 'function') callback(selectedPersonalBookId);
+          });
+        })
+        .withFailureHandler(function (error) {
+          alert(error && error.message ? error.message : error);
+        })
+        .createVocabularyBook(currentLoginToken, String(name).trim());
+    }
+
+    function renameCurrentPersonalBook() {
+      if (!selectedPersonalBookId) {
+        alert('이름을 변경할 단어장을 먼저 만들어주세요.');
+        return;
+      }
+      const current = personalVocabularyBooks.find(function (b) { return b.bookId === selectedPersonalBookId; });
+      const name = prompt('새 단어장 이름을 입력하세요.', current ? current.bookName : '');
+      if (name === null) return;
+      google.script.run
+        .withSuccessHandler(function () { loadPersonalBooks(loadSelectedPersonalBookWords); })
+        .withFailureHandler(function (error) { alert(error && error.message ? error.message : error); })
+        .renameVocabularyBook(currentLoginToken, selectedPersonalBookId, String(name).trim());
+    }
+
+    function deleteCurrentPersonalBook() {
+      if (!selectedPersonalBookId) return;
+      const current = personalVocabularyBooks.find(function (b) { return b.bookId === selectedPersonalBookId; });
+      const count = current ? Number(current.wordCount || 0) : 0;
+      if (!confirm('「' + (current ? current.bookName : '이 단어장') + '」을 삭제할까요?\n안의 단어 ' + count + '개도 함께 삭제됩니다.')) return;
+      google.script.run
+        .withSuccessHandler(function () {
+          selectedPersonalBookId = '';
+          loadPersonalBooks(loadSelectedPersonalBookWords);
+          loadPersonalVocabularyPreview();
+        })
+        .withFailureHandler(function (error) { alert(error && error.message ? error.message : error); })
+        .deleteVocabularyBook(currentLoginToken, selectedPersonalBookId);
+    }
+
+    function choosePersonalBookForSave(item, button) {
+      loadPersonalBooks(function () {
+        if (!personalVocabularyBooks.length) {
+          const make = confirm('아직 만든 단어장이 없습니다.\n새 단어장을 만들까요?');
+          if (!make) {
+            if (button) button.disabled = false;
+            return;
+          }
+          createNewPersonalBook(function (bookId) {
+            saveItemToSelectedBook(bookId, item, button);
+          });
+          return;
+        }
+        let message = '저장할 단어장을 선택하세요.\n\n';
+        personalVocabularyBooks.forEach(function (book, index) {
+          message += (index + 1) + '. ' + book.bookName + '\n';
+        });
+        message += '\n번호를 입력하거나, 새 단어장은 + 를 입력하세요.';
+        const answer = prompt(message, '1');
+        if (answer === null) {
+          if (button) button.disabled = false;
+          return;
+        }
+        if (String(answer).trim() === '+') {
+          createNewPersonalBook(function (bookId) { saveItemToSelectedBook(bookId, item, button); });
+          return;
+        }
+        const index = Number(answer) - 1;
+        if (!Number.isInteger(index) || index < 0 || index >= personalVocabularyBooks.length) {
+          if (button) button.disabled = false;
+          alert('올바른 번호를 입력해주세요.');
+          return;
+        }
+        saveItemToSelectedBook(personalVocabularyBooks[index].bookId, item, button);
+      });
+    }
+
+    function saveItemToSelectedBook(bookId, item, button) {
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (button) button.disabled = false;
+          alert(result && result.message ? result.message : '단어장에 저장했습니다.');
+          loadPersonalVocabularyPreview();
+          if (document.getElementById('personalVocabularyScreen') && !document.getElementById('personalVocabularyScreen').classList.contains('hidden')) {
+            selectedPersonalBookId = bookId;
+            loadPersonalBooks(loadSelectedPersonalBookWords);
+          }
+        })
+        .withFailureHandler(function (error) {
+          if (button) button.disabled = false;
+          alert('단어 저장 중 오류가 발생했습니다.\n' + (error && error.message ? error.message : error));
+        })
+        .addPersonalVocabularyToBook(currentLoginToken, bookId, item);
+    }
+
+    function saveToPersonalVocabulary(item, button) {
+      if (button) button.disabled = true;
+      choosePersonalBookForSave(item, button);
+    }
+
+    function showPersonalVocabulary() {
+      setActiveMenu('mypage');
+      [
+        'startScreen','testScreen','resultScreen','vocabScreen','myPageScreen',
+        'rankingScreen','wrongNotebookScreen','wrongTestSetupScreen',
+        'personalTestSetupScreen','smartReviewScreen'
+      ].forEach(function (id) {
+        const element = document.getElementById(id);
+        if (element) element.classList.add('hidden');
+      });
+      document.getElementById('personalVocabularyScreen').classList.remove('hidden');
+      document.getElementById('personalVocabularyLoading').textContent = '단어장을 불러오는 중입니다.';
+      document.getElementById('personalVocabularyList').innerHTML = '';
+      loadPersonalBooks(loadSelectedPersonalBookWords);
+      window.scrollTo(0, 0);
+    }
+
+    function loadSelectedPersonalBookWords() {
+      const loading = document.getElementById('personalVocabularyLoading');
+      if (!selectedPersonalBookId) {
+        personalVocabularyWords = [];
+        if (loading) loading.textContent = '';
+        document.getElementById('personalVocabularySummary').textContent = '새 단어장을 만들어 단어를 저장해보세요.';
+        renderPersonalVocabulary();
+        return;
+      }
+      if (loading) loading.textContent = '단어를 불러오는 중입니다.';
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (loading) loading.textContent = '';
+          personalVocabularyWords = result && result.words ? result.words : [];
+          const current = personalVocabularyBooks.find(function (b) { return b.bookId === selectedPersonalBookId; });
+          document.getElementById('personalVocabularySummary').textContent =
+            (current ? current.bookName + ' · ' : '') +
+            '암기할 단어 ' + Number(result.activeCount || 0) + '개 · 암기 완료 ' +
+            Number(result.masteredCount || 0) + '개 · 전체 ' + Number(result.totalCount || 0) + '개';
+          renderPersonalVocabulary();
+        })
+        .withFailureHandler(function (error) {
+          if (loading) loading.textContent = '';
+          alert('단어를 불러오지 못했습니다.\n' + (error && error.message ? error.message : error));
+        })
+        .getPersonalVocabularyByBook(currentLoginToken, selectedPersonalBookId);
+    }
+
+    function renderPersonalVocabulary() {
+      const list = document.getElementById('personalVocabularyList');
+      list.innerHTML = '';
+      if (!personalVocabularyBooks.length) {
+        list.innerHTML = '<div class="empty-message">아직 만든 단어장이 없습니다.<br>위의 ＋ 새 단어장 버튼을 눌러주세요.</div>';
+        return;
+      }
+      if (!personalVocabularyWords.length) {
+        list.innerHTML = '<div class="empty-message">이 단어장에는 아직 저장한 단어가 없습니다.</div>';
+        return;
+      }
+      const current = personalVocabularyBooks.find(function (b) { return b.bookId === selectedPersonalBookId; });
+      personalVocabularyWords.forEach(function (item) {
+        const card = document.createElement('div');
+        card.className = item.mastered ? 'personal-item mastered' : 'personal-item';
+        card.innerHTML =
+          '<div class="personal-book-label">' + escapeHtml(current ? current.bookName : '') + '</div>' +
+          '<label class="personal-select-row"><input type="checkbox" class="personal-share-check" value="' + Number(item.rowNumber) + '"><span>공유할 단어 선택</span></label>' +
+          '<div class="personal-item-top"><div class="personal-word">' + escapeHtml(item.word) + '</div>' +
+          '<div class="personal-meta">' + escapeHtml(item.sheetName || '') + (item.day ? ' · Day ' + escapeHtml(String(item.day)) : '') + '<br>' + escapeHtml(item.registeredDate || '') + '</div></div>' +
+          '<div class="wrong-note-meaning">' + escapeHtml(item.meaning || '') + '</div>' +
+          (item.example ? '<div class="wrong-note-example">' + escapeHtml(item.example) + '</div>' : '') +
+          (item.translation ? '<div class="wrong-note-translation">' + escapeHtml(item.translation) + '</div>' : '') +
+          '<div class="personal-actions">' +
+          '<button onclick="togglePersonalWordMastered(' + Number(item.rowNumber) + ', ' + (!item.mastered) + ')">' + (item.mastered ? '암기할 단어로 되돌리기' : '암기 완료') + '</button>' +
+          '<button class="secondary-button" onclick="movePersonalWord(' + Number(item.rowNumber) + ')">이동</button>' +
+          '<button class="danger-button" onclick="removePersonalWord(' + Number(item.rowNumber) + ')">삭제</button></div>';
+        list.appendChild(card);
+      });
+    }
+
+    function movePersonalWord(rowNumber) {
+      const others = personalVocabularyBooks.filter(function (b) { return b.bookId !== selectedPersonalBookId; });
+      if (!others.length) {
+        alert('이동하려면 다른 단어장을 하나 더 만들어주세요.');
+        return;
+      }
+      let message = '이동할 단어장을 선택하세요.\n\n';
+      others.forEach(function (book, index) { message += (index + 1) + '. ' + book.bookName + '\n'; });
+      const answer = prompt(message, '1');
+      if (answer === null) return;
+      const index = Number(answer) - 1;
+      if (!Number.isInteger(index) || index < 0 || index >= others.length) {
+        alert('올바른 번호를 입력해주세요.');
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function () { loadPersonalBooks(loadSelectedPersonalBookWords); })
+        .withFailureHandler(function (error) { alert(error && error.message ? error.message : error); })
+        .movePersonalVocabularyToBook(currentLoginToken, rowNumber, others[index].bookId);
+    }
+
+</script>
 </body>
 </html>
