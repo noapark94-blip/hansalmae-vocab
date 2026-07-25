@@ -1251,7 +1251,7 @@ protect	보호하다"></textarea>
     <div class="modal">
       <div class="modal-head">
         <h2>학생 응시 현황</h2>
-        <button id="closeModalBtn" class="close-btn" type="button">×</button>
+        <button id="closeModalBtn" class="close-btn" type="button" onclick="closeStatusModal()" aria-label="닫기">×</button>
       </div>
 
       <div id="statusSummary" class="summary-grid"></div>
@@ -1274,6 +1274,15 @@ protect	보호하다"></textarea>
           </thead>
           <tbody id="statusTableBody"></tbody>
         </table>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+        <button
+          id="statusExitBtn"
+          class="outline-btn"
+          type="button"
+          onclick="closeStatusModal()"
+        >나가기</button>
       </div>
     </div>
   </div>
@@ -1339,11 +1348,27 @@ protect	보호하다"></textarea>
       $('#examForm').addEventListener('submit', createExam);
       $('#refreshExamsBtn').addEventListener('click', loadExamList);
       $('#teacherLogoutBtn').addEventListener('click', teacherLogout);
-      $('#remindIncompleteBtn').addEventListener('click', () => {
-        if (currentStatusExamId) sendReminder(currentStatusExamId, true);
-      });
-      $('#closeModalBtn').addEventListener('click', closeStatusModal);
-      $('#closeDetailModalBtn').addEventListener('click', closeDetailModal);
+      const remindIncompleteBtn = $('#remindIncompleteBtn');
+      if (remindIncompleteBtn) {
+        remindIncompleteBtn.addEventListener('click', () => {
+          if (currentStatusExamId) sendReminder(currentStatusExamId, true);
+        });
+      }
+
+      const closeModalBtn = $('#closeModalBtn');
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeStatusModal);
+      }
+
+      const statusExitBtn = $('#statusExitBtn');
+      if (statusExitBtn) {
+        statusExitBtn.addEventListener('click', closeStatusModal);
+      }
+
+      const closeDetailModalBtn = $('#closeDetailModalBtn');
+      if (closeDetailModalBtn) {
+        closeDetailModalBtn.addEventListener('click', closeDetailModal);
+      }
 
       $('#detailModal').addEventListener('click', (event) => {
         if (event.target.id === 'detailModal') closeDetailModal();
@@ -2217,6 +2242,17 @@ protect	보호하다"></textarea>
         loadExamList();
       }
     }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if ($('#statusModal')?.classList.contains('show')) {
+          closeStatusModal();
+        }
+        if ($('#detailModal')?.classList.contains('show')) {
+          closeDetailModal();
+        }
+      }
+    });
 
     function closeStatusModal() {
       $('#statusModal').classList.remove('show');
