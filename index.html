@@ -2381,6 +2381,8 @@
         const writeFunctions = [
           'saveTestResult',
           'setWrongWordMastered',
+          'deleteMasteredWrongWord',
+          'deleteAllMasteredWrongWords',
           'addPersonalVocabulary',
           'removePersonalVocabulary',
           'setPersonalWordMastered',
@@ -2391,6 +2393,8 @@
           'movePersonalVocabularyToBook',
           'studentSubmitTeacherExam',
           'studentMarkNotificationRead',
+          'studentDeleteNotification',
+          'studentDeleteAllReadNotifications',
           'studentStopTeacherExam',
           'studentDeleteTeacherExamProgress'
         ];
@@ -2714,6 +2718,44 @@
   .loading-skeleton { min-height:80px; border-radius:14px; background:linear-gradient(90deg,#f8eef3 25%,#fff 37%,#f8eef3 63%); background-size:400% 100%; animation:skeletonMove 1.1s ease infinite; }
   @keyframes skeletonMove { 0%{background-position:100% 0} 100%{background-position:0 0} }
 </style>
+
+  <style id="data-cleanup-ui-style">
+    .notification-cleanup-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin: -14px 0 14px;
+    }
+
+    .notification-cleanup-toolbar button {
+      width: auto;
+      min-height: 40px;
+      margin: 0;
+      padding: 9px 13px;
+      font-size: 13px;
+    }
+
+    .wrong-note-actions .delete-mastered-button {
+      background: #fff0f3;
+      color: #b73559;
+      border: 1px solid #efc2cf;
+    }
+
+    @media (max-width: 650px) {
+      .wrong-note-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .wrong-note-header .study-action-button {
+        width: 100%;
+      }
+
+      .notification-cleanup-toolbar button {
+        width: 100%;
+      }
+    }
+  </style>
+
 </head>
 
 <body>
@@ -3085,6 +3127,17 @@
       <div id="studentNotificationScreen" class="card hidden">
         <h2>알림</h2>
         <div class="subtitle">새 시험 등록과 재시험 요청을 확인하세요.</div>
+
+        <div class="notification-cleanup-toolbar">
+          <button
+            type="button"
+            class="danger-button"
+            onclick="deleteAllReadNotifications_()"
+          >
+            읽은 알림 모두 삭제
+          </button>
+        </div>
+
         <div id="studentNotificationLoading" class="loading"></div>
         <div id="studentNotificationList" class="teacher-exam-grid"></div>
       </div>
@@ -3479,6 +3532,14 @@
               class="wrong-note-summary"
             ></div>
           </div>
+
+          <button
+            type="button"
+            class="danger-button study-action-button"
+            onclick="deleteAllMasteredWrongWords_()"
+          >
+            완료 단어 정리
+          </button>
         </div>
 
         <button
@@ -6245,6 +6306,16 @@
               ', this)">' +
               '⭐ 단어장 저장' +
             '</button>' +
+            (
+              item.mastered
+                ? '<button class="delete-mastered-button" ' +
+                    'onclick="deleteMasteredWrongWord_(' +
+                      Number(item.rowNumber) +
+                    ')">' +
+                    '삭제' +
+                  '</button>'
+                : ''
+            ) +
           '</div>';
 
         list.appendChild(card);
@@ -6317,6 +6388,163 @@
           currentLoginToken,
           rowNumber,
           mastered
+        );
+    }
+
+
+    function updateWrongNotebookSummary_() {
+      const activeCount =
+        wrongNotebookWords.filter(function (item) {
+          return !item.mastered;
+        }).length;
+
+      const masteredCount =
+        wrongNotebookWords.length -
+        activeCount;
+
+      const summary =
+        document.getElementById(
+          'wrongNotebookSummary'
+        );
+
+      if (summary) {
+        summary.textContent =
+          '복습할 오답 ' +
+          activeCount +
+          '개 · 복습 완료 ' +
+          masteredCount +
+          '개 · 전체 오답 ' +
+          wrongNotebookWords.length +
+          '개';
+      }
+    }
+
+
+    function deleteMasteredWrongWord_(
+      rowNumber
+    ) {
+      if (
+        !confirm(
+          '이 복습 완료 단어를 오답노트에서 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          if (
+            !result ||
+            !result.success
+          ) {
+            alert(
+              result &&
+              result.message
+                ? result.message
+                : '오답 단어를 삭제하지 못했습니다.'
+            );
+            return;
+          }
+
+          wrongNotebookWords =
+            wrongNotebookWords
+              .filter(function (item) {
+                return (
+                  Number(item.rowNumber) !==
+                  Number(rowNumber)
+                );
+              })
+              .map(function (item) {
+                if (
+                  Number(item.rowNumber) >
+                  Number(rowNumber)
+                ) {
+                  item.rowNumber =
+                    Number(item.rowNumber) -
+                    1;
+                }
+
+                return item;
+              });
+
+          renderWrongNotebook();
+          updateWrongNotebookSummary_();
+          loadWrongNotebookPreview();
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .deleteMasteredWrongWord(
+          currentLoginToken,
+          rowNumber
+        );
+    }
+
+
+    function deleteAllMasteredWrongWords_() {
+      const masteredCount =
+        wrongNotebookWords.filter(
+          function (item) {
+            return item.mastered;
+          }
+        ).length;
+
+      if (masteredCount < 1) {
+        alert(
+          '삭제할 복습 완료 단어가 없습니다.'
+        );
+        return;
+      }
+
+      if (
+        !confirm(
+          '복습 완료 단어 ' +
+          masteredCount +
+          '개를 모두 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          if (
+            !result ||
+            !result.success
+          ) {
+            alert(
+              result &&
+              result.message
+                ? result.message
+                : '복습 완료 단어를 삭제하지 못했습니다.'
+            );
+            return;
+          }
+
+          showWrongNotebook();
+          loadWrongNotebookPreview();
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .deleteAllMasteredWrongWords(
+          currentLoginToken
         );
     }
 
@@ -8147,7 +8375,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=15')
+          .register('./service-worker.js?v=16')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -8835,6 +9063,7 @@ google.script.run
           '<div class="notification-compact-text">' + escapeHtml(item.content || '') + '</div>' +
           '<div class="teacher-exam-actions">' +
           (!item.read ? '<button type="button" class="secondary-button" onclick="markStudentNotificationRead_(\'' + escapeJsString_(item.notificationId) + '\')">읽음</button>' : '') +
+          (item.read ? '<button type="button" class="danger-button" onclick="deleteStudentNotification_(\'' + escapeJsString_(item.notificationId) + '\')">삭제</button>' : '') +
           (item.examId ? '<button type="button" onclick="openExamFromNotification_(\'' + escapeJsString_(item.examId) + '\',\'' + escapeJsString_(item.notificationId) + '\')">시험 보기</button>' : '') +
           '</div>';
         list.appendChild(card);
@@ -8853,6 +9082,83 @@ google.script.run
         })
         .studentMarkNotificationRead(currentStudent.studentId, notificationId);
     }
+
+    function deleteStudentNotification_(
+      notificationId
+    ) {
+      if (
+        !confirm(
+          '이 읽은 알림을 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function () {
+          teacherExamCache.notifications = null;
+          teacherExamCache.notificationsAt = 0;
+          showStudentNotifications();
+          loadStudentNotificationBadge_();
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .studentDeleteNotification(
+          currentStudent.studentId,
+          notificationId
+        );
+    }
+
+
+    function deleteAllReadNotifications_() {
+      if (
+        !confirm(
+          '읽은 알림을 모두 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          teacherExamCache.notifications = null;
+          teacherExamCache.notificationsAt = 0;
+
+          if (
+            result &&
+            Number(result.deletedCount) === 0
+          ) {
+            alert(
+              '삭제할 읽은 알림이 없습니다.'
+            );
+          }
+
+          showStudentNotifications();
+          loadStudentNotificationBadge_();
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .studentDeleteAllReadNotifications(
+          currentStudent.studentId
+        );
+    }
+
 
     function openExamFromNotification_(examId, notificationId) {
       if (notificationId) {
