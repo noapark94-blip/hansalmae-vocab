@@ -3551,11 +3551,15 @@
 
 
 <style id="hsm-login-dog-animation-v1">
+  .login-card {
+    padding-top: 18px !important;
+  }
+
   .login-dog-animation {
     position: relative;
-    width: min(168px, 46vw);
-    height: 205px;
-    margin: -10px auto -2px;
+    width: min(92px, 25vw);
+    height: 108px;
+    margin: -4px auto -8px;
     overflow: visible;
   }
 
@@ -3577,11 +3581,19 @@
     transform: scale(1);
   }
 
+  #loginScreen > h1 {
+    margin-top: 0 !important;
+  }
+
   @media (max-width: 480px) {
+    .login-card {
+      padding-top: 14px !important;
+    }
+
     .login-dog-animation {
-      width: min(150px, 43vw);
-      height: 184px;
-      margin-top: -8px;
+      width: min(82px, 23vw);
+      height: 96px;
+      margin: -2px auto -8px;
     }
   }
 
@@ -10056,7 +10068,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=31', {
+          .register('./service-worker.js?v=32', {
             updateViaCache: 'none'
           })
           .then(function (registration) {
