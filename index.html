@@ -7621,9 +7621,8 @@
 
           '<div class="wrong-note-source">' +
             escapeHtml(item.sheetName || '') +
-            (Number(item.day || 0) > 0
-              ? ' · Day ' + Number(item.day)
-              : '') +
+            ' · Day ' +
+            Number(item.day || 0) +
           '</div>' +
 
           (
@@ -7809,10 +7808,15 @@
         );
 
       if (selectAllButton) {
+        /*
+         * '전체 해제' 전용 버튼이 옆에 있으므로
+         * 첫 번째 버튼의 문구는 항상 '전체 선택'으로 유지합니다.
+         * 모두 선택된 상태에서는 중복 동작을 막기 위해 비활성화합니다.
+         */
         selectAllButton.textContent =
-          allSelected
-            ? '전체 해제'
-            : '전체 선택';
+          '전체 선택';
+        selectAllButton.disabled =
+          allSelected;
       }
 
       const deleteButton =
