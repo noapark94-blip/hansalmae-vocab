@@ -3553,9 +3553,9 @@
 <style id="hsm-login-dog-animation-v1">
   .login-dog-animation {
     position: relative;
-    width: min(230px, 72vw);
-    aspect-ratio: 520 / 230;
-    margin: -4px auto 4px;
+    width: min(168px, 46vw);
+    height: 205px;
+    margin: -10px auto -2px;
     overflow: visible;
   }
 
@@ -3566,23 +3566,22 @@
     height: 100%;
     object-fit: contain;
     opacity: 0;
-    transform: translateY(4px) scale(0.985);
-    transition:
-      opacity 180ms ease,
-      transform 220ms ease;
+    transform: scale(0.995);
+    transition: opacity 55ms linear;
     pointer-events: none;
     user-select: none;
   }
 
   .login-dog-animation .dog-frame.active {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1);
   }
 
   @media (max-width: 480px) {
     .login-dog-animation {
-      width: min(205px, 68vw);
-      margin-bottom: 2px;
+      width: min(150px, 43vw);
+      height: 184px;
+      margin-top: -8px;
     }
   }
 
@@ -3616,7 +3615,7 @@
     >
       <div
         class="login-dog-animation"
-        aria-label="한살매 로고 공과 노는 강아지"
+        aria-label="천장에 매달려 회전하는 HSM 미러볼"
       >
         <img src="./images/hsm-ball-1.png" class="dog-frame active" alt="">
         <img src="./images/hsm-ball-2.png" class="dog-frame" alt="">
@@ -3899,7 +3898,6 @@
 
       <div class="topbar">
         <div class="topbar-title">
-          <img class="topbar-logo" src="./icon-192.png" alt="한살매 로고">
           <span>한살매 보카</span>
           <span
             id="loggedInStudent"
@@ -10058,7 +10056,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=28', {
+          .register('./service-worker.js?v=31', {
             updateViaCache: 'none'
           })
           .then(function (registration) {
@@ -12515,7 +12513,7 @@ google.script.run
       return;
     }
 
-    const sequence = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    const sequence = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     let sequenceIndex = 0;
     let timerId = null;
 
@@ -12541,7 +12539,7 @@ google.script.run
       }
 
       timerId =
-        window.setInterval(nextFrame, 420);
+        window.setInterval(nextFrame, 115);
     }
 
     function stopAnimation() {
