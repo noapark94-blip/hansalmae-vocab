@@ -3300,6 +3300,254 @@
   }
 </style>
 
+
+
+<style id="hsm-wrong-note-smart-selection-v4">
+  .wrong-note-header {
+    margin-bottom: 12px;
+  }
+
+  .wrong-note-filter {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin: 18px 0 10px;
+  }
+
+  .wrong-note-filter button {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 15px;
+  }
+
+  .wrong-selection-entry {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 14px;
+  }
+
+  .wrong-selection-entry-button {
+    width: auto;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+  }
+
+  .wrong-selection-entry-button.active-selection-mode {
+    background: linear-gradient(
+      135deg,
+      var(--hsm-800),
+      var(--hsm-500)
+    );
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .wrong-bulk-toolbar {
+    position: sticky;
+    top: 8px;
+    z-index: 45;
+    display: block !important;
+    margin: 12px 0 18px;
+    padding: 13px;
+    border: 1px solid #dfb8cc;
+    border-radius: 19px;
+    background: rgba(255, 250, 253, .98);
+    box-shadow: 0 13px 30px
+      rgba(79, 18, 55, .14);
+    backdrop-filter: blur(14px);
+  }
+
+  .wrong-bulk-toolbar.hidden {
+    display: none !important;
+  }
+
+  .wrong-bulk-toolbar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .wrong-bulk-count {
+    padding: 0;
+    color: var(--hsm-800);
+    font-size: 14px;
+  }
+
+  .wrong-bulk-count strong {
+    font-size: 18px;
+  }
+
+  .wrong-bulk-close {
+    width: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: #f3e3eb !important;
+    color: var(--hsm-800) !important;
+    box-shadow: none !important;
+    font-size: 23px !important;
+    line-height: 1 !important;
+  }
+
+  .wrong-bulk-actions {
+    display: grid;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .wrong-bulk-actions button {
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  .wrong-bulk-actions button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .wrong-note-select-layout {
+    display: grid;
+    grid-template-columns:
+      28px minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .wrong-note-item:has(
+    .wrong-batch-check:checked
+  ) {
+    border-color: var(--hsm-300);
+    background:
+      linear-gradient(180deg, #fffafd, #fff1f7);
+    box-shadow: 0 9px 24px
+      rgba(125, 22, 85, .12);
+  }
+
+  .wrong-selection-control {
+    cursor: pointer;
+  }
+
+  .hsm-picker-sheet {
+    width: min(calc(100% - 18px), 560px);
+    margin-bottom: 9px;
+    padding: 10px 16px
+      calc(18px + env(safe-area-inset-bottom));
+    border: 1px solid rgba(148, 26, 101, .12);
+    border-radius: 26px;
+  }
+
+  .hsm-picker-list {
+    display: grid;
+    gap: 9px;
+  }
+
+  .hsm-picker-book {
+    display: grid;
+    grid-template-columns:
+      42px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 70px;
+    margin: 0;
+    padding: 13px 14px;
+    border: 1px solid var(--hsm-200);
+    border-radius: 18px;
+    background: linear-gradient(
+      180deg,
+      #ffffff,
+      #fff7fb
+    );
+    color: var(--ink-900);
+    text-align: left;
+    box-shadow: 0 7px 18px
+      rgba(79, 18, 55, .07);
+  }
+
+  .hsm-picker-book:hover,
+  .hsm-picker-book:active {
+    border-color: var(--hsm-400, #c95b98);
+    background: #fff0f7;
+    transform: translateY(-1px);
+  }
+
+  .hsm-picker-book-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: #f4e2eb;
+    font-size: 22px;
+  }
+
+  .hsm-picker-book-copy {
+    min-width: 0;
+  }
+
+  .hsm-picker-book-name {
+    overflow: hidden;
+    color: var(--hsm-800);
+    font-size: 16px;
+    font-weight: 850;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hsm-picker-book-meta {
+    margin-top: 4px;
+    color: var(--ink-500);
+    font-size: 13px;
+  }
+
+  .hsm-picker-book-arrow {
+    color: var(--hsm-300);
+    font-size: 28px;
+    font-weight: 300;
+  }
+
+  .hsm-picker-new-book,
+  .hsm-picker-cancel {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 10px;
+  }
+
+  .hsm-picker-new-book {
+    background: linear-gradient(
+      180deg,
+      #fff5fa,
+      #f2dce8
+    );
+    color: var(--hsm-700);
+    border: 1px dashed var(--hsm-300);
+    box-shadow: none;
+  }
+
+  @media (max-width: 650px) {
+    .wrong-note-filter {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .wrong-selection-entry-button {
+      width: 100%;
+    }
+
+    .wrong-bulk-actions {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -4084,24 +4332,7 @@
             ></div>
           </div>
 
-          <div class="wrong-note-header-actions">
-            <button
-              id="wrongSelectionModeButton"
-              type="button"
-              class="study-action-button"
-              onclick="toggleWrongSelectionMode_()"
-            >
-              선택
-            </button>
 
-            <button
-              type="button"
-              class="danger-button study-action-button"
-              onclick="deleteAllMasteredWrongWords_()"
-            >
-              완료 단어 정리
-            </button>
-          </div>
         </div>
 
         <button
@@ -4121,13 +4352,6 @@
           </button>
 
           <button
-            id="wrongAllFilter"
-            onclick="setWrongNotebookFilter('all')"
-          >
-            전체 오답
-          </button>
-
-          <button
             id="wrongMasteredFilter"
             onclick="setWrongNotebookFilter('mastered')"
           >
@@ -4135,37 +4359,77 @@
           </button>
         </div>
 
+        <div class="wrong-selection-entry">
+          <button
+            id="wrongSelectionModeButton"
+            type="button"
+            class="secondary-button wrong-selection-entry-button"
+            onclick="toggleWrongSelectionMode_()"
+          >
+            ☑ 단어 선택
+          </button>
+        </div>
+
         <div
           id="wrongBulkToolbar"
           class="wrong-bulk-toolbar hidden"
         >
-          <button
-            id="wrongSelectAllButton"
-            type="button"
-            class="secondary-button"
-            onclick="toggleSmartWrongSelectAll_()"
-          >
-            전체 선택
-          </button>
-
-          <div class="wrong-bulk-count">
-            <strong id="wrongSelectedCount">0</strong>개 선택
+          <div class="wrong-bulk-toolbar-head">
+            <div class="wrong-bulk-count">
+              <strong id="wrongSelectedCount">0</strong>개 선택
+            </div>
+            <button
+              type="button"
+              class="wrong-bulk-close"
+              onclick="exitWrongSelectionMode_()"
+              aria-label="선택 취소"
+            >
+              ×
+            </button>
           </div>
 
-          <button
-            type="button"
-            onclick="batchSaveCheckedWrongWords_()"
-          >
-            단어장 저장
-          </button>
+          <div class="wrong-bulk-actions">
+            <button
+              id="wrongSelectAllButton"
+              type="button"
+              class="secondary-button"
+              onclick="selectAllVisibleWrongWords_()"
+            >
+              전체 선택
+            </button>
 
-                    <button
-            type="button"
-            class="secondary-button"
-            onclick="exitWrongSelectionMode_()"
-          >
-            취소
-          </button>
+            <button
+              type="button"
+              class="secondary-button"
+              onclick="clearWrongSelection_()"
+            >
+              전체 해제
+            </button>
+
+            <button
+              type="button"
+              onclick="batchSaveCheckedWrongWords_()"
+            >
+              ⭐ 단어장 저장
+            </button>
+
+            <button
+              id="wrongDeleteSelectedButton"
+              type="button"
+              class="danger-button"
+              onclick="deleteSelectedMasteredWrongWords_()"
+            >
+              선택한 단어 삭제
+            </button>
+
+            <button
+              type="button"
+              class="secondary-button"
+              onclick="exitWrongSelectionMode_()"
+            >
+              취소
+            </button>
+          </div>
         </div>
 
         <div
@@ -5986,8 +6250,8 @@
           preview.textContent =
             '복습할 오답 ' +
             Number(result.activeCount || 0) +
-            '개 · 전체 오답 ' +
-            Number(result.totalCount || 0) +
+            '개 · 복습 완료 ' +
+            Number(result.masteredCount || 0) +
             '개';
         })
         .withFailureHandler(function () {
@@ -6440,7 +6704,7 @@
           return;
         }
 
-        openPersonalBookPicker_(
+        openPersonalMoveBookPicker_(
           otherBooks,
           selectedRows.length
         );
@@ -7004,8 +7268,6 @@
             Number(result.activeCount || 0) +
             '개 · 복습 완료 ' +
             Number(result.masteredCount || 0) +
-            '개 · 전체 오답 ' +
-            Number(result.totalCount || 0) +
             '개';
 
           renderWrongNotebook();
@@ -7254,13 +7516,14 @@
 
       [
         'wrongActiveFilter',
-        'wrongAllFilter',
         'wrongMasteredFilter'
       ].forEach(function (id) {
-        document
-          .getElementById(id)
-          .classList
-          .remove('active');
+        const button =
+          document.getElementById(id);
+
+        if (button) {
+          button.classList.remove('active');
+        }
       });
 
       if (filter === 'active') {
@@ -7276,8 +7539,10 @@
           .add('active');
 
       } else {
+        wrongNotebookFilter = 'active';
+
         document
-          .getElementById('wrongAllFilter')
+          .getElementById('wrongActiveFilter')
           .classList
           .add('active');
       }
@@ -7303,7 +7568,7 @@
             return item.mastered;
           }
 
-          return true;
+          return !item.mastered;
         });
 
       if (filtered.length === 0) {
@@ -7356,8 +7621,9 @@
 
           '<div class="wrong-note-source">' +
             escapeHtml(item.sheetName || '') +
-            ' · Day ' +
-            Number(item.day || 0) +
+            (Number(item.day || 0) > 0
+              ? ' · Day ' + Number(item.day)
+              : '') +
           '</div>' +
 
           (
@@ -7495,8 +7761,8 @@
       if (modeButton) {
         modeButton.textContent =
           wrongSelectionMode_
-            ? '선택 종료'
-            : '선택';
+            ? '선택 중'
+            : '☑ 단어 선택';
 
         modeButton.classList.toggle(
           'active-selection-mode',
@@ -7555,37 +7821,65 @@
         );
 
       if (deleteButton) {
-        deleteButton.disabled =
-          wrongNotebookFilter !==
+        const canDelete =
+          wrongNotebookFilter ===
           'mastered';
+
+        deleteButton.disabled =
+          !canDelete;
+
+        deleteButton.title =
+          canDelete
+            ? '선택한 복습 완료 단어를 삭제합니다.'
+            : '복습 완료 탭에서만 삭제할 수 있습니다.';
       }
     }
 
 
+    function selectAllVisibleWrongWords_() {
+      document
+        .querySelectorAll(
+          '#wrongNotebookList .wrong-batch-check'
+        )
+        .forEach(function (checkbox) {
+          checkbox.checked = true;
+        });
+
+      updateWrongBulkToolbar_();
+    }
+
+
+    function clearWrongSelection_() {
+      document
+        .querySelectorAll(
+          '#wrongNotebookList .wrong-batch-check'
+        )
+        .forEach(function (checkbox) {
+          checkbox.checked = false;
+        });
+
+      updateWrongBulkToolbar_();
+    }
+
+
     function toggleSmartWrongSelectAll_() {
-      const checkboxes =
-        Array.from(
-          document.querySelectorAll(
-            '#wrongNotebookList .wrong-batch-check'
-          )
-        );
+      const checkboxes = Array.from(
+        document.querySelectorAll(
+          '#wrongNotebookList .wrong-batch-check'
+        )
+      );
 
       const allSelected =
         checkboxes.length > 0 &&
-        checkboxes.every(function (
-          checkbox
-        ) {
+        checkboxes.every(function (checkbox) {
           return checkbox.checked;
         });
 
-      checkboxes.forEach(function (
-        checkbox
-      ) {
-        checkbox.checked =
-          !allSelected;
-      });
-
-      updateWrongBulkToolbar_();
+      if (allSelected) {
+        clearWrongSelection_();
+      } else {
+        selectAllVisibleWrongWords_();
+      }
     }
 
 
@@ -7698,8 +7992,6 @@
             activeCount +
             '개 · 복습 완료 ' +
             masteredCount +
-            '개 · 전체 오답 ' +
-            wrongNotebookWords.length +
             '개';
         })
         .withFailureHandler(function (error) {
@@ -7741,8 +8033,6 @@
           activeCount +
           '개 · 복습 완료 ' +
           masteredCount +
-          '개 · 전체 오답 ' +
-          wrongNotebookWords.length +
           '개';
       }
     }
@@ -9825,38 +10115,17 @@ google.script.run
 
     function choosePersonalBookForSave(item, button) {
       loadPersonalBooks(function () {
-        if (!personalVocabularyBooks.length) {
-          const make = confirm('아직 만든 단어장이 없습니다.\n새 단어장을 만들까요?');
-          if (!make) {
-            if (button) button.disabled = false;
-            return;
+        openPersonalBookPicker_(
+          personalVocabularyBooks,
+          {
+            mode: 'saveSingle',
+            payload: item,
+            button: button,
+            title: '저장할 단어장 선택',
+            description:
+              '이 단어를 저장할 단어장을 터치하세요.'
           }
-          createNewPersonalBook(function (bookId) {
-            saveItemToSelectedBook(bookId, item, button);
-          });
-          return;
-        }
-        let message = '저장할 단어장을 선택하세요.\n\n';
-        personalVocabularyBooks.forEach(function (book, index) {
-          message += (index + 1) + '. ' + book.bookName + '\n';
-        });
-        message += '\n번호를 입력하거나, 새 단어장은 + 를 입력하세요.';
-        const answer = prompt(message, '1');
-        if (answer === null) {
-          if (button) button.disabled = false;
-          return;
-        }
-        if (String(answer).trim() === '+') {
-          createNewPersonalBook(function (bookId) { saveItemToSelectedBook(bookId, item, button); });
-          return;
-        }
-        const index = Number(answer) - 1;
-        if (!Number.isInteger(index) || index < 0 || index >= personalVocabularyBooks.length) {
-          if (button) button.disabled = false;
-          alert('올바른 번호를 입력해주세요.');
-          return;
-        }
-        saveItemToSelectedBook(personalVocabularyBooks[index].bookId, item, button);
+        );
       });
     }
 
@@ -10877,84 +11146,16 @@ google.script.run
       }
 
       loadPersonalBooks(function () {
-        if (!personalVocabularyBooks.length) {
-          if (
-            !confirm(
-              '아직 만든 단어장이 없습니다.\n새 단어장을 만들까요?'
-            )
-          ) {
-            return;
+        openPersonalBookPicker_(
+          personalVocabularyBooks,
+          {
+            mode: 'saveBatch',
+            payload: items,
+            title: '저장할 단어장 선택',
+            description:
+              items.length +
+              '개 단어를 저장할 단어장을 터치하세요.'
           }
-
-          createNewPersonalBook(
-            function (bookId) {
-              saveBatchToPersonalBook_(
-                bookId,
-                items
-              );
-            }
-          );
-
-          return;
-        }
-
-        let message =
-          '저장할 단어장을 선택하세요.\n\n';
-
-        personalVocabularyBooks.forEach(
-          function (book, index) {
-            message +=
-              (index + 1) +
-              '. ' +
-              book.bookName +
-              '\n';
-          }
-        );
-
-        message +=
-          '\n번호를 입력하거나 새 단어장은 +를 입력하세요.';
-
-        const answer =
-          prompt(message, '1');
-
-        if (answer === null) {
-          return;
-        }
-
-        if (
-          String(answer).trim() ===
-          '+'
-        ) {
-          createNewPersonalBook(
-            function (bookId) {
-              saveBatchToPersonalBook_(
-                bookId,
-                items
-              );
-            }
-          );
-
-          return;
-        }
-
-        const index =
-          Number(answer) - 1;
-
-        if (
-          !Number.isInteger(index) ||
-          index < 0 ||
-          index >=
-            personalVocabularyBooks.length
-        ) {
-          alert(
-            '올바른 번호를 입력해주세요.'
-          );
-          return;
-        }
-
-        saveBatchToPersonalBook_(
-          personalVocabularyBooks[index].bookId,
-          items
         );
       });
     }
@@ -11206,8 +11407,8 @@ google.script.run
           preview.textContent =
             '복습할 오답 ' +
             Number(result.activeCount || 0) +
-            '개 · 전체 오답 ' +
-            Number(result.totalCount || 0) +
+            '개 · 복습 완료 ' +
+            Number(result.masteredCount || 0) +
             '개';
         }
 
@@ -11231,8 +11432,6 @@ google.script.run
               Number(result.activeCount || 0) +
               '개 · 복습 완료 ' +
               Number(result.masteredCount || 0) +
-              '개 · 전체 오답 ' +
-              Number(result.totalCount || 0) +
               '개';
           }
 
@@ -11719,8 +11918,6 @@ google.script.run
         Number(result.activeCount || 0) +
         '개 · 복습 완료 ' +
         Number(result.masteredCount || 0) +
-        '개 · 전체 오답 ' +
-        Number(result.totalCount || 0) +
         '개';
     }
 
@@ -11733,8 +11930,8 @@ google.script.run
       preview.textContent =
         '복습할 오답 ' +
         Number(result.activeCount || 0) +
-        '개 · 전체 오답 ' +
-        Number(result.totalCount || 0) +
+        '개 · 복습 완료 ' +
+        Number(result.masteredCount || 0) +
         '개';
     }
 
@@ -11901,7 +12098,7 @@ google.script.run
 
       <div class="hsm-picker-header">
         <div>
-          <h3 id="personalBookPickerTitle">이동할 단어장 선택</h3>
+          <h3 id="personalBookPickerTitle">단어장 선택</h3>
           <p id="personalBookPickerDescription">
             원하는 단어장을 터치하세요.
           </p>
@@ -11924,6 +12121,14 @@ google.script.run
 
       <button
         type="button"
+        class="hsm-picker-new-book"
+        onclick="createBookFromPicker_()"
+      >
+        ＋ 새 단어장 만들기
+      </button>
+
+      <button
+        type="button"
         class="secondary-button hsm-picker-cancel"
         onclick="closePersonalBookPicker_()"
       >
@@ -11933,51 +12138,61 @@ google.script.run
   </div>
 
 
-<script id="hsm-book-picker-script-v2">
-  let pendingPersonalMoveRows_ = [];
+<script id="hsm-book-picker-script-v3">
+  let personalBookPickerMode_ = '';
+  let personalBookPickerPayload_ = null;
+  let personalBookPickerButton_ = null;
 
   function openPersonalBookPicker_(
     books,
-    selectedCount
+    options
   ) {
-    const modal =
-      document.getElementById(
-        'personalBookPickerModal'
-      );
+    const config = options || {};
+    const modal = document.getElementById(
+      'personalBookPickerModal'
+    );
+    const list = document.getElementById(
+      'personalBookPickerList'
+    );
+    const title = document.getElementById(
+      'personalBookPickerTitle'
+    );
+    const description = document.getElementById(
+      'personalBookPickerDescription'
+    );
 
-    const list =
-      document.getElementById(
-        'personalBookPickerList'
-      );
+    personalBookPickerMode_ =
+      String(config.mode || 'saveBatch');
+    personalBookPickerPayload_ =
+      config.payload || null;
+    personalBookPickerButton_ =
+      config.button || null;
 
-    const description =
-      document.getElementById(
-        'personalBookPickerDescription'
-      );
+    title.textContent =
+      config.title || '저장할 단어장 선택';
 
     description.textContent =
-      selectedCount +
-      '개 단어를 이동할 단어장을 터치하세요.';
+      config.description ||
+      '원하는 단어장을 터치하세요.';
 
     list.innerHTML = '';
 
-    books.forEach(function (book) {
-      const button =
-        document.createElement('button');
+    (books || []).forEach(function (book) {
+      const button = document.createElement(
+        'button'
+      );
 
       button.type = 'button';
-      button.className =
-        'hsm-picker-book';
-
+      button.className = 'hsm-picker-book';
       button.innerHTML =
-        '<div>' +
+        '<div class="hsm-picker-book-icon">📚</div>' +
+        '<div class="hsm-picker-book-copy">' +
           '<div class="hsm-picker-book-name">' +
             escapeHtml(book.bookName || '') +
           '</div>' +
           '<div class="hsm-picker-book-meta">' +
-            '저장 단어 ' +
             Number(book.wordCount || 0) +
-            '개' +
+            '개 저장됨' +
           '</div>' +
         '</div>' +
         '<span class="hsm-picker-book-arrow">›</span>';
@@ -11985,9 +12200,7 @@ google.script.run
       button.addEventListener(
         'click',
         function () {
-          moveSelectedPersonalWordsToBook_(
-            book
-          );
+          handlePersonalBookPickerChoice_(book);
         }
       );
 
@@ -12000,11 +12213,11 @@ google.script.run
     );
   }
 
+
   function closePersonalBookPicker_() {
-    const modal =
-      document.getElementById(
-        'personalBookPickerModal'
-      );
+    const modal = document.getElementById(
+      'personalBookPickerModal'
+    );
 
     if (modal) {
       modal.classList.add('hidden');
@@ -12013,7 +12226,148 @@ google.script.run
     document.body.classList.remove(
       'hsm-modal-open'
     );
+
+    if (
+      personalBookPickerButton_ &&
+      personalBookPickerMode_ ===
+        'saveSingle'
+    ) {
+      personalBookPickerButton_.disabled =
+        false;
+    }
+
+    personalBookPickerMode_ = '';
+    personalBookPickerPayload_ = null;
+    personalBookPickerButton_ = null;
   }
+
+
+  function handlePersonalBookPickerChoice_(
+    book
+  ) {
+    const mode = personalBookPickerMode_;
+    const payload = personalBookPickerPayload_;
+    const sourceButton =
+      personalBookPickerButton_;
+
+    // 먼저 닫되, 단일 저장 버튼은 저장 함수에서
+    // 다시 활성화하도록 참조를 보존합니다.
+    const modal = document.getElementById(
+      'personalBookPickerModal'
+    );
+    if (modal) modal.classList.add('hidden');
+    document.body.classList.remove(
+      'hsm-modal-open'
+    );
+
+    personalBookPickerMode_ = '';
+    personalBookPickerPayload_ = null;
+    personalBookPickerButton_ = null;
+
+    if (mode === 'move') {
+      moveSelectedPersonalWordsToBook_(book);
+      return;
+    }
+
+    if (mode === 'saveSingle') {
+      saveItemToSelectedBook(
+        book.bookId,
+        payload,
+        sourceButton
+      );
+      return;
+    }
+
+    saveBatchToPersonalBook_(
+      book.bookId,
+      Array.isArray(payload) ? payload : []
+    );
+  }
+
+
+  function createBookFromPicker_() {
+    const mode = personalBookPickerMode_;
+    const payload = personalBookPickerPayload_;
+    const sourceButton =
+      personalBookPickerButton_;
+
+    const name = prompt(
+      '새 단어장 이름을 입력하세요.'
+    );
+
+    if (name === null) return;
+
+    if (!String(name).trim()) {
+      alert('단어장 이름을 입력해주세요.');
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        const bookId =
+          result && result.book
+            ? result.book.bookId
+            : '';
+
+        closePersonalBookPicker_();
+
+        if (mode === 'saveSingle') {
+          saveItemToSelectedBook(
+            bookId,
+            payload,
+            sourceButton
+          );
+        } else if (mode === 'move') {
+          const book = result.book || {
+            bookId: bookId,
+            bookName: String(name).trim()
+          };
+          moveSelectedPersonalWordsToBook_(
+            book
+          );
+        } else {
+          saveBatchToPersonalBook_(
+            bookId,
+            Array.isArray(payload)
+              ? payload
+              : []
+          );
+        }
+      })
+      .withFailureHandler(function (error) {
+        alert(
+          error && error.message
+            ? error.message
+            : error
+        );
+      })
+      .createVocabularyBook(
+        currentLoginToken,
+        String(name).trim()
+      );
+  }
+
+
+  let pendingPersonalMoveRows_ = [];
+
+  function openPersonalMoveBookPicker_(
+    books,
+    selectedCount
+  ) {
+    openPersonalBookPicker_(
+      books,
+      {
+        mode: 'move',
+        payload:
+          pendingPersonalMoveRows_.slice(),
+        title: '이동할 단어장 선택',
+        description:
+          selectedCount +
+          '개 단어를 이동할 곳을 터치하세요.'
+      }
+    );
+  }
+
 
   function moveSelectedPersonalWordsToBook_(
     book
@@ -12022,11 +12376,8 @@ google.script.run
       pendingPersonalMoveRows_.slice();
 
     if (!selectedRows.length) {
-      closePersonalBookPicker_();
       return;
     }
-
-    closePersonalBookPicker_();
 
     google.script.run
       .withSuccessHandler(function (result) {
@@ -12056,6 +12407,7 @@ google.script.run
         book.bookId
       );
   }
+
 
   document.addEventListener(
     'keydown',
