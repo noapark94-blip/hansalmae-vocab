@@ -4,23 +4,23 @@
   <base target="_top">
 
   <meta charset="UTF-8">
-  <title>한살매 단어어플</title>
-  <meta name="description" content="한살매입시전문학원 영어 단어시험·오답노트·나만의 단어장">
+  <title>한살매 보카</title>
+  <meta name="description" content="한살매 보카 · 영어 단어시험·오답노트·나만의 단어장">
   <link rel="canonical" href="https://noapark94-blip.github.io/hansalmae-vocab/">
 
   <!-- 카카오톡·문자·SNS 링크 미리보기 -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="한살매입시전문학원">
-  <meta property="og:title" content="한살매 단어어플">
-  <meta property="og:description" content="한살매입시전문학원 영어 단어시험·오답노트·나만의 단어장">
+  <meta property="og:title" content="한살매 보카">
+  <meta property="og:description" content="한살매 보카 · 영어 단어시험·오답노트·나만의 단어장">
   <meta property="og:image" content="https://noapark94-blip.github.io/hansalmae-vocab/icon-512.png">
   <meta property="og:image:secure_url" content="https://noapark94-blip.github.io/hansalmae-vocab/icon-512.png">
   <meta property="og:image:alt" content="한살매 로고">
   <meta property="og:url" content="https://noapark94-blip.github.io/hansalmae-vocab/">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="한살매 단어어플">
-  <meta name="twitter:description" content="한살매입시전문학원 영어 단어시험·오답노트·나만의 단어장">
+  <meta name="twitter:title" content="한살매 보카">
+  <meta name="twitter:description" content="한살매 보카 · 영어 단어시험·오답노트·나만의 단어장">
   <meta name="twitter:image" content="https://noapark94-blip.github.io/hansalmae-vocab/icon-512.png">
 
 
@@ -39,7 +39,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="한살매 단어">
+  <meta name="apple-mobile-web-app-title" content="한살매 보카">
   <link rel="apple-touch-icon" href="./icon-192.png">
 
   <style>
@@ -4449,6 +4449,13 @@
         .focus();
 
       window.scrollTo(0, 0);
+
+      if (
+        typeof hsmUpdateBackButton_ ===
+        'function'
+      ) {
+        hsmUpdateBackButton_();
+      }
     }
 
 
@@ -4469,6 +4476,13 @@
 
       document.getElementById('studentId').focus();
       window.scrollTo(0, 0);
+
+      if (
+        typeof hsmUpdateBackButton_ ===
+        'function'
+      ) {
+        hsmUpdateBackButton_();
+      }
     }
 
 
@@ -4796,6 +4810,13 @@
         return;
       }
 
+      if (
+        typeof hsmBackStack_ !==
+        'undefined'
+      ) {
+        hsmBackStack_.length = 0;
+      }
+
       currentStudent = student;
 
       document
@@ -4935,6 +4956,24 @@
     function clearLoginState() {
       currentLoginToken = '';
       currentStudent = null;
+
+      if (
+        typeof hsmBackStack_ !==
+        'undefined'
+      ) {
+        hsmBackStack_.length = 0;
+      }
+
+      const backButton =
+        document.getElementById(
+          'hsmGlobalBackButton'
+        );
+
+      if (backButton) {
+        backButton.classList.add(
+          'hidden'
+        );
+      }
 
       localStorage.removeItem(
         'hansalmaeStudentToken'
@@ -8671,7 +8710,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=19')
+          .register('./service-worker.js?v=20')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -9558,6 +9597,52 @@ google.script.run
         );
 
       if (!button) {
+        return;
+      }
+
+      const loginScreen =
+        document.getElementById(
+          'loginScreen'
+        );
+
+      const signupScreen =
+        document.getElementById(
+          'signupScreen'
+        );
+
+      const teacherLoginScreen =
+        document.getElementById(
+          'teacherLoginScreen'
+        );
+
+      const loginVisible =
+        loginScreen &&
+        !loginScreen.classList.contains(
+          'hidden'
+        );
+
+      const signupVisible =
+        signupScreen &&
+        !signupScreen.classList.contains(
+          'hidden'
+        );
+
+      const teacherLoginVisible =
+        teacherLoginScreen &&
+        !teacherLoginScreen.classList.contains(
+          'hidden'
+        );
+
+      /*
+       * 로그인·회원가입·선생님 로그인 화면에서는
+       * 뒤로가기 버튼을 무조건 숨깁니다.
+       */
+      if (
+        loginVisible ||
+        signupVisible ||
+        teacherLoginVisible
+      ) {
+        button.classList.add('hidden');
         return;
       }
 
