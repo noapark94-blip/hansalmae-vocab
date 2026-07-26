@@ -3551,15 +3551,16 @@
 
 
 <style id="hsm-login-dog-animation-v1">
-  .login-card {
-    padding-top: 18px !important;
+  #loginScreen.login-card {
+    padding-top: 0 !important;
   }
 
   .login-dog-animation {
     position: relative;
-    width: min(92px, 25vw);
-    height: 108px;
-    margin: -4px auto -8px;
+    z-index: 2;
+    width: min(118px, 31vw);
+    height: 138px;
+    margin: -1px auto -15px;
     overflow: visible;
   }
 
@@ -3569,16 +3570,16 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    object-position: center top;
     opacity: 0;
-    transform: scale(0.995);
-    transition: opacity 55ms linear;
+    transform: scale(1);
+    transition: opacity 100ms linear;
     pointer-events: none;
     user-select: none;
   }
 
   .login-dog-animation .dog-frame.active {
     opacity: 1;
-    transform: scale(1);
   }
 
   #loginScreen > h1 {
@@ -3586,14 +3587,14 @@
   }
 
   @media (max-width: 480px) {
-    .login-card {
-      padding-top: 14px !important;
+    #loginScreen.login-card {
+      padding-top: 0 !important;
     }
 
     .login-dog-animation {
-      width: min(82px, 23vw);
-      height: 96px;
-      margin: -2px auto -8px;
+      width: min(106px, 29vw);
+      height: 124px;
+      margin: -1px auto -13px;
     }
   }
 
@@ -10068,7 +10069,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=32', {
+          .register('./service-worker.js?v=34', {
             updateViaCache: 'none'
           })
           .then(function (registration) {
@@ -12508,50 +12509,35 @@ google.script.run
         animation.querySelectorAll('.dog-frame')
       );
 
-    if (frames.length < 2) {
+    if (!frames.length) {
       return;
     }
 
-    const reducedMotion =
-      window.matchMedia &&
-      window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-    if (reducedMotion) {
-      frames.forEach(function (frame, index) {
-        frame.classList.toggle('active', index === 4);
-      });
-      return;
-    }
-
-    const sequence = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    let sequenceIndex = 0;
+    let currentIndex = 0;
     let timerId = null;
 
-    function showFrame(frameIndex) {
-      frames.forEach(function (frame, index) {
+    function showFrame(index) {
+      frames.forEach(function (frame, frameIndex) {
         frame.classList.toggle(
           'active',
-          index === frameIndex
+          frameIndex === index
         );
       });
     }
 
     function nextFrame() {
-      sequenceIndex =
-        (sequenceIndex + 1) % sequence.length;
+      currentIndex =
+        (currentIndex + 1) % frames.length;
 
-      showFrame(sequence[sequenceIndex]);
+      showFrame(currentIndex);
     }
 
     function startAnimation() {
-      if (timerId) {
+      if (timerId || document.hidden) {
         return;
       }
 
-      timerId =
-        window.setInterval(nextFrame, 115);
+      timerId = window.setInterval(nextFrame, 400);
     }
 
     function stopAnimation() {
@@ -12563,7 +12549,7 @@ google.script.run
       timerId = null;
     }
 
-    showFrame(sequence[0]);
+    showFrame(0);
     startAnimation();
 
     document.addEventListener(
