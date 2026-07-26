@@ -2273,6 +2273,11 @@
       const inflightRequests = new Map();
 
       const CACHE_RULES = {
+        teacherGetExamStatus: 10 * 1000,
+        teacherListExams: 15 * 1000,
+        teacherGetSetupData: 5 * 60 * 1000,
+        getWords: 10 * 60 * 1000,
+        getVocabularyWords: 10 * 60 * 1000,
         getSheetNames: 6 * 60 * 60 * 1000,
         getDays: 6 * 60 * 60 * 1000,
         getMonthlyRanking: 60 * 1000,
@@ -8375,7 +8380,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=16')
+          .register('./service-worker.js?v=17')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
