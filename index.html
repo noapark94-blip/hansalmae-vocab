@@ -2831,6 +2831,55 @@
     }
   </style>
 
+
+<style id="hsm-mobile-ghost-fix-v2">
+  button,
+  .choice,
+  .teacher-option-button {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    outline: none !important;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .choice:not(.correct):not(.wrong),
+    .choice:not(.correct):not(.wrong):hover,
+    .choice:not(.correct):not(.wrong):focus,
+    .choice:not(.correct):not(.wrong):focus-visible,
+    .choice:not(.correct):not(.wrong):active {
+      border-color: #ead6e1 !important;
+      background: #ffffff !important;
+      box-shadow: 0 5px 14px rgba(79, 18, 55, 0.04) !important;
+      color: #251b22 !important;
+      transform: none !important;
+      filter: none !important;
+    }
+
+    .teacher-option-button:not(.selected),
+    .teacher-option-button:not(.selected):hover,
+    .teacher-option-button:not(.selected):focus,
+    .teacher-option-button:not(.selected):focus-visible,
+    .teacher-option-button:not(.selected):active {
+      border-color: #ebc7d9 !important;
+      background: #fff8fb !important;
+      color: #5a2043 !important;
+      box-shadow: none !important;
+      transform: none !important;
+      filter: none !important;
+    }
+
+    .teacher-option-button.selected,
+    .teacher-option-button.selected:hover,
+    .teacher-option-button.selected:focus,
+    .teacher-option-button.selected:active {
+      border-color: #8f145f !important;
+      background: #8f145f !important;
+      color: #ffffff !important;
+      box-shadow: none !important;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -8345,6 +8394,8 @@ google.script.run
         'beforeend',
         pointMessage
       );
+
+    hsmRefreshWrongNotebookImmediately_();
   })
   .withFailureHandler(function (error) {
     alert(
@@ -8620,7 +8671,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=18')
+          .register('./service-worker.js?v=19')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -9207,6 +9258,7 @@ google.script.run
           teacherExamSession = null;
           teacherExamAnswers = {};
           teacherExamCache.examsAt = 0;
+          hsmRefreshWrongNotebookImmediately_();
           refreshTeacherExamDashboard_();
           window.scrollTo({ top: 0, behavior: 'instant' });
         })
@@ -9990,6 +10042,187 @@ google.script.run
   >
     ← 뒤로가기
   </button>
+
+
+<script id="hsm-wrong-note-immediate-refresh">
+  function hsmClearWrongNotebookBrowserCache_() {
+    try {
+      const prefix = 'hsmApiCacheV2:';
+      const targets = [
+        'getWrongNotebook|',
+        'getWrongNotebookCount|',
+        'getMyLearning|',
+        'getMonthlyRanking|'
+      ];
+
+      const removeKeys = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+
+        if (!key || key.indexOf(prefix) !== 0) {
+          continue;
+        }
+
+        const shouldRemove =
+          targets.some(function (target) {
+            return key.indexOf(target) !== -1;
+          });
+
+        if (shouldRemove) {
+          removeKeys.push(key);
+        }
+      }
+
+      removeKeys.forEach(function (key) {
+        localStorage.removeItem(key);
+      });
+
+      if (
+        typeof teacherExamCache === 'object' &&
+        teacherExamCache
+      ) {
+        teacherExamCache.exams = null;
+        teacherExamCache.examsAt = 0;
+      }
+    } catch (_error) {}
+  }
+
+  function hsmRefreshWrongNotebookImmediately_() {
+    hsmClearWrongNotebookBrowserCache_();
+
+    if (!currentLoginToken) {
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        if (!result || !result.success) {
+          return;
+        }
+
+        wrongNotebookWords =
+          Array.isArray(result.words)
+            ? result.words
+            : [];
+
+        const preview =
+          document.getElementById(
+            'wrongNotebookPreview'
+          );
+
+        if (preview) {
+          preview.textContent =
+            '복습할 오답 ' +
+            Number(result.activeCount || 0) +
+            '개 · 전체 오답 ' +
+            Number(result.totalCount || 0) +
+            '개';
+        }
+
+        const screen =
+          document.getElementById(
+            'wrongNotebookScreen'
+          );
+
+        if (
+          screen &&
+          !screen.classList.contains('hidden')
+        ) {
+          const summary =
+            document.getElementById(
+              'wrongNotebookSummary'
+            );
+
+          if (summary) {
+            summary.textContent =
+              '복습할 오답 ' +
+              Number(result.activeCount || 0) +
+              '개 · 복습 완료 ' +
+              Number(result.masteredCount || 0) +
+              '개 · 전체 오답 ' +
+              Number(result.totalCount || 0) +
+              '개';
+          }
+
+          renderWrongNotebook();
+        }
+      })
+      .withFailureHandler(function (error) {
+        console.error(
+          '오답노트 즉시 갱신 실패',
+          error
+        );
+      })
+      .getWrongNotebook(
+        currentLoginToken
+      );
+  }
+</script>
+
+
+<script id="hsm-mobile-focus-release-v2">
+  (function () {
+    function releaseFocus_(target) {
+      window.setTimeout(function () {
+        try {
+          if (
+            target &&
+            typeof target.blur === 'function'
+          ) {
+            target.blur();
+          }
+
+          if (
+            document.activeElement &&
+            typeof document.activeElement.blur ===
+              'function' &&
+            (
+              document.activeElement.classList.contains(
+                'choice'
+              ) ||
+              document.activeElement.classList.contains(
+                'teacher-option-button'
+              )
+            )
+          ) {
+            document.activeElement.blur();
+          }
+        } catch (_error) {}
+      }, 30);
+    }
+
+    document.addEventListener(
+      'touchend',
+      function (event) {
+        const target =
+          event.target.closest(
+            '.choice, .teacher-option-button'
+          );
+
+        if (target) {
+          releaseFocus_(target);
+        }
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      'pointerup',
+      function (event) {
+        const target =
+          event.target.closest(
+            '.choice, .teacher-option-button'
+          );
+
+        if (target) {
+          releaseFocus_(target);
+        }
+      },
+      true
+    );
+  })();
+</script>
 
 </body>
 </html>
