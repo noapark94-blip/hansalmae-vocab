@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hansalmae-voca-v37';
+const CACHE_NAME = 'hansalmae-voca-v38';
 const REQUIRED_ASSETS = ['./', './index.html', './manifest.json'];
 const OPTIONAL_ASSETS = ['./teacher.html', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', function (event) {
