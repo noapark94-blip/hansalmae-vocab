@@ -3158,6 +3158,23 @@
   }
 </style>
 
+
+<style id="hsm-wrong-simple-toolbar-v2">
+  .wrong-bulk-toolbar {
+    grid-template-columns:
+      auto minmax(76px, 1fr)
+      auto auto !important;
+  }
+
+  @media (max-width: 650px) {
+    .wrong-bulk-toolbar {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr))
+        !important;
+    }
+  }
+</style>
+
 </head>
 
 <body>
@@ -4017,16 +4034,7 @@
             단어장 저장
           </button>
 
-          <button
-            id="wrongDeleteSelectedButton"
-            type="button"
-            class="danger-button"
-            onclick="deleteSelectedMasteredWrongWords_()"
-          >
-            완료 단어 삭제
-          </button>
-
-          <button
+                    <button
             type="button"
             class="secondary-button"
             onclick="exitWrongSelectionMode_()"
@@ -4150,7 +4158,7 @@
 
         <div class="personal-toolbar personal-main-toolbar">
           <button onclick="showPersonalTestSetup()">
-            📝 암기할 단어 시험보기
+            📝 선택 단어 시험보기
           </button>
 
           <button
@@ -9332,7 +9340,7 @@ google.script.run
     } else if (questions.length < 30) {
       pointMessage +=
         '<br><span style="color:#666;">' +
-        '포인트는 30문제 이상 응시해야 지급됩니다.' +
+        '시험 기록은 이번 달 학습에 반영되었습니다. 포인트는 30문제 이상부터 지급됩니다.' +
         '</span>';
 
     } else if (percentage < 80) {
@@ -9641,7 +9649,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=24')
+          .register('./service-worker.js?v=25')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -11239,6 +11247,574 @@ google.script.run
       true
     );
   })();
+</script>
+
+
+<script id="hsm-personal-simple-mode-v1">
+  /*
+   * 나만의 단어장은 암기 완료 상태를 사용하지 않습니다.
+   * 선택한 단어만 시험·공유·이동·삭제합니다.
+   */
+  function loadSelectedPersonalBookWords() {
+    const loading =
+      document.getElementById(
+        'personalVocabularyLoading'
+      );
+
+    if (!selectedPersonalBookId) {
+      personalVocabularyWords = [];
+
+      if (loading) {
+        loading.textContent = '';
+      }
+
+      document
+        .getElementById(
+          'personalVocabularySummary'
+        )
+        .textContent =
+        '새 단어장을 만들어 단어를 저장해보세요.';
+
+      renderPersonalVocabulary();
+      return;
+    }
+
+    if (
+      Array.isArray(personalVocabularyWords) &&
+      personalVocabularyWords.length
+    ) {
+      renderPersonalVocabulary();
+    }
+
+    if (loading) {
+      loading.textContent =
+        '최신 단어를 확인하는 중입니다.';
+    }
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        if (loading) {
+          loading.textContent = '';
+        }
+
+        personalVocabularyWords =
+          result &&
+          Array.isArray(result.words)
+            ? result.words
+            : [];
+
+        const current =
+          personalVocabularyBooks.find(
+            function (book) {
+              return (
+                String(book.bookId) ===
+                String(
+                  selectedPersonalBookId
+                )
+              );
+            }
+          );
+
+        document
+          .getElementById(
+            'personalVocabularySummary'
+          )
+          .textContent =
+          (
+            current
+              ? current.bookName + ' · '
+              : ''
+          ) +
+          '전체 ' +
+          personalVocabularyWords.length +
+          '개';
+
+        renderPersonalVocabulary();
+      })
+      .withFailureHandler(function (error) {
+        if (loading) {
+          loading.textContent = '';
+        }
+
+        alert(
+          '단어를 불러오지 못했습니다.\n' +
+          (
+            error && error.message
+              ? error.message
+              : error
+          )
+        );
+      })
+      .getPersonalVocabularyByBook(
+        currentLoginToken,
+        selectedPersonalBookId
+      );
+  }
+
+
+  function renderPersonalVocabulary() {
+    const list =
+      document.getElementById(
+        'personalVocabularyList'
+      );
+
+    list.innerHTML = '';
+
+    if (!personalVocabularyBooks.length) {
+      list.innerHTML =
+        '<div class="empty-message">' +
+        '아직 만든 단어장이 없습니다.<br>' +
+        '위의 ＋ 새 단어장 버튼을 눌러주세요.' +
+        '</div>';
+
+      return;
+    }
+
+    if (!personalVocabularyWords.length) {
+      list.innerHTML =
+        '<div class="empty-message">' +
+        '이 단어장에는 아직 저장한 단어가 없습니다.' +
+        '</div>';
+
+      return;
+    }
+
+    const current =
+      personalVocabularyBooks.find(
+        function (book) {
+          return (
+            String(book.bookId) ===
+            String(
+              selectedPersonalBookId
+            )
+          );
+        }
+      );
+
+    personalVocabularyWords.forEach(
+      function (item) {
+        const card =
+          document.createElement('div');
+
+        card.className =
+          'personal-item';
+
+        card.innerHTML =
+          '<div class="personal-card-layout">' +
+            '<label class="personal-compact-check personal-selection-control" aria-label="단어 선택">' +
+              '<input type="checkbox" class="personal-share-check" value="' +
+                Number(item.rowNumber) +
+                '" onchange="updatePersonalBulkToolbar_()">' +
+              '<span></span>' +
+            '</label>' +
+            '<div class="personal-card-content">' +
+              '<div class="personal-book-label">' +
+                escapeHtml(
+                  current
+                    ? current.bookName
+                    : ''
+                ) +
+              '</div>' +
+              '<div class="personal-item-top">' +
+                '<div class="personal-word">' +
+                  escapeHtml(item.word) +
+                '</div>' +
+                '<div class="personal-meta">' +
+                  escapeHtml(
+                    item.sheetName || ''
+                  ) +
+                  (
+                    item.day
+                      ? ' · Day ' +
+                        escapeHtml(
+                          String(item.day)
+                        )
+                      : ''
+                  ) +
+                  '<br>' +
+                  escapeHtml(
+                    item.registeredDate ||
+                    ''
+                  ) +
+                '</div>' +
+              '</div>' +
+              '<div class="wrong-note-meaning">' +
+                escapeHtml(
+                  item.meaning || ''
+                ) +
+              '</div>' +
+              (
+                item.example
+                  ? '<div class="wrong-note-example">' +
+                    escapeHtml(item.example) +
+                    '</div>'
+                  : ''
+              ) +
+              (
+                item.translation
+                  ? '<div class="wrong-note-translation">' +
+                    escapeHtml(
+                      item.translation
+                    ) +
+                    '</div>'
+                  : ''
+              ) +
+            '</div>' +
+          '</div>';
+
+        list.appendChild(card);
+      }
+    );
+
+    applyPersonalSelectionMode_();
+  }
+
+
+  function showPersonalTestSetup() {
+    const selectedRows =
+      getSelectedPersonalRows_();
+
+    if (selectedRows.length < 4) {
+      alert(
+        '선택 버튼을 누른 뒤 시험 볼 단어를 4개 이상 체크해주세요.'
+      );
+      return;
+    }
+
+    const selectedWords =
+      personalVocabularyWords.filter(
+        function (item) {
+          return selectedRows.includes(
+            Number(item.rowNumber)
+          );
+        }
+      );
+
+    if (selectedWords.length < 4) {
+      alert(
+        '시험 볼 단어를 4개 이상 선택해주세요.'
+      );
+      return;
+    }
+
+    const days =
+      selectedWords
+        .map(function (item) {
+          return Number(item.day) || 0;
+        })
+        .filter(function (day) {
+          return day > 0;
+        });
+
+    currentTestContext = {
+      source: 'personal',
+      sheetName:
+        '나만의 단어장',
+      startDay:
+        days.length
+          ? Math.min.apply(null, days)
+          : 1,
+      endDay:
+        days.length
+          ? Math.max.apply(null, days)
+          : 1,
+      questionMode: 'random'
+    };
+
+    /*
+     * 체크한 단어를 모두 랜덤 유형으로 출제합니다.
+     */
+    createQuestions(
+      selectedWords,
+      {
+        requestedCount:
+          selectedWords.length,
+        questionMode: 'random'
+      }
+    );
+
+    exitPersonalSelectionMode_();
+  }
+</script>
+
+
+<script id="hsm-personal-test-selection-helper">
+  (function () {
+    const original =
+      window.showPersonalTestSetup;
+
+    window.showPersonalTestSetup =
+      function () {
+        const selected =
+          typeof getSelectedPersonalRows_ ===
+            'function'
+            ? getSelectedPersonalRows_()
+            : [];
+
+        if (
+          selected.length < 4 &&
+          !personalSelectionMode_
+        ) {
+          personalSelectionMode_ = true;
+          applyPersonalSelectionMode_();
+
+          alert(
+            '시험 볼 단어를 왼쪽 체크박스에서 4개 이상 선택해주세요.'
+          );
+          return;
+        }
+
+        return original.apply(
+          this,
+          arguments
+        );
+      };
+  })();
+</script>
+
+
+<script id="hsm-wrong-notebook-fast-v4">
+  const HSM_WRONG_LOCAL_KEY =
+    'hsmWrongNotebookSnapshotV4';
+
+  function saveWrongNotebookSnapshot_(
+    result
+  ) {
+    try {
+      localStorage.setItem(
+        HSM_WRONG_LOCAL_KEY,
+        JSON.stringify({
+          studentId:
+            currentStudent
+              ? currentStudent.studentId
+              : '',
+          savedAt: Date.now(),
+          result: result
+        })
+      );
+    } catch (_error) {}
+  }
+
+
+  function readWrongNotebookSnapshot_() {
+    try {
+      const raw =
+        localStorage.getItem(
+          HSM_WRONG_LOCAL_KEY
+        );
+
+      if (!raw) {
+        return null;
+      }
+
+      const saved =
+        JSON.parse(raw);
+
+      if (
+        !saved ||
+        !currentStudent ||
+        String(saved.studentId) !==
+          String(currentStudent.studentId) ||
+        Date.now() -
+          Number(saved.savedAt || 0) >
+          24 * 60 * 60 * 1000
+      ) {
+        return null;
+      }
+
+      return saved.result || null;
+
+    } catch (_error) {
+      return null;
+    }
+  }
+
+
+  function applyWrongNotebookResult_(
+    result
+  ) {
+    if (!result || !result.success) {
+      return;
+    }
+
+    wrongNotebookWords =
+      Array.isArray(result.words)
+        ? result.words
+        : [];
+
+    const summary =
+      document.getElementById(
+        'wrongNotebookSummary'
+      );
+
+    if (summary) {
+      summary.textContent =
+        '복습할 오답 ' +
+        Number(result.activeCount || 0) +
+        '개 · 복습 완료 ' +
+        Number(result.masteredCount || 0) +
+        '개 · 전체 오답 ' +
+        Number(result.totalCount || 0) +
+        '개';
+    }
+
+    const preview =
+      document.getElementById(
+        'wrongNotebookPreview'
+      );
+
+    if (preview) {
+      preview.textContent =
+        '복습할 오답 ' +
+        Number(result.activeCount || 0) +
+        '개 · 전체 오답 ' +
+        Number(result.totalCount || 0) +
+        '개';
+    }
+
+    renderWrongNotebook();
+    saveWrongNotebookSnapshot_(result);
+  }
+
+
+  function showWrongNotebook() {
+    setActiveMenu('mypage');
+
+    [
+      'startScreen',
+      'testScreen',
+      'resultScreen',
+      'vocabScreen',
+      'myPageScreen',
+      'rankingScreen',
+      'wrongTestSetupScreen',
+      'personalVocabularyScreen',
+      'personalTestSetupScreen',
+      'smartReviewScreen'
+    ].forEach(function (id) {
+      const element =
+        document.getElementById(id);
+
+      if (element) {
+        element.classList.add(
+          'hidden'
+        );
+      }
+    });
+
+    document
+      .getElementById(
+        'wrongNotebookScreen'
+      )
+      .classList
+      .remove('hidden');
+
+    const loading =
+      document.getElementById(
+        'wrongNotebookLoading'
+      );
+
+    const snapshot =
+      readWrongNotebookSnapshot_();
+
+    if (snapshot) {
+      applyWrongNotebookResult_(
+        snapshot
+      );
+
+      loading.textContent =
+        '최신 오답을 확인하는 중입니다.';
+    } else {
+      loading.textContent =
+        '오답노트를 불러오는 중입니다.';
+    }
+
+    google.script.run
+      .withSuccessHandler(function (
+        result
+      ) {
+        loading.textContent = '';
+        applyWrongNotebookResult_(
+          result
+        );
+      })
+      .withFailureHandler(function (
+        error
+      ) {
+        loading.textContent = '';
+
+        if (!snapshot) {
+          alert(
+            '오답노트를 불러오지 못했습니다.\n' +
+            (
+              error && error.message
+                ? error.message
+                : error
+            )
+          );
+        }
+      })
+      .getWrongNotebook(
+        currentLoginToken
+      );
+
+    window.scrollTo(0, 0);
+  }
+
+
+  /*
+   * 오답 상태를 바꾼 뒤 서버 재조회 없이
+   * 화면부터 즉시 갱신합니다.
+   */
+  const originalToggleWrongWordMastered_ =
+    window.toggleWrongWordMastered;
+
+  window.toggleWrongWordMastered =
+    function (
+      rowNumber,
+      mastered
+    ) {
+      const target =
+        wrongNotebookWords.find(
+          function (item) {
+            return (
+              Number(item.rowNumber) ===
+              Number(rowNumber)
+            );
+          }
+        );
+
+      if (target) {
+        target.mastered =
+          Boolean(mastered);
+
+        applyWrongNotebookResult_({
+          success: true,
+          words:
+            wrongNotebookWords,
+          activeCount:
+            wrongNotebookWords.filter(
+              function (item) {
+                return !item.mastered;
+              }
+            ).length,
+          masteredCount:
+            wrongNotebookWords.filter(
+              function (item) {
+                return item.mastered;
+              }
+            ).length,
+          totalCount:
+            wrongNotebookWords.length
+        });
+      }
+
+      return originalToggleWrongWordMastered_
+        .apply(
+          this,
+          arguments
+        );
+    };
 </script>
 
 </body>
