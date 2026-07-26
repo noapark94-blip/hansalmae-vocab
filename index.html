@@ -2395,6 +2395,7 @@
           'renameVocabularyBook',
           'deleteVocabularyBook',
           'addPersonalVocabularyToBook',
+          'addPersonalVocabularyBatchToBook',
           'movePersonalVocabularyToBook',
           'studentSubmitTeacherExam',
           'studentMarkNotificationRead',
@@ -2757,6 +2758,75 @@
 
       .notification-cleanup-toolbar button {
         width: 100%;
+      }
+    }
+  </style>
+
+
+  <style id="hsm-navigation-batch-style">
+    .hsm-global-back {
+      position: fixed;
+      left: 14px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      z-index: 2000;
+      width: auto;
+      min-width: 104px;
+      min-height: 44px;
+      margin: 0;
+      padding: 10px 15px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 999px;
+      background: rgba(77, 18, 55, .92);
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 9px 24px rgba(79, 18, 55, .28);
+      backdrop-filter: blur(12px);
+    }
+
+    .wrong-note-header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .wrong-note-header-actions button {
+      width: auto;
+      margin: 0;
+    }
+
+    .wrong-note-select-layout {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 11px;
+      align-items: start;
+    }
+
+    .wrong-note-select-content {
+      min-width: 0;
+    }
+
+    .wrong-batch-check {
+      width: 22px;
+      height: 22px;
+      margin: 3px 0 0;
+      accent-color: #941a65;
+    }
+
+    @media (max-width: 650px) {
+      .wrong-note-header-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .wrong-note-header-actions button {
+        width: 100%;
+      }
+
+      .vocab-actions {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
       }
     }
   </style>
@@ -3396,6 +3466,13 @@
 
         <div class="vocab-actions">
           <button
+            type="button"
+            onclick="batchSaveCheckedVocabulary_()"
+          >
+            ⭐ 선택 단어 일괄 저장
+          </button>
+
+          <button
             class="secondary-button"
             onclick="shareCheckedWords()"
           >
@@ -3538,13 +3615,23 @@
             ></div>
           </div>
 
-          <button
-            type="button"
-            class="danger-button study-action-button"
-            onclick="deleteAllMasteredWrongWords_()"
-          >
-            완료 단어 정리
-          </button>
+          <div class="wrong-note-header-actions">
+            <button
+              type="button"
+              class="study-action-button"
+              onclick="batchSaveCheckedWrongWords_()"
+            >
+              ⭐ 선택 단어 일괄 저장
+            </button>
+
+            <button
+              type="button"
+              class="danger-button study-action-button"
+              onclick="deleteAllMasteredWrongWords_()"
+            >
+              완료 단어 정리
+            </button>
+          </div>
         </div>
 
         <button
@@ -4695,10 +4782,104 @@
       loadSheetNames();
 
       setTimeout(function () {
+        showLoginNotificationPopup_();
+      }, 350);
+
+      setTimeout(function () {
         askToResumeSavedTest();
-      }, 500);
+      }, 1400);
 
       window.scrollTo(0, 0);
+    }
+
+
+    /**
+     * 로그인 직후 읽지 않은 알림이 있으면 한 번 안내합니다.
+     */
+    function showLoginNotificationPopup_() {
+      if (
+        !currentStudent ||
+        !currentStudent.studentId
+      ) {
+        return;
+      }
+
+      const popupKey =
+        'hsmLoginNotificationPopup:' +
+        currentStudent.studentId +
+        ':' +
+        currentLoginToken;
+
+      if (
+        sessionStorage.getItem(popupKey) ===
+        'shown'
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          const unreadCount =
+            Number(
+              result &&
+              result.unreadCount
+                ? result.unreadCount
+                : 0
+            );
+
+          if (unreadCount < 1) {
+            return;
+          }
+
+          sessionStorage.setItem(
+            popupKey,
+            'shown'
+          );
+
+          const notifications =
+            result &&
+            Array.isArray(
+              result.notifications
+            )
+              ? result.notifications
+              : [];
+
+          const newest =
+            notifications.find(
+              function (item) {
+                return !item.read;
+              }
+            );
+
+          let message =
+            '새로운 알림이 ' +
+            unreadCount +
+            '개 있습니다.';
+
+          if (newest && newest.title) {
+            message +=
+              '\n\n' +
+              newest.title;
+          }
+
+          message +=
+            '\n\n지금 알림을 확인할까요?';
+
+          if (confirm(message)) {
+            showStudentNotifications();
+          }
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          console.error(
+            '로그인 알림 확인 실패',
+            error
+          );
+        })
+        .studentGetNotifications(
+          currentStudent.studentId
+        );
     }
 
 
@@ -4879,35 +5060,87 @@
 
     function showTestHome() {
       hideExtraStudyScreens();
-      document
-        .getElementById('wrongNotebookScreen')
-        .classList
-        .add('hidden');
 
-      document
-        .getElementById('myPageScreen')
-        .classList
-        .add('hidden');
+      [
+        'wrongNotebookScreen',
+        'myPageScreen',
+        'vocabScreen',
+        'rankingScreen',
+        'resultScreen',
+        'teacherExamHomeScreen',
+        'studentNotificationScreen',
+        'teacherExamTakingScreen',
+        'teacherExamResultScreen'
+      ].forEach(function (id) {
+        const element =
+          document.getElementById(id);
+
+        if (element) {
+          element.classList.add('hidden');
+        }
+      });
 
       setActiveMenu('test');
 
-      document
-        .getElementById('vocabScreen')
-        .classList
-        .add('hidden');
+      /*
+       * 자유시험이 진행 중이면 시작 화면으로 돌아가지 않고
+       * 보던 문제를 그대로 다시 표시합니다.
+       */
+      if (
+        Array.isArray(questions) &&
+        questions.length > 0 &&
+        Number.isInteger(currentIndex) &&
+        currentIndex >= 0 &&
+        currentIndex < questions.length
+      ) {
+        document
+          .getElementById('startScreen')
+          .classList
+          .add('hidden');
 
-      document
-        .getElementById('rankingScreen')
-        .classList
-        .add('hidden');
+        document
+          .getElementById('testScreen')
+          .classList
+          .remove('hidden');
+
+        showQuestion();
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      /*
+       * 선생님 시험이 진행 중이면 해당 시험 화면으로 돌아갑니다.
+       */
+      if (
+        teacherExamSession &&
+        Array.isArray(
+          teacherExamSession.questions
+        ) &&
+        teacherExamSession.questions.length
+      ) {
+        document
+          .getElementById('startScreen')
+          .classList
+          .add('hidden');
+
+        document
+          .getElementById(
+            'teacherExamTakingScreen'
+          )
+          .classList
+          .remove('hidden');
+
+        setStudentMenuActive_(
+          'teacherExam'
+        );
+
+        renderTeacherExamQuestion_();
+        window.scrollTo(0, 0);
+        return;
+      }
 
       document
         .getElementById('testScreen')
-        .classList
-        .add('hidden');
-
-      document
-        .getElementById('resultScreen')
         .classList
         .add('hidden');
 
@@ -6244,6 +6477,11 @@
             : 'wrong-note-item';
 
         card.innerHTML =
+          '<div class="wrong-note-select-layout">' +
+            '<input type="checkbox" class="wrong-batch-check" value="' +
+              Number(item.rowNumber) +
+            '">' +
+            '<div class="wrong-note-select-content">' +
           '<div class="wrong-note-top">' +
             '<div class="wrong-note-word">' +
               escapeHtml(item.word) +
@@ -6321,6 +6559,8 @@
                   '</button>'
                 : ''
             ) +
+          '</div>' +
+            '</div>' +
           '</div>';
 
         list.appendChild(card);
@@ -8380,7 +8620,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=17')
+          .register('./service-worker.js?v=18')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
@@ -8739,6 +8979,23 @@ google.script.run
 
     function showTeacherExamHome() {
       if (!currentStudent || !currentStudent.studentId) return;
+
+      if (
+        teacherExamSession &&
+        Array.isArray(teacherExamSession.questions) &&
+        teacherExamSession.questions.length
+      ) {
+        hideAllStudentMainScreens_();
+        setStudentMenuActive_('teacherExam');
+        document
+          .getElementById('teacherExamTakingScreen')
+          .classList
+          .remove('hidden');
+        renderTeacherExamQuestion_();
+        window.scrollTo(0, 0);
+        return;
+      }
+
       hideAllStudentMainScreens_();
       setStudentMenuActive_('teacherExam');
       document.getElementById('teacherExamHomeScreen').classList.remove('hidden');
@@ -9201,5 +9458,538 @@ google.script.run
       refreshTeacherExamDashboard_();
     };
 </script>
+<script>
+
+    const hsmBackStack_ = [];
+    let hsmBackRestoring_ = false;
+
+    function hsmGetVisibleScreenId_() {
+      const ids = [
+        'startScreen',
+        'testScreen',
+        'resultScreen',
+        'vocabScreen',
+        'myPageScreen',
+        'rankingScreen',
+        'wrongNotebookScreen',
+        'wrongTestSetupScreen',
+        'personalVocabularyScreen',
+        'personalTestSetupScreen',
+        'smartReviewScreen',
+        'teacherExamHomeScreen',
+        'studentNotificationScreen',
+        'teacherExamTakingScreen',
+        'teacherExamResultScreen'
+      ];
+
+      for (let i = 0; i < ids.length; i++) {
+        const element =
+          document.getElementById(ids[i]);
+
+        if (
+          element &&
+          !element.classList.contains(
+            'hidden'
+          )
+        ) {
+          return ids[i];
+        }
+      }
+
+      return '';
+    }
+
+    function hsmUpdateBackButton_() {
+      const button =
+        document.getElementById(
+          'hsmGlobalBackButton'
+        );
+
+      if (!button) {
+        return;
+      }
+
+      const mainApp =
+        document.getElementById(
+          'mainApp'
+        );
+
+      const loggedIn =
+        mainApp &&
+        !mainApp.classList.contains(
+          'hidden'
+        );
+
+      button.classList.toggle(
+        'hidden',
+        !loggedIn ||
+        hsmBackStack_.length < 1
+      );
+    }
+
+    function hsmRememberCurrentScreen_() {
+      if (hsmBackRestoring_) {
+        return;
+      }
+
+      const id =
+        hsmGetVisibleScreenId_();
+
+      if (!id) {
+        return;
+      }
+
+      const last =
+        hsmBackStack_[
+          hsmBackStack_.length - 1
+        ];
+
+      if (last !== id) {
+        hsmBackStack_.push(id);
+      }
+
+      if (hsmBackStack_.length > 30) {
+        hsmBackStack_.shift();
+      }
+
+      hsmUpdateBackButton_();
+    }
+
+    function hsmRestoreScreen_(id) {
+      hideAllStudentMainScreens_();
+
+      const element =
+        document.getElementById(id);
+
+      if (!element) {
+        showTestHome();
+        return;
+      }
+
+      element.classList.remove('hidden');
+
+      if (id === 'testScreen') {
+        setActiveMenu('test');
+        showQuestion();
+
+      } else if (
+        id === 'teacherExamTakingScreen'
+      ) {
+        setStudentMenuActive_(
+          'teacherExam'
+        );
+        renderTeacherExamQuestion_();
+
+      } else if (
+        id === 'teacherExamHomeScreen'
+      ) {
+        setStudentMenuActive_(
+          'teacherExam'
+        );
+
+      } else if (
+        id === 'studentNotificationScreen'
+      ) {
+        setStudentMenuActive_(
+          'notification'
+        );
+
+      } else if (
+        id === 'vocabScreen'
+      ) {
+        setActiveMenu('vocab');
+
+      } else if (
+        id === 'myPageScreen' ||
+        id === 'wrongNotebookScreen' ||
+        id === 'wrongTestSetupScreen' ||
+        id === 'personalVocabularyScreen' ||
+        id === 'personalTestSetupScreen' ||
+        id === 'smartReviewScreen'
+      ) {
+        setActiveMenu('mypage');
+
+      } else if (
+        id === 'rankingScreen'
+      ) {
+        setActiveMenu('ranking');
+
+      } else {
+        setActiveMenu('test');
+      }
+
+      window.scrollTo(0, 0);
+    }
+
+    function hsmGoBack_() {
+      if (!hsmBackStack_.length) {
+        return;
+      }
+
+      const current =
+        hsmGetVisibleScreenId_();
+
+      let target =
+        hsmBackStack_.pop();
+
+      while (
+        target === current &&
+        hsmBackStack_.length
+      ) {
+        target =
+          hsmBackStack_.pop();
+      }
+
+      if (!target || target === current) {
+        hsmUpdateBackButton_();
+        return;
+      }
+
+      hsmBackRestoring_ = true;
+
+      try {
+        hsmRestoreScreen_(target);
+      } finally {
+        hsmBackRestoring_ = false;
+        hsmUpdateBackButton_();
+      }
+    }
+
+    function hsmInstallNavigationHistory_() {
+      const navigationFunctions = [
+        'showTestHome',
+        'showVocabHome',
+        'showMyPage',
+        'showRankingHome',
+        'showWrongNotebook',
+        'showWrongTestSetup',
+        'showPersonalVocabulary',
+        'showPersonalTestSetup',
+        'showSmartReview',
+        'showTeacherExamHome',
+        'showStudentNotifications'
+      ];
+
+      navigationFunctions.forEach(
+        function (name) {
+          const original =
+            window[name];
+
+          if (
+            typeof original !==
+              'function' ||
+            original.__hsmWrapped
+          ) {
+            return;
+          }
+
+          const wrapped =
+            function () {
+              hsmRememberCurrentScreen_();
+              const result =
+                original.apply(
+                  this,
+                  arguments
+                );
+
+              setTimeout(
+                hsmUpdateBackButton_,
+                0
+              );
+
+              return result;
+            };
+
+          wrapped.__hsmWrapped = true;
+          window[name] = wrapped;
+        }
+      );
+
+      hsmUpdateBackButton_();
+    }
+
+    window.addEventListener(
+      'load',
+      function () {
+        setTimeout(
+          hsmInstallNavigationHistory_,
+          50
+        );
+      },
+      { once: true }
+    );
+</script>
+<script>
+
+    function choosePersonalBookForBatch_(
+      items
+    ) {
+      if (
+        !Array.isArray(items) ||
+        !items.length
+      ) {
+        alert(
+          '저장할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      loadPersonalBooks(function () {
+        if (!personalVocabularyBooks.length) {
+          if (
+            !confirm(
+              '아직 만든 단어장이 없습니다.\n새 단어장을 만들까요?'
+            )
+          ) {
+            return;
+          }
+
+          createNewPersonalBook(
+            function (bookId) {
+              saveBatchToPersonalBook_(
+                bookId,
+                items
+              );
+            }
+          );
+
+          return;
+        }
+
+        let message =
+          '저장할 단어장을 선택하세요.\n\n';
+
+        personalVocabularyBooks.forEach(
+          function (book, index) {
+            message +=
+              (index + 1) +
+              '. ' +
+              book.bookName +
+              '\n';
+          }
+        );
+
+        message +=
+          '\n번호를 입력하거나 새 단어장은 +를 입력하세요.';
+
+        const answer =
+          prompt(message, '1');
+
+        if (answer === null) {
+          return;
+        }
+
+        if (
+          String(answer).trim() ===
+          '+'
+        ) {
+          createNewPersonalBook(
+            function (bookId) {
+              saveBatchToPersonalBook_(
+                bookId,
+                items
+              );
+            }
+          );
+
+          return;
+        }
+
+        const index =
+          Number(answer) - 1;
+
+        if (
+          !Number.isInteger(index) ||
+          index < 0 ||
+          index >=
+            personalVocabularyBooks.length
+        ) {
+          alert(
+            '올바른 번호를 입력해주세요.'
+          );
+          return;
+        }
+
+        saveBatchToPersonalBook_(
+          personalVocabularyBooks[index].bookId,
+          items
+        );
+      });
+    }
+
+    function saveBatchToPersonalBook_(
+      bookId,
+      items
+    ) {
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          alert(
+            result &&
+            result.message
+              ? result.message
+              : '선택한 단어를 저장했습니다.'
+          );
+
+          loadPersonalVocabularyPreview();
+
+          if (
+            document
+              .getElementById(
+                'personalVocabularyScreen'
+              ) &&
+            !document
+              .getElementById(
+                'personalVocabularyScreen'
+              )
+              .classList
+              .contains('hidden')
+          ) {
+            selectedPersonalBookId =
+              bookId;
+
+            loadPersonalBooks(
+              loadSelectedPersonalBookWords
+            );
+          }
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            '단어를 일괄 저장하는 중 오류가 발생했습니다.\n' +
+            (
+              error && error.message
+                ? error.message
+                : error
+            )
+          );
+        })
+        .addPersonalVocabularyBatchToBook(
+          currentLoginToken,
+          bookId,
+          items
+        );
+    }
+
+    function batchSaveCheckedVocabulary_() {
+      const selected =
+        vocabWords.filter(function (
+          word
+        ) {
+          return isWordChecked(word);
+        });
+
+      if (!selected.length) {
+        alert(
+          '단어 왼쪽 네모칸에서 저장할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      const sheetName =
+        document
+          .getElementById(
+            'vocabSheetName'
+          )
+          .value;
+
+      const day =
+        Number(
+          document
+            .getElementById(
+              'vocabDay'
+            )
+            .value
+        ) || 0;
+
+      const items =
+        selected.map(function (word) {
+          return {
+            rawSheetName: sheetName,
+            sheetName:
+              String(sheetName || '')
+                .replace(/DB$/i, ''),
+            day: day,
+            word: word.word,
+            meaning: word.meaning,
+            example: word.example || '',
+            translation:
+              word.translation || ''
+          };
+        });
+
+      choosePersonalBookForBatch_(items);
+    }
+
+    function batchSaveCheckedWrongWords_() {
+      const checked =
+        Array.prototype.slice.call(
+          document.querySelectorAll(
+            '.wrong-batch-check:checked'
+          )
+        );
+
+      if (!checked.length) {
+        alert(
+          '오답 단어 왼쪽 네모칸에서 저장할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      const selectedRows = {};
+
+      checked.forEach(function (
+        checkbox
+      ) {
+        selectedRows[
+          Number(checkbox.value)
+        ] = true;
+      });
+
+      const items =
+        wrongNotebookWords
+          .filter(function (item) {
+            return Boolean(
+              selectedRows[
+                Number(item.rowNumber)
+              ]
+            );
+          })
+          .map(function (item) {
+            return {
+              rawSheetName:
+                item.rawSheetName ||
+                item.sheetName ||
+                '오답노트',
+              sheetName:
+                item.sheetName ||
+                '오답노트',
+              day:
+                Number(item.day) || 0,
+              word: item.word,
+              meaning:
+                item.meaning || '',
+              example:
+                item.example || '',
+              translation:
+                item.translation || ''
+            };
+          });
+
+      choosePersonalBookForBatch_(items);
+    }
+</script>
+
+  <button
+    id="hsmGlobalBackButton"
+    type="button"
+    class="hsm-global-back hidden"
+    onclick="hsmGoBack_()"
+  >
+    ← 뒤로가기
+  </button>
+
 </body>
 </html>
