@@ -4621,7 +4621,7 @@
           console.error('서버 시험 저장 실패', error);
         })
         .saveStudentTestProgress(
-          currentStudent.studentId,
+          currentLoginToken,
           progressData
         );
     }
@@ -4646,7 +4646,7 @@
           .withFailureHandler(function (error) {
             console.error('서버 시험 삭제 실패', error);
           })
-          .deleteStudentTestProgress(studentId);
+          .deleteStudentTestProgress(currentLoginToken);
       }
     }
 
@@ -4852,7 +4852,7 @@
         .withFailureHandler(function (error) {
           console.error('서버 시험 불러오기 실패', error);
         })
-        .getStudentTestProgress(currentStudent.studentId);
+        .getStudentTestProgress(currentLoginToken);
     }
 
 
@@ -4905,7 +4905,7 @@
         .withSuccessHandler(function (result) {
           button.disabled = false;
 
-          if (result !== true) {
+          if (!result || result.success !== true || !result.token) {
             message.textContent = '관리자 코드가 올바르지 않습니다.';
             codeInput.value = '';
             codeInput.focus();
@@ -4913,7 +4913,7 @@
           }
 
           message.textContent = '확인되었습니다. 관리 화면으로 이동합니다.';
-          sessionStorage.setItem('hansalmaeTeacherVerified', 'true');
+          sessionStorage.setItem('hansalmaeTeacherToken', result.token);
           window.location.href = './teacher.html';
         })
         .withFailureHandler(function (error) {
@@ -4923,7 +4923,7 @@
               ? error.message
               : '관리자 코드를 확인하지 못했습니다.';
         })
-        .checkAdminCode(code);
+        .adminLogin(code);
     }
 
 
@@ -5446,7 +5446,7 @@
           );
         })
         .studentGetNotifications(
-          currentStudent.studentId
+          currentLoginToken
         );
     }
 
@@ -9441,7 +9441,7 @@ google.script.run
       )
     );
   })
-  .saveTestResult(resultData);
+  .saveTestResult(currentLoginToken, resultData);
 
 
       document.getElementById('resultScore').textContent =
@@ -10054,7 +10054,7 @@ google.script.run
         .withFailureHandler(function (error) {
           console.error('배정 시험 확인 실패', error);
         })
-        .studentGetAssignedExams(currentStudent.studentId);
+        .studentGetAssignedExams(currentLoginToken);
     }
 
     function loadStudentNotificationBadge_() {
@@ -10070,7 +10070,7 @@ google.script.run
         .withFailureHandler(function (error) {
           console.error('알림 확인 실패', error);
         })
-        .studentGetNotifications(currentStudent.studentId);
+        .studentGetNotifications(currentLoginToken);
     }
 
     function showTeacherExamHome() {
@@ -10115,7 +10115,7 @@ google.script.run
           document.getElementById('teacherExamHomeLoading').textContent = '';
           alert('시험 목록을 불러오지 못했습니다.\n' + (error && error.message ? error.message : error));
         })
-        .studentGetAssignedExams(currentStudent.studentId);
+        .studentGetAssignedExams(currentLoginToken);
       window.scrollTo(0, 0);
     }
 
@@ -10170,7 +10170,7 @@ google.script.run
         .withFailureHandler(function (error) {
           alert('시험 시작 중 오류가 발생했습니다.\n' + (error && error.message ? error.message : error));
         })
-        .studentStartTeacherExam(currentStudent.studentId, examId);
+        .studentStartTeacherExam(currentLoginToken, examId);
     }
 
     function renderTeacherExamQuestion_() {
@@ -10231,7 +10231,7 @@ google.script.run
         .withFailureHandler(function (error) {
           alert('시험을 그만두는 중 오류가 발생했습니다.\n' + (error && error.message ? error.message : error));
         })
-        .studentStopTeacherExam(currentStudent.studentId, examId);
+        .studentStopTeacherExam(currentLoginToken, examId);
     }
 
 
@@ -10249,7 +10249,7 @@ google.script.run
         };
         google.script.run
           .withFailureHandler(function (error) { console.error('선생님 시험 저장 실패', error); })
-          .studentSaveTeacherExamProgress(currentStudent.studentId, teacherExamSession.exam.examId, progress);
+          .studentSaveTeacherExamProgress(currentLoginToken, teacherExamSession.exam.examId, progress);
       }, 450);
     }
 
@@ -10319,8 +10319,7 @@ google.script.run
             (error && error.message ? error.message : error)
           );
         })
-        .studentSubmitTeacherExam({
-          studentId: currentStudent.studentId,
+        .studentSubmitTeacherExam(currentLoginToken, {
           examId: teacherExamSession.exam.examId,
           attempt: Number(teacherExamSession.exam.attempt) || 1,
           answers: answers
@@ -10390,7 +10389,7 @@ google.script.run
           document.getElementById('studentNotificationLoading').textContent = '';
           alert('알림을 불러오지 못했습니다.\n' + (error && error.message ? error.message : error));
         })
-        .studentGetNotifications(currentStudent.studentId);
+        .studentGetNotifications(currentLoginToken);
       window.scrollTo(0, 0);
     }
 
@@ -10439,7 +10438,7 @@ google.script.run
         .withFailureHandler(function (error) {
           alert(error && error.message ? error.message : error);
         })
-        .studentMarkNotificationRead(currentStudent.studentId, notificationId);
+        .studentMarkNotificationRead(currentLoginToken, notificationId);
     }
 
     function deleteStudentNotification_(
@@ -10470,7 +10469,7 @@ google.script.run
           );
         })
         .studentDeleteNotification(
-          currentStudent.studentId,
+          currentLoginToken,
           notificationId
         );
     }
@@ -10514,7 +10513,7 @@ google.script.run
           );
         })
         .studentDeleteAllReadNotifications(
-          currentStudent.studentId
+          currentLoginToken
         );
     }
 
