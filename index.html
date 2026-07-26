@@ -2885,10 +2885,10 @@
 <body>
 
   <!-- 앱 실행 시 표시되는 스플래시 화면 -->
-  <div id="appSplash" aria-label="한살매 단어학습을 불러오는 중">
+  <div id="appSplash" aria-label="한살매 보카를 불러오는 중">
     <div class="splash-content">
       <img class="splash-logo" src="./icon-512.png" alt="한살매 로고">
-      <div class="splash-title">한살매 단어학습</div>
+      <div class="splash-title">한살매 보카</div>
       <div class="splash-loading" aria-hidden="true"></div>
     </div>
   </div>
@@ -8710,7 +8710,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=20')
+          .register('./service-worker.js?v=21')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
