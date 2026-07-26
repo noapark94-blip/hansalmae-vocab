@@ -2281,7 +2281,6 @@
         getSheetNames: 6 * 60 * 60 * 1000,
         getDays: 6 * 60 * 60 * 1000,
         getMonthlyRanking: 60 * 1000,
-        getWrongNotebookCount: 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
         getVocabularyBooks: 30 * 1000,
         studentGetAssignedExams: 20 * 1000,
@@ -2388,6 +2387,7 @@
           'setWrongWordMastered',
           'deleteMasteredWrongWord',
           'deleteAllMasteredWrongWords',
+          'deleteSelectedMasteredWrongWords',
           'addPersonalVocabulary',
           'removePersonalVocabulary',
           'setPersonalWordMastered',
@@ -3051,6 +3051,109 @@
     .personal-bulk-toolbar button {
       width: 100%;
       min-width: 0;
+    }
+  }
+</style>
+
+
+<style id="hsm-selection-checkbox-visibility-v3">
+  /* 선택 모드가 아닐 때만 체크박스를 숨깁니다. */
+  #personalVocabularyList:not(.selection-mode)
+    .personal-selection-control {
+    display: none !important;
+  }
+
+  /* 선택 모드에서는 무조건 표시합니다. */
+  #personalVocabularyList.selection-mode
+    .personal-selection-control {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #personalVocabularyList.selection-mode
+    .personal-card-layout {
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+  }
+</style>
+
+
+<style id="hsm-wrong-selection-mode-v1">
+  #wrongNotebookList:not(.selection-mode)
+    .wrong-selection-control {
+    display: none !important;
+  }
+
+  #wrongNotebookList.selection-mode
+    .wrong-selection-control {
+    display: block !important;
+    width: 22px;
+    height: 22px;
+    margin: 4px 0 0;
+    accent-color: #941a65;
+  }
+
+  #wrongNotebookList:not(.selection-mode)
+    .wrong-note-select-layout {
+    grid-template-columns:
+      minmax(0, 1fr) !important;
+  }
+
+  .wrong-bulk-toolbar {
+    position: sticky;
+    top: 6px;
+    z-index: 35;
+    display: grid;
+    grid-template-columns:
+      auto minmax(76px, 1fr)
+      repeat(3, auto);
+    gap: 7px;
+    align-items: center;
+    margin: 12px 0 18px;
+    padding: 10px;
+    border: 1px solid #dfb8cc;
+    border-radius: 15px;
+    background: rgba(255, 250, 253, .97);
+    box-shadow:
+      0 9px 22px
+      rgba(79, 18, 55, .12);
+    backdrop-filter: blur(12px);
+  }
+
+  .wrong-bulk-toolbar.hidden {
+    display: none !important;
+  }
+
+  .wrong-bulk-toolbar button {
+    width: auto;
+    min-height: 40px;
+    margin: 0;
+    padding: 8px 11px;
+    font-size: 12px;
+  }
+
+  .wrong-bulk-count {
+    padding-left: 4px;
+    color: #651446;
+    font-size: 13px;
+  }
+
+  @media (max-width: 650px) {
+    .wrong-bulk-toolbar {
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+    }
+
+    .wrong-bulk-toolbar button {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .wrong-bulk-count {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      order: -1;
     }
   }
 </style>
@@ -3841,11 +3944,12 @@
 
           <div class="wrong-note-header-actions">
             <button
+              id="wrongSelectionModeButton"
               type="button"
               class="study-action-button"
-              onclick="batchSaveCheckedWrongWords_()"
+              onclick="toggleWrongSelectionMode_()"
             >
-              ⭐ 선택 단어 일괄 저장
+              선택
             </button>
 
             <button
@@ -3886,6 +3990,48 @@
             onclick="setWrongNotebookFilter('mastered')"
           >
             복습 완료
+          </button>
+        </div>
+
+        <div
+          id="wrongBulkToolbar"
+          class="wrong-bulk-toolbar hidden"
+        >
+          <button
+            id="wrongSelectAllButton"
+            type="button"
+            class="secondary-button"
+            onclick="toggleSmartWrongSelectAll_()"
+          >
+            전체 선택
+          </button>
+
+          <div class="wrong-bulk-count">
+            <strong id="wrongSelectedCount">0</strong>개 선택
+          </div>
+
+          <button
+            type="button"
+            onclick="batchSaveCheckedWrongWords_()"
+          >
+            단어장 저장
+          </button>
+
+          <button
+            id="wrongDeleteSelectedButton"
+            type="button"
+            class="danger-button"
+            onclick="deleteSelectedMasteredWrongWords_()"
+          >
+            완료 단어 삭제
+          </button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            onclick="exitWrongSelectionMode_()"
+          >
+            취소
           </button>
         </div>
 
@@ -5918,7 +6064,7 @@
 
         card.innerHTML =
           '<div class="personal-card-layout">' +
-            '<label class="personal-compact-check personal-selection-control hidden" aria-label="단어 선택">' +
+            '<label class="personal-compact-check personal-selection-control" aria-label="단어 선택">' +
               '<input type="checkbox" class="personal-share-check" value="' +
                 Number(item.rowNumber) +
                 '" onchange="updatePersonalBulkToolbar_()">' +
@@ -6021,20 +6167,6 @@
 
 
     function applyPersonalSelectionMode_() {
-      const controls =
-        document.querySelectorAll(
-          '.personal-selection-control'
-        );
-
-      controls.forEach(function (
-        control
-      ) {
-        control.classList.toggle(
-          'hidden',
-          !personalSelectionMode_
-        );
-      });
-
       const toolbar =
         document.getElementById(
           'personalBulkToolbar'
@@ -6755,15 +6887,34 @@
         .classList
         .remove('hidden');
 
-      document
-        .getElementById('wrongNotebookLoading')
-        .textContent =
-        '오답노트를 불러오는 중입니다.';
+      const wrongLoading =
+        document.getElementById(
+          'wrongNotebookLoading'
+        );
 
-      document
-        .getElementById('wrongNotebookList')
-        .innerHTML = '';
+      if (
+        Array.isArray(wrongNotebookWords) &&
+        wrongNotebookWords.length > 0
+      ) {
+        wrongLoading.textContent =
+          '최신 오답을 확인하는 중입니다.';
 
+        renderWrongNotebook();
+      } else {
+        wrongLoading.textContent =
+          '오답노트를 불러오는 중입니다.';
+
+        document
+          .getElementById(
+            'wrongNotebookList'
+          )
+          .innerHTML = '';
+      }
+
+      /*
+       * 오답 목록은 캐시를 사용하지 않고
+       * 시트의 최신 데이터를 바로 요청합니다.
+       */
       google.script.run
         .withSuccessHandler(function (result) {
           document
@@ -7029,6 +7180,14 @@
     function setWrongNotebookFilter(filter) {
       wrongNotebookFilter = filter;
 
+      document
+        .querySelectorAll(
+          '.wrong-batch-check'
+        )
+        .forEach(function (checkbox) {
+          checkbox.checked = false;
+        });
+
       [
         'wrongActiveFilter',
         'wrongAllFilter',
@@ -7060,6 +7219,7 @@
       }
 
       renderWrongNotebook();
+      updateWrongBulkToolbar_();
     }
 
 
@@ -7108,7 +7268,7 @@
 
         card.innerHTML =
           '<div class="wrong-note-select-layout">' +
-            '<input type="checkbox" class="wrong-batch-check" value="' +
+            '<input type="checkbox" class="wrong-batch-check wrong-selection-control" onchange="updateWrongBulkToolbar_()" value="' +
               Number(item.rowNumber) +
             '">' +
             '<div class="wrong-note-select-content">' +
@@ -7195,6 +7355,235 @@
 
         list.appendChild(card);
       });
+
+      applyWrongSelectionMode_();
+    }
+
+
+
+    let wrongSelectionMode_ = false;
+
+
+    function getSelectedWrongRows_() {
+      return Array.from(
+        document.querySelectorAll(
+          '.wrong-batch-check:checked'
+        )
+      ).map(function (checkbox) {
+        return Number(checkbox.value);
+      });
+    }
+
+
+    function toggleWrongSelectionMode_() {
+      wrongSelectionMode_ =
+        !wrongSelectionMode_;
+
+      applyWrongSelectionMode_();
+    }
+
+
+    function exitWrongSelectionMode_() {
+      wrongSelectionMode_ = false;
+
+      document
+        .querySelectorAll(
+          '.wrong-batch-check'
+        )
+        .forEach(function (checkbox) {
+          checkbox.checked = false;
+        });
+
+      applyWrongSelectionMode_();
+    }
+
+
+    function applyWrongSelectionMode_() {
+      const list =
+        document.getElementById(
+          'wrongNotebookList'
+        );
+
+      if (list) {
+        list.classList.toggle(
+          'selection-mode',
+          wrongSelectionMode_
+        );
+      }
+
+      const toolbar =
+        document.getElementById(
+          'wrongBulkToolbar'
+        );
+
+      if (toolbar) {
+        toolbar.classList.toggle(
+          'hidden',
+          !wrongSelectionMode_
+        );
+      }
+
+      const modeButton =
+        document.getElementById(
+          'wrongSelectionModeButton'
+        );
+
+      if (modeButton) {
+        modeButton.textContent =
+          wrongSelectionMode_
+            ? '선택 종료'
+            : '선택';
+
+        modeButton.classList.toggle(
+          'active-selection-mode',
+          wrongSelectionMode_
+        );
+      }
+
+      updateWrongBulkToolbar_();
+    }
+
+
+    function updateWrongBulkToolbar_() {
+      const selectedRows =
+        getSelectedWrongRows_();
+
+      const count =
+        document.getElementById(
+          'wrongSelectedCount'
+        );
+
+      if (count) {
+        count.textContent =
+          selectedRows.length;
+      }
+
+      const visibleCheckboxes =
+        Array.from(
+          document.querySelectorAll(
+            '#wrongNotebookList .wrong-batch-check'
+          )
+        );
+
+      const allSelected =
+        visibleCheckboxes.length > 0 &&
+        visibleCheckboxes.every(
+          function (checkbox) {
+            return checkbox.checked;
+          }
+        );
+
+      const selectAllButton =
+        document.getElementById(
+          'wrongSelectAllButton'
+        );
+
+      if (selectAllButton) {
+        selectAllButton.textContent =
+          allSelected
+            ? '전체 해제'
+            : '전체 선택';
+      }
+
+      const deleteButton =
+        document.getElementById(
+          'wrongDeleteSelectedButton'
+        );
+
+      if (deleteButton) {
+        deleteButton.disabled =
+          wrongNotebookFilter !==
+          'mastered';
+      }
+    }
+
+
+    function toggleSmartWrongSelectAll_() {
+      const checkboxes =
+        Array.from(
+          document.querySelectorAll(
+            '#wrongNotebookList .wrong-batch-check'
+          )
+        );
+
+      const allSelected =
+        checkboxes.length > 0 &&
+        checkboxes.every(function (
+          checkbox
+        ) {
+          return checkbox.checked;
+        });
+
+      checkboxes.forEach(function (
+        checkbox
+      ) {
+        checkbox.checked =
+          !allSelected;
+      });
+
+      updateWrongBulkToolbar_();
+    }
+
+
+    function deleteSelectedMasteredWrongWords_() {
+      if (
+        wrongNotebookFilter !==
+        'mastered'
+      ) {
+        alert(
+          '복습 완료 탭에서 삭제할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      const selectedRows =
+        getSelectedWrongRows_();
+
+      if (!selectedRows.length) {
+        alert(
+          '삭제할 복습 완료 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      if (
+        !confirm(
+          '선택한 복습 완료 단어 ' +
+          selectedRows.length +
+          '개를 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          alert(
+            result &&
+            result.message
+              ? result.message
+              : '선택한 단어를 삭제했습니다.'
+          );
+
+          wrongSelectionMode_ = false;
+          showWrongNotebook();
+          loadWrongNotebookPreview();
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .deleteSelectedMasteredWrongWords(
+          currentLoginToken,
+          selectedRows
+        );
     }
 
 
@@ -9252,7 +9641,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=23')
+          .register('./service-worker.js?v=24')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
