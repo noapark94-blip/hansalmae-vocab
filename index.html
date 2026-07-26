@@ -2397,6 +2397,8 @@
           'addPersonalVocabularyToBook',
           'addPersonalVocabularyBatchToBook',
           'movePersonalVocabularyToBook',
+          'deletePersonalVocabularyBatch',
+          'movePersonalVocabularyBatchToBook',
           'studentSubmitTeacherExam',
           'studentMarkNotificationRead',
           'studentDeleteNotification',
@@ -2876,6 +2878,109 @@
       background: #8f145f !important;
       color: #ffffff !important;
       box-shadow: none !important;
+    }
+  }
+</style>
+
+
+<style id="hsm-personal-bulk-ui-v1">
+  .personal-card-layout {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .personal-card-content {
+    min-width: 0;
+  }
+
+  .personal-compact-check {
+    display: block;
+    width: 24px;
+    height: 24px;
+    margin: 3px 0 0;
+    cursor: pointer;
+  }
+
+  .personal-compact-check input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .personal-compact-check span {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #b9a7b1;
+    border-radius: 7px;
+    background: #ffffff;
+  }
+
+  .personal-compact-check input:checked + span {
+    border-color: #941a65;
+    background:
+      #941a65
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E")
+      center/17px 17px
+      no-repeat;
+  }
+
+  .personal-bulk-toolbar {
+    position: sticky;
+    top: 8px;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: minmax(90px, 1fr) repeat(3, auto);
+    gap: 7px;
+    align-items: center;
+    margin: 12px 0 18px;
+    padding: 10px;
+    border: 1px solid #dfb8cc;
+    border-radius: 15px;
+    background: rgba(255, 250, 253, .96);
+    box-shadow: 0 9px 22px rgba(79, 18, 55, .12);
+    backdrop-filter: blur(12px);
+  }
+
+  .personal-bulk-count {
+    padding-left: 5px;
+    color: #651446;
+    font-size: 14px;
+  }
+
+  .personal-bulk-toolbar button {
+    width: auto;
+    min-width: 64px;
+    min-height: 40px;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .personal-select-row {
+    display: none !important;
+  }
+
+  @media (max-width: 650px) {
+    .personal-bulk-toolbar {
+      grid-template-columns: 1fr repeat(3, auto);
+    }
+
+    .personal-bulk-toolbar button {
+      min-width: 56px;
+      padding: 8px 9px;
+      font-size: 12px;
+    }
+
+    .personal-toolbar {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+    }
+
+    .personal-toolbar button:first-child {
+      grid-column: 1 / -1;
     }
   }
 </style>
@@ -3834,16 +3939,48 @@
 
           <button
             class="secondary-button"
-            onclick="shareSelectedPersonalWords()"
+            onclick="toggleAllPersonalWords_(true)"
           >
-            📤 선택한 단어 공유
+            전체 선택
           </button>
 
           <button
             class="secondary-button"
-            onclick="showMyPage()"
+            onclick="toggleAllPersonalWords_(false)"
           >
-            내 학습으로 돌아가기
+            선택 해제
+          </button>
+        </div>
+
+        <div
+          id="personalBulkToolbar"
+          class="personal-bulk-toolbar hidden"
+        >
+          <div class="personal-bulk-count">
+            <strong id="personalSelectedCount">0</strong>개 선택
+          </div>
+
+          <button
+            type="button"
+            onclick="shareSelectedPersonalWords()"
+          >
+            공유
+          </button>
+
+          <button
+            type="button"
+            class="secondary-button"
+            onclick="moveSelectedPersonalWords_()"
+          >
+            이동
+          </button>
+
+          <button
+            type="button"
+            class="danger-button"
+            onclick="deleteSelectedPersonalWords_()"
+          >
+            삭제
           </button>
         </div>
 
@@ -5698,12 +5835,14 @@
             : 'personal-item';
 
         card.innerHTML =
-          '<label class="personal-select-row">' +
-            '<input type="checkbox" class="personal-share-check" value="' +
-              Number(item.rowNumber) +
-            '">' +
-            '<span>공유할 단어 선택</span>' +
-          '</label>' +
+          '<div class="personal-card-layout">' +
+            '<label class="personal-compact-check" aria-label="단어 선택">' +
+              '<input type="checkbox" class="personal-share-check" value="' +
+                Number(item.rowNumber) +
+                '" onchange="updatePersonalBulkToolbar_()">' +
+              '<span></span>' +
+            '</label>' +
+            '<div class="personal-card-content">' +
           '<div class="personal-item-top">' +
             '<div class="personal-word">' +
               escapeHtml(item.word) +
@@ -5750,21 +5889,232 @@
             ')">' +
               '삭제' +
             '</button>' +
+          '</div>' +
+            '</div>' +
           '</div>';
 
         list.appendChild(card);
       });
+
+      updatePersonalBulkToolbar_();
     }
 
 
-    function shareSelectedPersonalWords() {
-      const checkedRows = Array.from(
+
+    function getSelectedPersonalRows_() {
+      return Array.from(
         document.querySelectorAll(
           '.personal-share-check:checked'
         )
       ).map(function (checkbox) {
         return Number(checkbox.value);
       });
+    }
+
+
+    function updatePersonalBulkToolbar_() {
+      const selectedRows =
+        getSelectedPersonalRows_();
+
+      const toolbar =
+        document.getElementById(
+          'personalBulkToolbar'
+        );
+
+      const count =
+        document.getElementById(
+          'personalSelectedCount'
+        );
+
+      if (count) {
+        count.textContent =
+          selectedRows.length;
+      }
+
+      if (toolbar) {
+        toolbar.classList.toggle(
+          'hidden',
+          selectedRows.length === 0
+        );
+      }
+    }
+
+
+    function toggleAllPersonalWords_(
+      checked
+    ) {
+      document
+        .querySelectorAll(
+          '.personal-share-check'
+        )
+        .forEach(function (checkbox) {
+          checkbox.checked =
+            Boolean(checked);
+        });
+
+      updatePersonalBulkToolbar_();
+    }
+
+
+    function moveSelectedPersonalWords_() {
+      const selectedRows =
+        getSelectedPersonalRows_();
+
+      if (!selectedRows.length) {
+        alert(
+          '이동할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      loadPersonalBooks(function () {
+        const otherBooks =
+          personalVocabularyBooks.filter(
+            function (book) {
+              return (
+                String(book.bookId) !==
+                String(
+                  selectedPersonalBookId
+                )
+              );
+            }
+          );
+
+        if (!otherBooks.length) {
+          alert(
+            '이동할 다른 단어장이 없습니다.'
+          );
+          return;
+        }
+
+        let message =
+          '이동할 단어장을 선택하세요.\n\n';
+
+        otherBooks.forEach(function (
+          book,
+          index
+        ) {
+          message +=
+            (index + 1) +
+            '. ' +
+            book.bookName +
+            '\n';
+        });
+
+        const answer =
+          prompt(message, '1');
+
+        if (answer === null) {
+          return;
+        }
+
+        const selectedIndex =
+          Number(answer) - 1;
+
+        if (
+          !Number.isInteger(
+            selectedIndex
+          ) ||
+          selectedIndex < 0 ||
+          selectedIndex >=
+            otherBooks.length
+        ) {
+          alert(
+            '올바른 번호를 입력해주세요.'
+          );
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (
+            result
+          ) {
+            alert(
+              result &&
+              result.message
+                ? result.message
+                : '선택한 단어를 이동했습니다.'
+            );
+
+            loadPersonalBooks(
+              loadSelectedPersonalBookWords
+            );
+          })
+          .withFailureHandler(function (
+            error
+          ) {
+            alert(
+              error && error.message
+                ? error.message
+                : error
+            );
+          })
+          .movePersonalVocabularyBatchToBook(
+            currentLoginToken,
+            selectedRows,
+            otherBooks[
+              selectedIndex
+            ].bookId
+          );
+      });
+    }
+
+
+    function deleteSelectedPersonalWords_() {
+      const selectedRows =
+        getSelectedPersonalRows_();
+
+      if (!selectedRows.length) {
+        alert(
+          '삭제할 단어를 선택해주세요.'
+        );
+        return;
+      }
+
+      if (
+        !confirm(
+          '선택한 ' +
+          selectedRows.length +
+          '개 단어를 삭제할까요?'
+        )
+      ) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (
+          result
+        ) {
+          alert(
+            result &&
+            result.message
+              ? result.message
+              : '선택한 단어를 삭제했습니다.'
+          );
+
+          loadPersonalBooks(
+            loadSelectedPersonalBookWords
+          );
+        })
+        .withFailureHandler(function (
+          error
+        ) {
+          alert(
+            error && error.message
+              ? error.message
+              : error
+          );
+        })
+        .deletePersonalVocabularyBatch(
+          currentLoginToken,
+          selectedRows
+        );
+    }
+
+
+    function shareSelectedPersonalWords() {
+      const checkedRows =
+        getSelectedPersonalRows_();
 
       if (checkedRows.length === 0) {
         alert('공유할 단어를 먼저 선택해주세요.');
@@ -8710,7 +9060,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=21')
+          .register('./service-worker.js?v=22')
           .catch(function (error) {
             console.error('서비스 워커 등록 실패:', error);
           });
