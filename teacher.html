@@ -1321,6 +1321,8 @@ protect	보호하다"></textarea>
   <script>
     const API_URL =
       'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
+    const TEACHER_ADMIN_TOKEN = sessionStorage.getItem('hansalmaeTeacherToken') || '';
+    if (!TEACHER_ADMIN_TOKEN) { window.location.href = './index.html'; }
 
     let setupData = {
       dbSheets: [],
@@ -1427,6 +1429,7 @@ protect	보호하다"></textarea>
     }
 
     async function apiCall(functionName, ...args) {
+      args = [TEACHER_ADMIN_TOKEN].concat(args || []);
       const key = teacherApiKey(functionName, args);
       const ttl = TEACHER_API_CACHE_TTL[functionName] || 0;
       const cached = teacherApiCache.get(key);
