@@ -1209,54 +1209,18 @@
         text-align: center;
         font-size: 20px;
       }
+
       .topbar-menu {
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        gap: 10px;
-        width: 100%;
-        min-width: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 2px 2px 8px;
-        -webkit-overflow-scrolling: touch;
-        touch-action: pan-x;
-        overscroll-behavior-x: contain;
-        scroll-snap-type: x proximity;
-        scrollbar-width: none;
-      }
-
-      .topbar-menu::-webkit-scrollbar {
-        display: none;
-      }
-
-      .topbar {
-        overflow: visible;
-      }
-
-      .topbar::after {
-        content: "";
-        position: absolute;
-        right: 10px;
-        bottom: 13px;
-        width: 24px;
-        height: 54px;
-        border-radius: 14px;
-        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.92));
-        pointer-events: none;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1.35fr 0.8fr;
       }
 
       .topbar-menu button {
-        flex: 0 0 auto;
-        width: auto;
-        min-width: 96px;
-        margin: 0;
-        padding: 11px 14px;
+        width: 100%;
+        min-width: 0;
+        padding: 11px 7px;
         font-size: 14px;
-        white-space: nowrap;
-        scroll-snap-align: start;
       }
-
 
       .question {
         min-height: 90px;
@@ -4052,7 +4016,7 @@
           <button
             id="vocabMenuButton"
             class="menu-button"
-            onclick="showVocabHome()"
+            onclick="moveFromTestWithConfirm_(showVocabHome)"
           >
             단어장
           </button>
@@ -4060,7 +4024,7 @@
           <button
             id="myPageMenuButton"
             class="menu-button"
-            onclick="showMyPage()"
+            onclick="moveFromTestWithConfirm_(showMyPage)"
           >
             내 학습
           </button>
@@ -4068,7 +4032,7 @@
           <button
             id="rankingMenuButton"
             class="menu-button"
-            onclick="showRankingHome()"
+            onclick="moveFromTestWithConfirm_(showRankingHome)"
           >
             🏆 이달의 단어천재
           </button>
@@ -4076,7 +4040,7 @@
           <button
             id="teacherExamMenuButton"
             class="menu-button"
-            onclick="showTeacherExamHome()"
+            onclick="moveFromTestWithConfirm_(showTeacherExamHome)"
           >
             선생님 시험
           </button>
@@ -4084,14 +4048,14 @@
           <button
             id="notificationMenuButton"
             class="menu-button"
-            onclick="showStudentNotifications()"
+            onclick="moveFromTestWithConfirm_(showStudentNotifications)"
           >
             알림 <span id="studentNotificationBadge" class="notification-badge hidden">0</span>
           </button>
 
           <button
             class="logout-button"
-            onclick="logout()"
+            onclick="moveFromTestWithConfirm_(logout)"
           >
             로그아웃
           </button>
@@ -4369,7 +4333,7 @@
           >
 
           <span>
-            안 외운 단어만 보기
+            체크한 단어만 보기
           </span>
         </label>
 
@@ -4378,7 +4342,7 @@
             type="button"
             onclick="batchSaveCheckedVocabulary_()"
           >
-            ⭐ 선택 단어 일괄 저장
+            ⭐ 선택 단어 단어장에 일괄 저장
           </button>
 
           <button
@@ -6097,6 +6061,79 @@
           element.classList.add('hidden');
         }
       });
+    }
+
+
+
+    /**
+     * 일반 단어 테스트가 실제로 진행 중인지 확인합니다.
+     */
+    function isNormalTestInProgress_() {
+      const testScreen =
+        document.getElementById('testScreen');
+
+      return Boolean(
+        testScreen &&
+        !testScreen.classList.contains('hidden') &&
+        Array.isArray(questions) &&
+        questions.length > 0 &&
+        Number.isInteger(currentIndex) &&
+        currentIndex >= 0 &&
+        currentIndex < questions.length
+      );
+    }
+
+
+    /**
+     * 시험을 종료하고 진행 기록도 삭제합니다.
+     */
+    function stopNormalTestForMenuMove_() {
+      clearTestProgress();
+
+      questions = [];
+      currentIndex = 0;
+      score = 0;
+      wrongAnswers = [];
+      answered = false;
+      freeTestStopped = false;
+
+      const testScreen =
+        document.getElementById('testScreen');
+
+      if (testScreen) {
+        testScreen.classList.add('hidden');
+      }
+    }
+
+
+    /**
+     * 시험 도중 다른 메뉴로 이동하려 할 때 경고합니다.
+     */
+    function moveFromTestWithConfirm_(moveFunction) {
+      if (
+        typeof moveFunction !== 'function'
+      ) {
+        return;
+      }
+
+      if (!isNormalTestInProgress_()) {
+        moveFunction();
+        return;
+      }
+
+      const shouldMove = window.confirm(
+        '시험이 진행 중입니다.\n\n' +
+        '다른 메뉴로 이동하면 현재 시험이 중단되며, ' +
+        '진행 중인 시험 기록도 삭제됩니다.\n\n' +
+        '정말 이동하시겠습니까?'
+      );
+
+      if (!shouldMove) {
+        return;
+      }
+
+      stopNormalTestForMenuMove_();
+      moveFunction();
     }
 
 
