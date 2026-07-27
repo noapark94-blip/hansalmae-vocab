@@ -3700,6 +3700,40 @@
   }
 </style>
 
+
+<style id="android-topbar-swipe-final-fix">
+@media (max-width: 650px) {
+  .topbar {
+    overflow: visible !important;
+    touch-action: auto !important;
+  }
+  .topbar-menu {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 10px !important;
+    padding: 2px 2px 8px !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .topbar-menu::-webkit-scrollbar { display: none; }
+  .topbar-menu button {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 96px !important;
+    margin: 0 !important;
+    padding: 11px 14px !important;
+    white-space: nowrap !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -6065,13 +6099,8 @@
 
 
 
-    /**
-     * 일반 단어 테스트가 실제로 진행 중인지 확인합니다.
-     */
     function isNormalTestInProgress_() {
-      const testScreen =
-        document.getElementById('testScreen');
-
+      const testScreen = document.getElementById('testScreen');
       return Boolean(
         testScreen &&
         !testScreen.classList.contains('hidden') &&
@@ -6083,13 +6112,8 @@
       );
     }
 
-
-    /**
-     * 시험을 종료하고 진행 기록도 삭제합니다.
-     */
     function stopNormalTestForMenuMove_() {
       clearTestProgress();
-
       questions = [];
       currentIndex = 0;
       score = 0;
@@ -6097,24 +6121,12 @@
       answered = false;
       freeTestStopped = false;
 
-      const testScreen =
-        document.getElementById('testScreen');
-
-      if (testScreen) {
-        testScreen.classList.add('hidden');
-      }
+      const testScreen = document.getElementById('testScreen');
+      if (testScreen) testScreen.classList.add('hidden');
     }
 
-
-    /**
-     * 시험 도중 다른 메뉴로 이동하려 할 때 경고합니다.
-     */
     function moveFromTestWithConfirm_(moveFunction) {
-      if (
-        typeof moveFunction !== 'function'
-      ) {
-        return;
-      }
+      if (typeof moveFunction !== 'function') return;
 
       if (!isNormalTestInProgress_()) {
         moveFunction();
@@ -6123,19 +6135,15 @@
 
       const shouldMove = window.confirm(
         '시험이 진행 중입니다.\n\n' +
-        '다른 메뉴로 이동하면 현재 시험이 중단되며, ' +
-        '진행 중인 시험 기록도 삭제됩니다.\n\n' +
+        '다른 메뉴로 이동하면 현재 시험이 중단되며, 진행 중인 시험 기록도 삭제됩니다.\n\n' +
         '정말 이동하시겠습니까?'
       );
 
-      if (!shouldMove) {
-        return;
-      }
+      if (!shouldMove) return;
 
       stopNormalTestForMenuMove_();
       moveFunction();
     }
-
 
     function showTestHome() {
       hideExtraStudyScreens();
