@@ -4213,6 +4213,10 @@
             한글 → 영어만
           </option>
 
+          <option value="mixed">
+            영한·한영 혼합
+          </option>
+
           <option value="example">
             예문 문제만
           </option>
@@ -4668,6 +4672,7 @@
           <option value="random">랜덤 출제</option>
           <option value="engToKor">영어 → 한글만</option>
           <option value="korToEng">한글 → 영어만</option>
+          <option value="mixed">영한·한영 혼합</option>
           <option value="example">예문 문제만</option>
         </select>
 
@@ -4828,6 +4833,7 @@
           <option value="random">랜덤 출제</option>
           <option value="engToKor">영어 → 한글만</option>
           <option value="korToEng">한글 → 영어만</option>
+          <option value="mixed">영한·한영 혼합</option>
           <option value="example">예문 문제만</option>
         </select>
 
@@ -4991,6 +4997,8 @@
 
     let currentStudent = null;
     let currentLoginToken = '';
+    let studentSessionCheckTimer = null;
+    let studentSessionCheckInFlight = false;
 
 
     let wrongNotebookWords = [];
@@ -5770,6 +5778,7 @@
       }
 
       currentStudent = student;
+      startStudentSessionMonitor_();
 
       document
         .getElementById('studentName')
@@ -5905,7 +5914,63 @@
     }
 
 
+    function startStudentSessionMonitor_() {
+      stopStudentSessionMonitor_();
+
+      if (!currentLoginToken) {
+        return;
+      }
+
+      studentSessionCheckTimer = window.setInterval(
+        checkCurrentStudentSession_,
+        30000
+      );
+    }
+
+
+    function stopStudentSessionMonitor_() {
+      if (studentSessionCheckTimer) {
+        window.clearInterval(studentSessionCheckTimer);
+        studentSessionCheckTimer = null;
+      }
+
+      studentSessionCheckInFlight = false;
+    }
+
+
+    function checkCurrentStudentSession_() {
+      const token = currentLoginToken;
+
+      if (!token || studentSessionCheckInFlight) {
+        return;
+      }
+
+      studentSessionCheckInFlight = true;
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          studentSessionCheckInFlight = false;
+
+          if (!result || !result.success) {
+            const message =
+              result && result.message
+                ? result.message
+                : '로그인 정보가 만료되었습니다.';
+
+            clearLoginState();
+            alert(message);
+          }
+        })
+        .withFailureHandler(function (error) {
+          studentSessionCheckInFlight = false;
+          console.error('로그인 상태 확인 실패', error);
+        })
+        .checkStudentSession(token);
+    }
+
+
     function clearLoginState() {
+      stopStudentSessionMonitor_();
       currentLoginToken = '';
       currentStudent = null;
 
@@ -6011,7 +6076,17 @@
             .textContent = '';
 
           if (!result || !result.success) {
+            const message =
+              result && result.message
+                ? result.message
+                : '로그인 정보가 만료되었습니다.';
+
             clearLoginState();
+
+            if (result && result.code === 'DUPLICATE_LOGIN') {
+              alert(message);
+            }
+
             return;
           }
 
@@ -9297,40 +9372,60 @@
       const availableTypes = [];
 
 
-      words.forEach(function (word) {
-        if (
-          questionMode === 'random' ||
-          questionMode === 'engToKor'
-        ) {
+      if (questionMode === 'mixed') {
+        const mixedWords = shuffleArray(words);
+        const engToKorCount = Math.ceil(requestedCount / 2);
+        const korToEngCount = requestedCount - engToKorCount;
+
+        for (let i = 0; i < engToKorCount; i++) {
           availableTypes.push({
             type: 'engToKor',
-            data: word
+            data: mixedWords[i % mixedWords.length]
           });
         }
 
-        if (
-          questionMode === 'random' ||
-          questionMode === 'korToEng'
-        ) {
+        for (let i = 0; i < korToEngCount; i++) {
           availableTypes.push({
             type: 'korToEng',
-            data: word
+            data: mixedWords[(engToKorCount + i) % mixedWords.length]
           });
         }
-
-        if (
-          (
+      } else {
+        words.forEach(function (word) {
+          if (
             questionMode === 'random' ||
-            questionMode === 'example'
-          ) &&
-          word.example
-        ) {
-          availableTypes.push({
-            type: 'example',
-            data: word
-          });
-        }
-      });
+            questionMode === 'engToKor'
+          ) {
+            availableTypes.push({
+              type: 'engToKor',
+              data: word
+            });
+          }
+
+          if (
+            questionMode === 'random' ||
+            questionMode === 'korToEng'
+          ) {
+            availableTypes.push({
+              type: 'korToEng',
+              data: word
+            });
+          }
+
+          if (
+            (
+              questionMode === 'random' ||
+              questionMode === 'example'
+            ) &&
+            word.example
+          ) {
+            availableTypes.push({
+              type: 'example',
+              data: word
+            });
+          }
+        });
+      }
 
 
       if (availableTypes.length === 0) {
@@ -9349,6 +9444,10 @@
 
 
       questions = [];
+
+      if (questionMode === 'mixed') {
+        questions = shuffleArray(availableTypes).slice(0, requestedCount);
+      }
 
       while (questions.length < requestedCount) {
         const shuffledRound =
@@ -10236,7 +10335,7 @@ google.script.run
     window.addEventListener('load', function () {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register('./service-worker.js?v=34', {
+          .register('./service-worker.js?v=51', {
             updateViaCache: 'none'
           })
           .then(function (registration) {
