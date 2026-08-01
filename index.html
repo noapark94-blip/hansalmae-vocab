@@ -478,6 +478,80 @@
       font-size: 18px;
     }
 
+
+    .experience-card {
+      margin: 8px 0 24px;
+      padding: 22px;
+      border: 1px solid #ead7e1;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff9fc, #fff3f8);
+    }
+
+    .experience-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .experience-level {
+      color: #8f145f;
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .experience-title {
+      color: #5d2347;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .experience-progress-wrap {
+      height: 13px;
+      margin-top: 16px;
+      overflow: hidden;
+      border-radius: 20px;
+      background: #eadfe6;
+    }
+
+    .experience-progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, #8f145f, #d94b9b);
+      transition: width 0.45s ease;
+    }
+
+    .experience-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      color: #6c5b66;
+      font-size: 14px;
+    }
+
+    .experience-earned {
+      margin: 18px auto 4px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #fff0f7;
+      color: #8f145f;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .experience-level-up {
+      margin-top: 10px;
+      color: #d12f82;
+      text-align: center;
+      font-size: 23px;
+      font-weight: 900;
+      line-height: 1.5;
+    }
+
     .wrong-list {
       margin-top: 26px;
     }
@@ -4036,6 +4110,10 @@
             id="loggedInStudent"
             style="display:block; margin-top:4px; color:#666; font-size:14px; font-weight:normal;"
           ></span>
+          <span
+            id="loggedInExperience"
+            style="display:block; margin-top:3px; color:#8f145f; font-size:13px; font-weight:bold;"
+          ></span>
         </div>
 
         <div class="topbar-menu">
@@ -4421,6 +4499,20 @@
           id="myPageStudent"
           class="subtitle"
         ></div>
+
+        <div id="myExperienceCard" class="experience-card">
+          <div class="experience-head">
+            <div id="myExperienceLevel" class="experience-level">Lv.1</div>
+            <div id="myExperienceTitle" class="experience-title">단어병아리</div>
+          </div>
+          <div class="experience-progress-wrap">
+            <div id="myExperienceProgress" class="experience-progress-bar"></div>
+          </div>
+          <div class="experience-meta">
+            <span id="myExperienceXp">0 XP</span>
+            <span id="myExperienceRemaining">다음 레벨까지 60 XP</span>
+          </div>
+        </div>
 
         <div class="my-summary">
           <div class="my-summary-card">
@@ -5765,6 +5857,84 @@
     }
 
 
+    function renderExperienceSummary_(experience) {
+      if (!experience) {
+        return;
+      }
+
+      const level = Number(experience.level || experience.currentLevel || 1);
+      const title = String(experience.title || '단어병아리');
+      const totalXp = Number(experience.totalXp || 0);
+      const progress = Math.max(0, Math.min(100, Number(experience.progressPercent || 0)));
+      const maxLevel = experience.maxLevel === true || level >= 30;
+      const remaining = Number(experience.remainingXp || 0);
+
+      const topbar = document.getElementById('loggedInExperience');
+      if (topbar) {
+        topbar.textContent = 'Lv.' + level + ' · ' + title;
+      }
+
+      const levelEl = document.getElementById('myExperienceLevel');
+      const titleEl = document.getElementById('myExperienceTitle');
+      const progressEl = document.getElementById('myExperienceProgress');
+      const xpEl = document.getElementById('myExperienceXp');
+      const remainingEl = document.getElementById('myExperienceRemaining');
+
+      if (levelEl) levelEl.textContent = 'Lv.' + level;
+      if (titleEl) titleEl.textContent = title;
+      if (progressEl) progressEl.style.width = progress + '%';
+      if (xpEl) xpEl.textContent = totalXp.toLocaleString() + ' XP';
+      if (remainingEl) {
+        remainingEl.textContent = maxLevel
+          ? 'MAX LEVEL'
+          : '다음 레벨까지 ' + remaining.toLocaleString() + ' XP';
+      }
+    }
+
+
+    function refreshExperienceUi_() {
+      if (!currentLoginToken) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result && result.success && result.experience) {
+            renderExperienceSummary_(result.experience);
+          }
+        })
+        .withFailureHandler(function () {})
+        .getStudentExperience(currentLoginToken);
+    }
+
+
+    function buildEarnedExperienceHtml_(experience) {
+      if (!experience) {
+        return '';
+      }
+
+      const earnedXp = Number(experience.earnedXp || 0);
+      const previousLevel = Number(experience.previousLevel || 1);
+      const currentLevel = Number(experience.currentLevel || experience.level || 1);
+      const title = String(experience.title || '');
+
+      let html =
+        '<div class="experience-earned">+' +
+        earnedXp.toLocaleString() +
+        ' XP 획득</div>';
+
+      if (experience.levelUp === true && currentLevel > previousLevel) {
+        html +=
+          '<div class="experience-level-up">LEVEL UP!<br>' +
+          'Lv.' + previousLevel + ' → Lv.' + currentLevel +
+          (title ? '<br>' + escapeHtml(title) : '') +
+          '</div>';
+      }
+
+      return html;
+    }
+
+
     function openMainApp(student) {
       if (!student) {
         return;
@@ -5779,6 +5949,7 @@
 
       currentStudent = student;
       startStudentSessionMonitor_();
+      refreshExperienceUi_();
 
       document
         .getElementById('studentName')
@@ -6443,6 +6614,8 @@
 
       const summary =
         data.summary || {};
+
+      renderExperienceSummary_(data.experience || null);
 
       document
         .getElementById('myPageStudent')
@@ -10052,6 +10225,11 @@ google.script.run
         '</span>';
     }
 
+    if (savedResult && savedResult.experience) {
+      pointMessage += buildEarnedExperienceHtml_(savedResult.experience);
+      renderExperienceSummary_(savedResult.experience);
+    }
+
     document
       .getElementById('resultText')
       .insertAdjacentHTML(
@@ -10059,6 +10237,7 @@ google.script.run
         pointMessage
       );
 
+    refreshExperienceUi_();
     hsmRefreshWrongNotebookImmediately_();
   })
   .withFailureHandler(function (error) {
@@ -10907,7 +11086,12 @@ google.script.run
             '<div class="result-score">' + lastTeacherExamResult.score + '점</div>' +
             '<div class="subtitle">정답 ' + lastTeacherExamResult.correctCount + '개 / ' + lastTeacherExamResult.totalCount + '개<br>' +
             (passed ? '통과했습니다.' : '기준점수에 도달하지 못했습니다.') +
-            (Number(result.wrongCount || 0) > 0 ? '<br>틀린 단어는 오답노트에 자동 저장되었습니다.' : '') + '</div>';
+            (Number(result.wrongCount || 0) > 0 ? '<br>틀린 단어는 오답노트에 자동 저장되었습니다.' : '') + '</div>' +
+            buildEarnedExperienceHtml_(result.experience || null);
+          if (result.experience) {
+            renderExperienceSummary_(result.experience);
+          }
+          refreshExperienceUi_();
           showTeacherExamReview_(Number(result.wrongCount || 0) > 0 ? 'wrong' : 'all');
           teacherExamSession = null;
           teacherExamAnswers = {};
