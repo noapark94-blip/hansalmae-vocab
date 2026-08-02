@@ -1066,7 +1066,11 @@
       cursor: default;
     }
 
-  </style>
+  
+    .hsm-teacher-student-name, .hsm-status-student { display:inline-flex; align-items:center; gap:7px; }
+    .hsm-teacher-emblem { width:30px; height:30px; object-fit:contain; border-radius:50%; flex:none; }
+
+</style>
 </head>
 <body>
   <main class="app">
@@ -1582,7 +1586,12 @@ protect	보호하다"></textarea>
             ${previouslySelected.has(student.studentId) ? 'checked' : ''}
           />
           <div class="student-meta">
-            <div class="student-name">${escapeHtml(student.studentName)}</div>
+            <div class="student-name hsm-teacher-student-name">
+              ${student.equippedEmblem && student.equippedEmblem.imagePath
+                ? `<img class="hsm-teacher-emblem" src="${escapeHtml(student.equippedEmblem.imagePath)}" alt="">`
+                : ''}
+              ${escapeHtml(student.studentName)}
+            </div>
             <div class="student-sub">
               ${escapeHtml(student.grade || '학년 미입력')} ·
               ${escapeHtml(student.studentId)}
@@ -2173,7 +2182,7 @@ protect	보호하다"></textarea>
 
             return `
               <tr>
-                <td><strong>${escapeHtml(student['학생이름'] || '-')}</strong></td>
+                <td><strong class="hsm-status-student">${student['장착엠블럼'] && student['장착엠블럼'].imagePath ? `<img class="hsm-teacher-emblem" src="${escapeHtml(student['장착엠블럼'].imagePath)}" alt="">` : ''}${escapeHtml(student['학생이름'] || '-')}</strong></td>
                 <td>${escapeHtml(student['학생ID'] || '-')}</td>
                 <td>${escapeHtml(student['학년'] || '미입력')}</td>
                 <td>${escapeHtml(student['응시상태'] || '미응시')}</td>
