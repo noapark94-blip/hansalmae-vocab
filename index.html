@@ -9220,11 +9220,18 @@
             medal +
           '</div>' +
 
+          '<div class="hsm-ranking-emblem-wrap">' +
+            (student.equippedEmblem && student.equippedEmblem.imagePath
+              ? '<img class="hsm-ranking-emblem" src="' +
+                  escapeHtml(student.equippedEmblem.imagePath) +
+                  '" alt="' +
+                  escapeHtml(student.equippedEmblem.emblemName || '장착 엠블럼') +
+                  '">'
+              : '<div class="hsm-ranking-emblem-placeholder">—</div>') +
+          '</div>' +
+
           '<div class="ranking-info hsm-ranking-info">' +
             '<div class="ranking-name">' +
-              (student.equippedEmblem && student.equippedEmblem.imagePath
-                ? '<img class="hsm-ranking-emblem" src="' + escapeHtml(student.equippedEmblem.imagePath) + '" alt="">'
-                : '') +
               escapeHtml(student.name) +
             '</div>' +
 
@@ -13297,7 +13304,29 @@ google.script.run
 
 <style id="hsmEmblemStyles">
   .hsm-profile-emblem{width:44px;height:44px;object-fit:contain;border-radius:50%;vertical-align:middle;margin-right:8px}
-  .hsm-ranking-emblem{width:36px;height:36px;object-fit:contain;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .hsm-ranking-emblem-wrap{
+    width:54px;
+    height:54px;
+    flex:0 0 54px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    background:linear-gradient(145deg,#fff8fc,#f4e4ed);
+    border:1px solid #ead0de;
+    box-shadow:0 6px 14px rgba(79,18,55,.10);
+  }
+  .hsm-ranking-emblem{
+    width:48px;
+    height:48px;
+    display:block;
+    object-fit:contain;
+  }
+  .hsm-ranking-emblem-placeholder{
+    color:#b9a7b1;
+    font-size:18px;
+    font-weight:800;
+  }
   .hsm-emblem-card{margin:0 0 22px;padding:20px;border:1px solid #ead7e1;border-radius:18px;background:linear-gradient(180deg,#fffafd,#fff3f8)}
   .hsm-emblem-current{display:flex;align-items:center;gap:16px}
   .hsm-emblem-current img{width:90px;height:90px;object-fit:contain;border-radius:22px;background:#fff}
@@ -13393,8 +13422,8 @@ google.script.run
       '</div>';
     }).join('');
   }
-  async function load(force){if(api.loading||!currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
-  async function equip(id){try{const r=await call('equipStudentEmblem',[currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
+  async function load(force){if(api.loading||!window.currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[window.currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
+  async function equip(id){try{const r=await call('equipStudentEmblem',[window.currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
   function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(true)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
   window.HSMEmblems={load,open,close,equip};
   document.addEventListener('DOMContentLoaded',()=>{ensureCard();setTimeout(()=>load(false),500)});
