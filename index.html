@@ -13393,8 +13393,8 @@ google.script.run
       '</div>';
     }).join('');
   }
-  async function load(force){if(api.loading||!window.currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[window.currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
-  async function equip(id){try{const r=await call('equipStudentEmblem',[window.currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
+  async function load(force){if(api.loading||!currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
+  async function equip(id){try{const r=await call('equipStudentEmblem',[currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
   function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(true)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
   window.HSMEmblems={load,open,close,equip};
   document.addEventListener('DOMContentLoaded',()=>{ensureCard();setTimeout(()=>load(false),500)});
