@@ -9220,8 +9220,11 @@
             medal +
           '</div>' +
 
-          '<div class="ranking-info">' +
+          '<div class="ranking-info hsm-ranking-info">' +
             '<div class="ranking-name">' +
+              (student.equippedEmblem && student.equippedEmblem.imagePath
+                ? '<img class="hsm-ranking-emblem" src="' + escapeHtml(student.equippedEmblem.imagePath) + '" alt="">'
+                : '') +
               escapeHtml(student.name) +
             '</div>' +
 
@@ -13291,5 +13294,76 @@ google.script.run
     }
   );
 </script>
+
+<style id="hsmEmblemStyles">
+  .hsm-profile-emblem{width:44px;height:44px;object-fit:contain;border-radius:50%;vertical-align:middle;margin-right:8px}
+  .hsm-ranking-emblem{width:36px;height:36px;object-fit:contain;border-radius:50%;margin-right:8px;vertical-align:middle}
+  .hsm-emblem-card{margin:0 0 22px;padding:20px;border:1px solid #ead7e1;border-radius:18px;background:linear-gradient(180deg,#fffafd,#fff3f8)}
+  .hsm-emblem-current{display:flex;align-items:center;gap:16px}
+  .hsm-emblem-current img{width:90px;height:90px;object-fit:contain;border-radius:22px;background:#fff}
+  .hsm-emblem-current-name{font-size:20px;font-weight:900;color:#8f145f}
+  .hsm-emblem-current-sub{margin-top:5px;color:#6c5b66;font-size:14px}
+  .hsm-emblem-open{margin-top:14px;background:#8f145f}
+  .hsm-emblem-modal{position:fixed;inset:0;z-index:99999;background:rgba(28,18,25,.58);display:flex;align-items:center;justify-content:center;padding:18px}
+  .hsm-emblem-modal.hidden{display:none!important}
+  .hsm-emblem-panel{width:min(720px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.24)}
+  .hsm-emblem-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .hsm-emblem-panel-head h3{margin:0;font-size:24px;color:#8f145f}
+  .hsm-emblem-close{width:auto;margin:0;padding:8px 12px;background:#eee;color:#555}
+  .hsm-emblem-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .hsm-emblem-item{position:relative;padding:16px;border:1px solid #eadfe6;border-radius:18px;text-align:center;background:#fff}
+  .hsm-emblem-item.locked{filter:grayscale(1);opacity:.45}
+  .hsm-emblem-item.equipped{border:2px solid #8f145f;background:#fff4f9}
+  .hsm-emblem-item img{width:120px;height:120px;object-fit:contain}
+  .hsm-emblem-name{font-weight:900;margin-top:8px}
+  .hsm-emblem-condition{font-size:13px;color:#777;margin-top:5px}
+  .hsm-emblem-equip{margin-top:10px;padding:10px;font-size:14px}
+  .hsm-emblem-new{margin-top:12px;padding:16px;border-radius:16px;background:#fff2f8;text-align:center}
+  .hsm-emblem-new img{width:130px;height:130px;object-fit:contain}
+  @media(max-width:560px){.hsm-emblem-grid{grid-template-columns:1fr}.hsm-emblem-current img{width:76px;height:76px}}
+</style>
+
+<div id="hsmEmblemModal" class="hsm-emblem-modal hidden" aria-hidden="true">
+  <div class="hsm-emblem-panel">
+    <div class="hsm-emblem-panel-head"><h3>엠블럼 도감</h3><button class="hsm-emblem-close" type="button" onclick="HSMEmblems.close()">닫기</button></div>
+    <div id="hsmEmblemSummary" class="subtitle" style="margin:0 0 16px"></div>
+    <div id="hsmEmblemGrid" class="hsm-emblem-grid"></div>
+  </div>
+</div>
+
+<script id="hsmEmblemPlugin">
+(function(){
+  const api={data:null,loading:false};
+  function esc(v){return String(v==null?'':v).replace(/[&<>'"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));}
+  function call(name,args){return new Promise((resolve,reject)=>{google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name].apply(google.script.run,args||[]);});}
+  function ensureCard(){
+    const screen=document.getElementById('myPageScreen'); if(!screen||document.getElementById('hsmMyEmblemCard')) return;
+    const xp=document.getElementById('myExperienceCard'); const card=document.createElement('div'); card.id='hsmMyEmblemCard'; card.className='hsm-emblem-card';
+    card.innerHTML='<div class="hsm-emblem-current"><img id="hsmCurrentEmblemImage" src="./images/emblems/title-chick.png" alt=""><div><div id="hsmCurrentEmblemName" class="hsm-emblem-current-name">단어병아리</div><div id="hsmCurrentEmblemSub" class="hsm-emblem-current-sub">보유 엠블럼을 불러오는 중입니다.</div></div></div><button type="button" class="hsm-emblem-open" onclick="HSMEmblems.open()">내 엠블럼 보기 · 장착 변경</button>';
+    if(xp&&xp.parentNode) xp.parentNode.insertBefore(card,xp.nextSibling); else screen.appendChild(card);
+  }
+  function apply(data){
+    if(!data||!data.success)return; api.data=data; ensureCard(); const eq=data.equippedEmblem;
+    const img=document.getElementById('hsmCurrentEmblemImage'), name=document.getElementById('hsmCurrentEmblemName'), sub=document.getElementById('hsmCurrentEmblemSub');
+    if(eq){if(img)img.src=eq.imagePath;if(name)name.textContent=eq.emblemName;if(sub)sub.textContent='획득 '+data.acquiredCount+' / '+data.totalCount+' · 현재 장착 중';}
+    let top=document.getElementById('hsmTopbarEmblem'); const text=document.getElementById('loggedInExperience');
+    if(!top&&text&&text.parentNode){top=document.createElement('img');top.id='hsmTopbarEmblem';top.className='hsm-profile-emblem';text.parentNode.insertBefore(top,text);}
+    if(top&&eq){top.src=eq.imagePath;top.alt=eq.emblemName;top.style.display='inline-block';}
+    renderGrid();
+  }
+  function renderGrid(){const d=api.data;if(!d)return;const s=document.getElementById('hsmEmblemSummary'),g=document.getElementById('hsmEmblemGrid');if(s)s.textContent='획득 '+d.acquiredCount+' / '+d.totalCount+' · Lv.'+d.currentLevel;if(!g)return;
+    g.innerHTML=(d.emblems||[]).map(e=>'<div class="hsm-emblem-item '+(!e.owned?'locked ':'')+(e.equipped?'equipped':'')+'"><img src="'+esc(e.imagePath)+'" alt="'+esc(e.emblemName)+'"><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><div class="hsm-emblem-condition">'+(e.equipped?'장착 중':esc(e.conditionText||''))+'</div>'+(e.owned&&!e.equipped?'<button class="hsm-emblem-equip" type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">장착하기</button>':'')+'</div>').join('');}
+  async function load(force){if(api.loading||!window.currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[window.currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
+  async function equip(id){try{const r=await call('equipStudentEmblem',[window.currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
+  function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(true)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
+  window.HSMEmblems={load,open,close,equip};
+  document.addEventListener('DOMContentLoaded',()=>{ensureCard();setTimeout(()=>load(false),500)});
+  const oldMain=window.openMainApp;if(typeof oldMain==='function')window.openMainApp=function(){const r=oldMain.apply(this,arguments);setTimeout(()=>load(true),250);return r};
+  const oldMy=window.showMyPage;if(typeof oldMy==='function')window.showMyPage=function(){const r=oldMy.apply(this,arguments);ensureCard();setTimeout(()=>load(false),150);return r};
+  const oldExp=window.renderExperienceSummary_;if(typeof oldExp==='function')window.renderExperienceSummary_=function(){const r=oldExp.apply(this,arguments);setTimeout(()=>load(true),100);return r};
+  const oldEarn=window.buildEarnedExperienceHtml_;if(typeof oldEarn==='function')window.buildEarnedExperienceHtml_=function(experience){let html=oldEarn.apply(this,arguments);const list=experience&&experience.newlyGrantedEmblems||[];if(list.length){const e=list[0];html+='<div class="hsm-emblem-new"><div style="font-weight:900;color:#8f145f">✨ 새로운 엠블럼 획득!</div><img src="'+esc(e.imagePath)+'" alt=""><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><button type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">바로 장착하기</button></div>';setTimeout(()=>load(true),250);}return html};
+})();
+</script>
+
 </body>
 </html>
