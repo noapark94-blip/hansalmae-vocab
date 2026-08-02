@@ -13311,8 +13311,15 @@ google.script.run
   .hsm-emblem-panel-head h3{margin:0;font-size:24px;color:#8f145f}
   .hsm-emblem-close{width:auto;margin:0;padding:8px 12px;background:#eee;color:#555}
   .hsm-emblem-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  .hsm-emblem-item{position:relative;padding:16px;border:1px solid #eadfe6;border-radius:18px;text-align:center;background:#fff}
-  .hsm-emblem-item.locked{filter:grayscale(1);opacity:.45}
+  .hsm-emblem-item{position:relative;padding:16px;border:1px solid #eadfe6;border-radius:18px;text-align:center;background:#fff;overflow:hidden}
+  .hsm-emblem-status{position:absolute;top:10px;right:10px;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:900;background:#f2f2f2;color:#666}
+  .hsm-emblem-status.owned{background:#fff0f7;color:#8f145f}
+  .hsm-emblem-guide{margin:-4px 0 18px;padding:13px 15px;border-radius:14px;background:#fff7fb;color:#6c5b66;font-size:14px;line-height:1.65}
+  .hsm-emblem-guide strong{color:#8f145f}
+  .hsm-emblem-lock-icon{font-size:18px;margin-right:3px}
+  .hsm-emblem-item.locked{background:#f7f7f7}
+  .hsm-emblem-item.locked img{filter:grayscale(1);opacity:.32}
+  .hsm-emblem-item.locked .hsm-emblem-name,.hsm-emblem-item.locked .hsm-emblem-condition{color:#999}
   .hsm-emblem-item.equipped{border:2px solid #8f145f;background:#fff4f9}
   .hsm-emblem-item img{width:120px;height:120px;object-fit:contain}
   .hsm-emblem-name{font-weight:900;margin-top:8px}
@@ -13326,7 +13333,8 @@ google.script.run
 <div id="hsmEmblemModal" class="hsm-emblem-modal hidden" aria-hidden="true">
   <div class="hsm-emblem-panel">
     <div class="hsm-emblem-panel-head"><h3>엠블럼 도감</h3><button class="hsm-emblem-close" type="button" onclick="HSMEmblems.close()">닫기</button></div>
-    <div id="hsmEmblemSummary" class="subtitle" style="margin:0 0 16px"></div>
+    <div id="hsmEmblemSummary" class="subtitle" style="margin:0 0 10px"></div>
+    <div class="hsm-emblem-guide"><strong>획득 방법</strong><br>각 엠블럼에 표시된 레벨에 도달하면 자동으로 획득합니다. 획득한 엠블럼은 언제든 원하는 것으로 바꿔 장착할 수 있습니다.</div>
     <div id="hsmEmblemGrid" class="hsm-emblem-grid"></div>
   </div>
 </div>
@@ -13351,8 +13359,40 @@ google.script.run
     if(top&&eq){top.src=eq.imagePath;top.alt=eq.emblemName;top.style.display='inline-block';}
     renderGrid();
   }
-  function renderGrid(){const d=api.data;if(!d)return;const s=document.getElementById('hsmEmblemSummary'),g=document.getElementById('hsmEmblemGrid');if(s)s.textContent='획득 '+d.acquiredCount+' / '+d.totalCount+' · Lv.'+d.currentLevel;if(!g)return;
-    g.innerHTML=(d.emblems||[]).map(e=>'<div class="hsm-emblem-item '+(!e.owned?'locked ':'')+(e.equipped?'equipped':'')+'"><img src="'+esc(e.imagePath)+'" alt="'+esc(e.emblemName)+'"><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><div class="hsm-emblem-condition">'+(e.equipped?'장착 중':esc(e.conditionText||''))+'</div>'+(e.owned&&!e.equipped?'<button class="hsm-emblem-equip" type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">장착하기</button>':'')+'</div>').join('');}
+  function renderGrid(){
+    const d=api.data;
+    if(!d)return;
+    const summary=document.getElementById('hsmEmblemSummary');
+    const grid=document.getElementById('hsmEmblemGrid');
+
+    if(summary){
+      summary.innerHTML='<strong style="color:#8f145f">획득 가능한 엠블럼 '+Number(d.totalCount||0)+'개</strong> · 현재 획득 '+Number(d.acquiredCount||0)+' / '+Number(d.totalCount||0)+' · Lv.'+Number(d.currentLevel||1);
+    }
+
+    if(!grid)return;
+
+    grid.innerHTML=(d.emblems||[]).map(function(e){
+      const owned=Boolean(e.owned);
+      const equipped=Boolean(e.equipped);
+      const status=equipped
+        ? '<span class="hsm-emblem-status owned">장착 중</span>'
+        : owned
+          ? '<span class="hsm-emblem-status owned">획득 완료</span>'
+          : '<span class="hsm-emblem-status"><span class="hsm-emblem-lock-icon">🔒</span>잠금</span>';
+
+      const button=owned&&!equipped
+        ? '<button class="hsm-emblem-equip" type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">이 엠블럼 장착하기</button>'
+        : '';
+
+      return '<div class="hsm-emblem-item '+(!owned?'locked ':'')+(equipped?'equipped':'')+'">'+
+        status+
+        '<img src="'+esc(e.imagePath)+'" alt="'+esc(e.emblemName)+'">'+
+        '<div class="hsm-emblem-name">'+esc(e.emblemName)+'</div>'+
+        '<div class="hsm-emblem-condition">획득 조건: '+esc(e.conditionText||'조건 달성 시 획득')+'</div>'+
+        button+
+      '</div>';
+    }).join('');
+  }
   async function load(force){if(api.loading||!window.currentLoginToken)return; if(api.data&&!force){apply(api.data);return;} api.loading=true;try{apply(await call('getStudentEmblems',[window.currentLoginToken]));}catch(e){console.error(e);}finally{api.loading=false;}}
   async function equip(id){try{const r=await call('equipStudentEmblem',[window.currentLoginToken,id]);if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');await load(true);alert(r.message||'엠블럼을 장착했습니다.');}catch(e){alert(e&&e.message?e.message:String(e));}}
   function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(true)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
