@@ -2492,6 +2492,95 @@
       .book-action-row button { width: 100%; }
     }
 
+  
+    /* =========================================================
+       세련된 학습 메뉴 아이콘 + 이미지 보호
+       ========================================================= */
+    .icon-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    h2.icon-title {
+      justify-content: flex-start;
+    }
+
+    .section-icon {
+      display: inline-flex;
+      width: 24px;
+      height: 24px;
+      flex: 0 0 24px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      vertical-align: middle;
+    }
+
+    .section-icon svg {
+      width: 19px;
+      height: 19px;
+      overflow: visible;
+    }
+
+    .section-icon-book {
+      color: #8f145f;
+      background: linear-gradient(145deg, #fff4f9, #f2dce8);
+      box-shadow: inset 0 0 0 1px rgba(143, 20, 95, 0.10);
+    }
+
+    .section-icon-book svg {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.65;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .section-icon-star {
+      color: #e6a91a;
+      background: linear-gradient(145deg, #fffaf0, #fff0c8);
+      box-shadow: inset 0 0 0 1px rgba(210, 151, 20, 0.13);
+    }
+
+    .section-icon-star svg {
+      fill: currentColor;
+      stroke: #c98d0b;
+      stroke-width: 0.65;
+      stroke-linejoin: round;
+    }
+
+    .section-icon-bolt {
+      color: #ff7a45;
+      background: linear-gradient(145deg, #fff7f2, #ffe2d2);
+      box-shadow: inset 0 0 0 1px rgba(255, 112, 65, 0.12);
+    }
+
+    .section-icon-bolt svg {
+      fill: currentColor;
+      stroke: #e75e2c;
+      stroke-width: 0.65;
+      stroke-linejoin: round;
+    }
+
+    /* iPhone Safari · Android Chrome · PC 이미지 메뉴/드래그 방지 */
+    img {
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      -webkit-user-drag: none !important;
+      user-drag: none !important;
+      pointer-events: none;
+    }
+
+    .emblem-card,
+    .emblem-modal,
+    .ranking-equipped-emblem {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
   </style>
 
 
@@ -4720,7 +4809,7 @@
             class="learning-shortcut"
             onclick="showWrongNotebook()"
           >
-            <div class="shortcut-title">📚 오답노트</div>
+            <div class="shortcut-title icon-title"><span class="section-icon section-icon-book" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4.75 5.25A2.25 2.25 0 0 1 7 3h4.25c.69 0 1.25.56 1.25 1.25v14.5A2.75 2.75 0 0 0 9.75 16H7a2.25 2.25 0 0 0-2.25 2.25v-13Z"/><path d="M19.25 5.25A2.25 2.25 0 0 0 17 3h-4.25c-.69 0-1.25.56-1.25 1.25v14.5A2.75 2.75 0 0 1 14.25 16H17a2.25 2.25 0 0 1 2.25 2.25v-13Z"/><path d="m14.9 9.7 1.25 1.25 2.45-2.45"/></svg></span><span>오답노트</span></div>
 
             <div class="shortcut-description">
               시험에서 틀린 단어를 확인하고 복습 완료로 표시합니다.
@@ -4738,7 +4827,7 @@
             class="learning-shortcut"
             onclick="showPersonalVocabulary()"
           >
-            <div class="shortcut-title">⭐ 나만의 단어장</div>
+            <div class="shortcut-title icon-title"><span class="section-icon section-icon-star" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m12 3.25 2.63 5.33 5.88.85-4.25 4.14 1 5.86L12 16.66l-5.26 2.77 1-5.86-4.25-4.14 5.88-.85L12 3.25Z"/></svg></span><span>나만의 단어장</span></div>
 
             <div class="shortcut-description">
               직접 저장한 단어를 확인하고 따로 시험봅니다.
@@ -4756,7 +4845,7 @@
             class="learning-shortcut"
             onclick="showSmartReview()"
           >
-            <div class="shortcut-title">🧠 스마트 복습</div>
+            <div class="shortcut-title icon-title"><span class="section-icon section-icon-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M13.35 2.75 5.9 13.05h5.2l-.45 8.2 7.45-10.3h-5.2l.45-8.2Z"/></svg></span><span>스마트 복습</span></div>
 
             <div class="shortcut-description">
               자주 틀린 단어를 우선으로 오늘 복습할 단어를 추천합니다.
@@ -4788,7 +4877,7 @@
       >
         <div class="wrong-note-header">
           <div>
-            <h2>📚 오답노트</h2>
+            <h2 class="icon-title"><span class="section-icon section-icon-book" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4.75 5.25A2.25 2.25 0 0 1 7 3h4.25c.69 0 1.25.56 1.25 1.25v14.5A2.75 2.75 0 0 0 9.75 16H7a2.25 2.25 0 0 0-2.25 2.25v-13Z"/><path d="M19.25 5.25A2.25 2.25 0 0 0 17 3h-4.25c-.69 0-1.25.56-1.25 1.25v14.5A2.75 2.75 0 0 1 14.25 16H17a2.25 2.25 0 0 1 2.25 2.25v-13Z"/><path d="m14.9 9.7 1.25 1.25 2.45-2.45"/></svg></span><span>오답노트</span></h2>
 
             <div
               id="wrongNotebookSummary"
@@ -4988,7 +5077,7 @@
       >
         <div class="wrong-note-header">
           <div>
-            <h2>⭐ 나만의 단어장</h2>
+            <h2 class="icon-title"><span class="section-icon section-icon-star" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m12 3.25 2.63 5.33 5.88.85-4.25 4.14 1 5.86L12 16.66l-5.26 2.77 1-5.86-4.25-4.14 5.88-.85L12 3.25Z"/></svg></span><span>나만의 단어장</span></h2>
             <div
               id="personalVocabularySummary"
               class="wrong-note-summary"
@@ -5088,7 +5177,7 @@
         id="personalTestSetupScreen"
         class="card hidden"
       >
-        <h2>⭐ 나만의 단어장 시험</h2>
+        <h2 class="icon-title"><span class="section-icon section-icon-star" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m12 3.25 2.63 5.33 5.88.85-4.25 4.14 1 5.86L12 16.66l-5.26 2.77 1-5.86-4.25-4.14 5.88-.85L12 3.25Z"/></svg></span><span>나만의 단어장 시험</span></h2>
 
         <div class="wrong-test-guide">
           암기할 단어만 시험에 출제됩니다.<br>
@@ -5140,7 +5229,7 @@
       >
         <div class="wrong-note-header">
           <div>
-            <h2>🧠 스마트 복습</h2>
+            <h2 class="icon-title"><span class="section-icon section-icon-bolt" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M13.35 2.75 5.9 13.05h5.2l-.45 8.2 7.45-10.3h-5.2l.45-8.2Z"/></svg></span><span>스마트 복습</span></h2>
             <div
               id="smartReviewSummary"
               class="wrong-note-summary"
@@ -13584,6 +13673,77 @@ google.script.run
   window.hsmHandleAttendanceAchievement_=function(data){if(!data)return;const list=Array.isArray(data.achievements)?data.achievements:[];if(list.length)setTimeout(function(){window.HSMEmblemCelebration.show(list[0])},500);else if(data.earnedXp>0&&!data.duplicated)toast('+10 XP · 오늘의 출석 완료')};
 })();
 </script>
+
+
+  <script>
+  (function preventImageSaveAndCopy() {
+    'use strict';
+
+    function getImageTarget(target) {
+      if (!target) return null;
+      if (target.tagName === 'IMG') return target;
+      return target.closest ? target.closest('img') : null;
+    }
+
+    function protectImage(image) {
+      if (!image || image.tagName !== 'IMG') return;
+      image.draggable = false;
+      image.setAttribute('draggable', 'false');
+      image.setAttribute('oncontextmenu', 'return false;');
+    }
+
+    function protectImages(root) {
+      if (!root) return;
+      if (root.nodeType === 1 && root.tagName === 'IMG') {
+        protectImage(root);
+      }
+      if (root.querySelectorAll) {
+        root.querySelectorAll('img').forEach(protectImage);
+      }
+    }
+
+    document.addEventListener('contextmenu', function (event) {
+      if (getImageTarget(event.target)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    document.addEventListener('dragstart', function (event) {
+      if (getImageTarget(event.target)) {
+        event.preventDefault();
+      }
+    }, true);
+
+    document.addEventListener('selectstart', function (event) {
+      if (getImageTarget(event.target)) {
+        event.preventDefault();
+      }
+    }, true);
+
+    function startProtection() {
+      protectImages(document);
+      if (!document.documentElement || typeof MutationObserver === 'undefined') return;
+
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          mutation.addedNodes.forEach(function (node) {
+            protectImages(node);
+          });
+        });
+      }).observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startProtection, { once: true });
+    } else {
+      startProtection();
+    }
+  })();
+  </script>
 
 </body>
 </html>
