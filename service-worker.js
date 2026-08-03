@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hansalmae-voca-v61';
+const CACHE_NAME = 'hansalmae-voca-v62';
 
 const REQUIRED_ASSETS = [
   './',
@@ -17,29 +17,27 @@ const OPTIONAL_ASSETS = [
   './images/emblems/title-holic.png',
   './images/emblems/title-slayer.png',
   './images/emblems/title-madman.png',
-  './images/emblems/title-dictionary.png'
+  './images/emblems/title-dictionary.png',
+  './images/emblems/achievement-king.png',
+  './images/emblems/achievement-success.png',
+  './images/emblems/achievement-madness-max.png'
 ];
 
 self.addEventListener('install', function (event) {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(REQUIRED_ASSETS).then(function () {
-        return Promise.all(OPTIONAL_ASSETS.map(function (asset) {
-          return cache.add(asset).catch(function () { return null; });
-        }));
-      });
-    }).then(function () { return self.skipWaiting(); })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(function (cache) {
+    return cache.addAll(REQUIRED_ASSETS).then(function () {
+      return Promise.all(OPTIONAL_ASSETS.map(function (asset) {
+        return cache.add(asset).catch(function () { return null; });
+      }));
+    });
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (event) {
-  event.waitUntil(
-    caches.keys().then(function (keys) {
-      return Promise.all(keys.filter(function (key) {
-        return key !== CACHE_NAME;
-      }).map(function (key) { return caches.delete(key); }));
-    }).then(function () { return self.clients.claim(); })
-  );
+  event.waitUntil(caches.keys().then(function (keys) {
+    return Promise.all(keys.filter(function (key) { return key !== CACHE_NAME; })
+      .map(function (key) { return caches.delete(key); }));
+  }).then(function () { return self.clients.claim(); }));
 });
 
 self.addEventListener('message', function (event) {
@@ -50,37 +48,29 @@ self.addEventListener('fetch', function (event) {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.hostname === 'script.google.com' ||
-      url.hostname === 'script.googleusercontent.com') return;
-  const acceptsHtml = request.mode === 'navigate' ||
-    (request.headers.get('accept') || '').includes('text/html');
+  if (url.hostname === 'script.google.com' || url.hostname === 'script.googleusercontent.com') return;
+  const acceptsHtml = request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html');
   if (acceptsHtml) {
-    event.respondWith(
-      fetch(request, { cache: 'no-store' }).then(function (response) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(function (cache) { cache.put(request, copy); });
-        return response;
-      }).catch(function () {
-        return caches.match(request).then(function (cached) {
-          if (cached) return cached;
-          return url.pathname.endsWith('/teacher.html')
-            ? caches.match('./teacher.html')
-            : caches.match('./index.html');
-        });
-      })
-    );
+    event.respondWith(fetch(request, { cache: 'no-store' }).then(function (response) {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then(function (cache) { cache.put(request, copy); });
+      return response;
+    }).catch(function () {
+      return caches.match(request).then(function (cached) {
+        if (cached) return cached;
+        return url.pathname.endsWith('/teacher.html') ? caches.match('./teacher.html') : caches.match('./index.html');
+      });
+    }));
     return;
   }
-  event.respondWith(
-    caches.match(request).then(function (cached) {
-      const networkRequest = fetch(request).then(function (response) {
-        if (response && response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(function (cache) { cache.put(request, copy); });
-        }
-        return response;
-      }).catch(function () { return cached; });
-      return cached || networkRequest;
-    })
-  );
+  event.respondWith(caches.match(request).then(function (cached) {
+    const networkRequest = fetch(request).then(function (response) {
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(function (cache) { cache.put(request, copy); });
+      }
+      return response;
+    }).catch(function () { return cached; });
+    return cached || networkRequest;
+  }));
 });
