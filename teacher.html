@@ -1070,6 +1070,40 @@
     .hsm-teacher-student-name, .hsm-status-student { display:inline-flex; align-items:center; gap:7px; }
     .hsm-teacher-emblem { width:30px; height:30px; object-fit:contain; border-radius:50%; flex:none; }
 
+
+    /* 마감 종료 및 재응시 상태 */
+    .deadline-pill {
+      border-color: #e7c97d;
+      background: #fff7df;
+      color: #986511;
+    }
+
+    .status-deadline {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border: 1px solid #edcf87;
+      border-radius: 999px;
+      background: #fff8e6;
+      color: #93620f;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status-retake {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border: 1px solid #d9a8c3;
+      border-radius: 999px;
+      background: #fff1f8;
+      color: #8f145f;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
 </style>
 </head>
 <body>
@@ -1822,6 +1856,17 @@ protect	보호하다"></textarea>
         const title = String(exam['시험제목'] || '제목 없음');
         const status = String(exam['상태'] || '공개');
         const cancelled = status === '취소';
+        const deadlineDate = exam['마감일시']
+          ? new Date(exam['마감일시'])
+          : null;
+        const deadlineEnded =
+          !cancelled &&
+          deadlineDate &&
+          !Number.isNaN(deadlineDate.getTime()) &&
+          Date.now() > deadlineDate.getTime();
+        const displayStatus = cancelled
+          ? '취소'
+          : (deadlineEnded ? '마감 종료' : status);
 
         return `
           <article class="exam-card ${cancelled ? 'cancelled' : ''}">
@@ -1830,8 +1875,8 @@ protect	보호하다"></textarea>
                 <h3 class="exam-title">${escapeHtml(title)}</h3>
                 <div class="exam-id">${escapeHtml(examId)}</div>
               </div>
-              <span class="status-pill ${cancelled ? 'cancelled-pill' : ''}">
-                ${escapeHtml(status)}
+              <span class="status-pill ${cancelled ? 'cancelled-pill' : (deadlineEnded ? 'deadline-pill' : '')}">
+                ${escapeHtml(displayStatus)}
               </span>
             </div>
 
@@ -1992,7 +2037,7 @@ protect	보호하다"></textarea>
     async function requestRetakeAllFromList(examId, title) {
       const ok = window.confirm(
         `'${title || '선택한 시험'}' 대상 학생 전체에게 재응시 알림을 보낼까요?\n\n` +
-        '기존 최고점과 응시 기록은 유지됩니다.'
+        '기존 최고점과 응시 기록은 유지되며, 요청 후 72시간 동안 응시할 수 있습니다.'
       );
 
       if (!ok) return;
@@ -2151,7 +2196,12 @@ protect	보호하다"></textarea>
         ['전체', result.totalCount || 0],
         ['완료', result.completedCount || 0],
         ['시험 중', result.inProgressCount || 0],
-        ['미응시', result.notStartedCount || 0]
+        [
+          result.examDeadlineEnded ? '마감 미응시' : '미응시',
+          result.examDeadlineEnded
+            ? (result.deadlineMissedCount || 0)
+            : (result.notStartedCount || 0)
+        ]
       ];
 
       $('#statusSummary').innerHTML = summaries.map(([label, value]) => `
@@ -2185,7 +2235,15 @@ protect	보호하다"></textarea>
                 <td><strong class="hsm-status-student">${student['장착엠블럼'] && student['장착엠블럼'].imagePath ? `<img class="hsm-teacher-emblem" src="${escapeHtml(student['장착엠블럼'].imagePath)}" alt="">` : ''}${escapeHtml(student['학생이름'] || '-')}</strong></td>
                 <td>${escapeHtml(student['학생ID'] || '-')}</td>
                 <td>${escapeHtml(student['학년'] || '미입력')}</td>
-                <td>${escapeHtml(student['응시상태'] || '미응시')}</td>
+                <td>
+                  ${
+                    student['마감종료']
+                      ? `<span class="status-deadline">${escapeHtml(student['표시상태'] || '미응시 · 마감 종료')}</span>`
+                      : student['재응시가능']
+                        ? `<span class="status-retake">재응시 대기</span>`
+                        : escapeHtml(student['표시상태'] || student['응시상태'] || '미응시')
+                  }
+                </td>
                 <td>${escapeHtml(student['응시회차'] || 0)}회</td>
                 <td>${escapeHtml(latestScore)}</td>
                 <td>${escapeHtml(bestScore)}</td>
@@ -2193,18 +2251,20 @@ protect	보호하다"></textarea>
                 <td>${escapeHtml(formatDateTime(student['완료일시']))}</td>
                 <td>
                   ${
-                    student['응시상태'] === '완료'
+                    student['응시상태'] === '완료' || student['마감종료']
                       ? `<button type="button"
                            class="mini-action-btn student-retake-btn"
                            data-student-id="${escapeHtml(student['학생ID'] || '')}"
                            data-student-name="${escapeHtml(student['학생이름'] || '')}">
-                           재응시
+                           ${student['마감종료'] ? '재오픈' : '재응시'}
                          </button>`
                       : `<button type="button"
                            class="mini-action-btn student-reminder-btn"
                            data-student-id="${escapeHtml(student['학생ID'] || '')}"
                            disabled>
-                           ${student['응시상태'] === '시험중' ? '시험 중' : '미응시'}
+                           ${student['재응시가능']
+                             ? '재응시 대기'
+                             : (student['응시상태'] === '시험중' ? '시험 중' : '미응시')}
                          </button>`
                   }
                 </td>
