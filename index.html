@@ -6099,6 +6099,7 @@
           );
 
           openMainApp(currentStudent);
+          hsmHandleAttendanceAchievement_(result.attendanceBonus);
         })
         .withFailureHandler(showLoginError)
         .studentLogin(
@@ -6604,6 +6605,7 @@
           }
 
           openMainApp(result.student);
+          hsmHandleAttendanceAchievement_(result.attendanceBonus);
         })
         .withFailureHandler(function () {
           clearLoginState();
@@ -10593,6 +10595,7 @@ google.script.run
       pointMessage += buildEarnedExperienceHtml_(savedResult.experience);
       renderExperienceSummary_(savedResult.experience);
     }
+    hsmHandleBonusExperience_(savedResult && savedResult.bonusExperience);
 
     document
       .getElementById('resultText')
@@ -11455,6 +11458,7 @@ google.script.run
           if (result.experience) {
             renderExperienceSummary_(result.experience);
           }
+          hsmHandleBonusExperience_(result.bonusExperience);
           refreshExperienceUi_();
           showTeacherExamReview_(Number(result.wrongCount || 0) > 0 ? 'wrong' : 'all');
           teacherExamSession = null;
@@ -13551,6 +13555,33 @@ google.script.run
   const oldMy=window.showMyPage;if(typeof oldMy==='function')window.showMyPage=function(){const r=oldMy.apply(this,arguments);ensureCard();setTimeout(()=>load(false),150);return r};
   const oldExp=window.renderExperienceSummary_;if(typeof oldExp==='function')window.renderExperienceSummary_=function(){const r=oldExp.apply(this,arguments);setTimeout(()=>load(true),100);return r};
   const oldEarn=window.buildEarnedExperienceHtml_;if(typeof oldEarn==='function')window.buildEarnedExperienceHtml_=function(experience){let html=oldEarn.apply(this,arguments);const list=experience&&experience.newlyGrantedEmblems||[];if(list.length){const e=list[0];html+='<div class="hsm-emblem-new"><div style="font-weight:900;color:#8f145f">✨ 새로운 엠블럼 획득!</div><img src="'+esc(e.imagePath)+'" alt=""><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><button type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">바로 장착하기</button></div>';setTimeout(()=>load(true),250);}return html};
+})();
+</script>
+
+
+<style>
+#hsmAchievementToast{position:fixed;left:50%;bottom:26px;z-index:100001;transform:translate(-50%,130px);opacity:0;pointer-events:none;min-width:min(88vw,360px);padding:14px 18px;border-radius:18px;background:rgba(45,20,37,.95);color:#fff;text-align:center;font-weight:800;box-shadow:0 18px 45px rgba(0,0,0,.28);transition:.35s ease}
+#hsmAchievementToast.show{transform:translate(-50%,0);opacity:1}
+#hsmAchievementCelebration{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(31,15,25,.66);backdrop-filter:blur(7px)}
+#hsmAchievementCelebration.hidden{display:none!important}
+.hsm-achievement-panel{position:relative;width:min(92vw,460px);padding:28px 24px 24px;border:2px solid #e9c46b;border-radius:28px;background:linear-gradient(180deg,#fffdf7,#fff5fb);text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.34);overflow:hidden;animation:hsmAchievementPop .48s cubic-bezier(.2,.9,.2,1.15)}
+.hsm-achievement-panel img{width:190px;height:190px;object-fit:contain;filter:drop-shadow(0 14px 22px rgba(86,20,61,.2))}
+.hsm-achievement-kicker{color:#c18a22;font-size:16px;font-weight:900;letter-spacing:.04em}.hsm-achievement-name{margin-top:4px;color:#7d1655;font-size:31px;font-weight:950;letter-spacing:-1px}.hsm-achievement-xp{margin-top:12px;color:#d28e1d;font-size:22px;font-weight:950}.hsm-achievement-close{margin-top:18px}
+.hsm-confetti{position:absolute;width:10px;height:18px;border-radius:3px;animation:hsmConfetti 1.8s ease-out infinite}.hsm-confetti:nth-child(1){left:9%;background:#f5b700;animation-delay:0s}.hsm-confetti:nth-child(2){left:22%;background:#d94b9b;animation-delay:.2s}.hsm-confetti:nth-child(3){left:40%;background:#8f145f;animation-delay:.45s}.hsm-confetti:nth-child(4){left:62%;background:#f5b700;animation-delay:.1s}.hsm-confetti:nth-child(5){left:78%;background:#6b7cff;animation-delay:.35s}.hsm-confetti:nth-child(6){left:91%;background:#d94b9b;animation-delay:.55s}
+@keyframes hsmAchievementPop{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}@keyframes hsmConfetti{0%{top:-24px;transform:rotate(0deg)}100%{top:105%;transform:rotate(540deg)}}
+</style>
+<div id="hsmAchievementToast"></div>
+<div id="hsmAchievementCelebration" class="hidden" aria-hidden="true"><div class="hsm-achievement-panel"><i class="hsm-confetti"></i><i class="hsm-confetti"></i><i class="hsm-confetti"></i><i class="hsm-confetti"></i><i class="hsm-confetti"></i><i class="hsm-confetti"></i><div class="hsm-achievement-kicker">✨ 새로운 업적 달성!</div><img id="hsmAchievementImage" src="" alt=""><div id="hsmAchievementName" class="hsm-achievement-name"></div><div class="hsm-achievement-xp">+30 XP · 새로운 엠블럼 획득</div><button type="button" class="hsm-achievement-close" onclick="HSMEmblemCelebration.close()">확인</button></div></div>
+<script>
+(function(){
+  function esc(v){return String(v==null?'':v)}
+  function toast(message){const el=document.getElementById('hsmAchievementToast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){el.classList.remove('show')},2800)}
+  window.HSMEmblemCelebration={
+    show:function(emblem){if(!emblem)return;const modal=document.getElementById('hsmAchievementCelebration');document.getElementById('hsmAchievementImage').src=esc(emblem.imagePath);document.getElementById('hsmAchievementImage').alt=esc(emblem.emblemName);document.getElementById('hsmAchievementName').textContent=esc(emblem.emblemName);modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');toast('+30 XP · 새로운 엠블럼 획득');try{if(window.HSMEmblems)HSMEmblems.load(true)}catch(_e){}},
+    close:function(){const modal=document.getElementById('hsmAchievementCelebration');if(modal){modal.classList.add('hidden');modal.setAttribute('aria-hidden','true')}}
+  };
+  window.hsmHandleBonusExperience_=function(data){if(!data)return;const list=Array.isArray(data.achievements)?data.achievements:[];if(list.length)window.HSMEmblemCelebration.show(list[0]);else{const bonuses=Array.isArray(data.bonuses)?data.bonuses:[];const earned=bonuses.reduce(function(sum,b){return sum+Number(b&&b.earnedXp||0)},0);if(earned>0)toast('+'+earned+' XP · 보너스 경험치 획득')}};
+  window.hsmHandleAttendanceAchievement_=function(data){if(!data)return;const list=Array.isArray(data.achievements)?data.achievements:[];if(list.length)setTimeout(function(){window.HSMEmblemCelebration.show(list[0])},500);else if(data.earnedXp>0&&!data.duplicated)toast('+10 XP · 오늘의 출석 완료')};
 })();
 </script>
 
