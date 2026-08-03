@@ -13552,9 +13552,11 @@ google.script.run
       if(name)name.textContent='장착한 엠블럼 없음';
       if(sub)sub.textContent='획득 '+Number(data.acquiredCount||0)+' / '+Number(data.totalCount||0)+' · 엠블럼을 선택해주세요.';
     }
-    let top=document.getElementById('hsmTopbarEmblem'); const text=document.getElementById('loggedInExperience');
-    if(!top&&text&&text.parentNode){top=document.createElement('img');top.id='hsmTopbarEmblem';top.className='hsm-profile-emblem';text.parentNode.insertBefore(top,text);}
-    if(top&&eq){top.src=eq.imagePath;top.alt=eq.emblemName;top.style.display='inline-block';}
+    // 상단 프로필에서는 엠블럼 이미지를 표시하지 않고
+    // 레벨과 칭호 텍스트만 보여줍니다.
+    const top=document.getElementById('hsmTopbarEmblem');
+    if(top) top.remove();
+
     renderGrid();
   }
   function renderGrid(){
