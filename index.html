@@ -6524,9 +6524,11 @@
         return;
       }
 
+      // 30초마다 세션을 확인하면 학생 수가 많을 때
+      // Apps Script 요청이 과도하게 발생하므로 3분 간격으로 확인합니다.
       studentSessionCheckTimer = window.setInterval(
         checkCurrentStudentSession_,
-        30000
+        180000
       );
     }
 
@@ -7272,7 +7274,7 @@
     }
 
 
-    function showPersonalVocabulary() {
+    function showPersonalVocabularyLegacy_() {
       setActiveMenu('mypage');
 
       [
@@ -7354,7 +7356,7 @@
     }
 
 
-    function renderPersonalVocabulary() {
+    function renderPersonalVocabularyLegacy1_() {
       const list =
         document.getElementById('personalVocabularyList');
 
@@ -11144,7 +11146,7 @@ google.script.run
       window.scrollTo(0, 0);
     }
 
-    function loadSelectedPersonalBookWords() {
+    function loadSelectedPersonalBookWordsLegacy_() {
       const loading = document.getElementById('personalVocabularyLoading');
       if (!selectedPersonalBookId) {
         personalVocabularyWords = [];
@@ -11172,7 +11174,7 @@ google.script.run
         .getPersonalVocabularyByBook(currentLoginToken, selectedPersonalBookId);
     }
 
-    function renderPersonalVocabulary() {
+    function renderPersonalVocabularyLegacy2_() {
       const list = document.getElementById('personalVocabularyList');
       list.innerHTML = '';
       if (!personalVocabularyBooks.length) {
