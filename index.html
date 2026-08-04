@@ -2606,7 +2606,7 @@
         getVocabularyWords: 10 * 60 * 1000,
         getSheetNames: 6 * 60 * 60 * 1000,
         getDays: 6 * 60 * 60 * 1000,
-        getMonthlyRanking: 60 * 1000,
+        getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
         getVocabularyBooks: 30 * 1000,
         studentGetAssignedExams: 20 * 1000,
@@ -12326,8 +12326,7 @@ google.script.run
       const targets = [
         'getWrongNotebook|',
         'getWrongNotebookCount|',
-        'getMyLearning|',
-        'getMonthlyRanking|'
+        'getMyLearning|'
       ];
 
       const removeKeys = [];
