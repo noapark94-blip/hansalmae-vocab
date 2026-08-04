@@ -2608,7 +2608,7 @@
         getDays: 6 * 60 * 60 * 1000,
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
-        getVocabularyBooks: 30 * 1000,
+        getVocabularyBooks: 2 * 60 * 1000,
         studentGetAssignedExams: 60 * 1000,
         studentGetNotifications: 60 * 1000,
         getWrongNotebook: 2 * 60 * 1000,
@@ -2625,8 +2625,8 @@
           saveTestResult: 120000,
           addPersonalVocabularyToBook: 90000,
           getMyLearning: 90000,
-          getWrongNotebook: 90000,
-          getPersonalVocabularyByBook: 90000
+          getWrongNotebook: 2 * 60 * 1000,
+          getPersonalVocabularyByBook: 2 * 60 * 1000
         };
 
         return longRequestTimeouts[functionName] ||
