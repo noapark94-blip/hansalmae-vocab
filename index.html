@@ -9376,24 +9376,42 @@
             '</div>' +
           '</div>';
 
-        const emblemButton =
-          item.querySelector(
-            '.hsm-ranking-emblem-wrap.is-clickable'
+        if (
+          student.equippedEmblem &&
+          student.equippedEmblem.imagePath
+        ) {
+          item.classList.add(
+            'hsm-ranking-item-clickable'
           );
 
-        if (emblemButton) {
+          item.setAttribute(
+            'role',
+            'button'
+          );
+
+          item.setAttribute(
+            'tabindex',
+            '0'
+          );
+
+          item.setAttribute(
+            'aria-label',
+            student.name +
+            ' 학생의 랭킹 엠블럼 크게 보기'
+          );
+
           const openShowcase = function () {
             openRankingEmblemShowcase_(
               student
             );
           };
 
-          emblemButton.addEventListener(
+          item.addEventListener(
             'click',
             openShowcase
           );
 
-          emblemButton.addEventListener(
+          item.addEventListener(
             'keydown',
             function (event) {
               if (
@@ -9446,9 +9464,14 @@
           'hsmRankingShowcaseLevelTitle'
         );
 
-      const rank =
+      const topRank =
         document.getElementById(
-          'hsmRankingShowcaseRank'
+          'hsmRankingShowcaseTopRank'
+        );
+
+      const currentRank =
+        document.getElementById(
+          'hsmRankingShowcaseCurrentRank'
         );
 
       const points =
@@ -9492,9 +9515,19 @@
           '단어병아리'
         );
 
-      rank.textContent =
+      const rankText =
         Number(student.rank || 0) +
         '위';
+
+      if (topRank) {
+        topRank.textContent =
+          rankText;
+      }
+
+      if (currentRank) {
+        currentRank.textContent =
+          rankText;
+      }
 
       points.textContent =
         Number(student.points || 0) +
@@ -13663,6 +13696,25 @@ google.script.run
     outline:3px solid rgba(143,20,95,.25);
     outline-offset:3px;
   }
+  .hsm-ranking-item-clickable{
+    cursor:pointer;
+    transition:
+      transform .18s ease,
+      box-shadow .18s ease,
+      border-color .18s ease;
+  }
+  .hsm-ranking-item-clickable:hover{
+    transform:translateY(-2px);
+    border-color:#d898b9;
+    box-shadow:0 10px 24px rgba(111,20,75,.14);
+  }
+  .hsm-ranking-item-clickable:active{
+    transform:scale(.992);
+  }
+  .hsm-ranking-item-clickable:focus-visible{
+    outline:3px solid rgba(143,20,95,.24);
+    outline-offset:3px;
+  }
   body.hsm-ranking-showcase-open{
     overflow:hidden;
   }
@@ -13815,12 +13867,6 @@ google.script.run
     line-height:1.6;
     overflow-wrap:anywhere;
   }
-  .hsm-ranking-showcase-guide{
-    margin-top:13px;
-    color:#a08493;
-    font-size:12px;
-    font-weight:700;
-  }
   .hsm-ranking-info{
     flex:1;
     min-width:0;
@@ -13964,7 +14010,7 @@ google.script.run
     >×</button>
 
     <div
-      id="hsmRankingShowcaseRank"
+      id="hsmRankingShowcaseTopRank"
       class="hsm-ranking-showcase-rank"
     >1위</div>
 
@@ -14009,9 +14055,9 @@ google.script.run
           현재 순위
         </div>
         <div
+          id="hsmRankingShowcaseCurrentRank"
           class="hsm-ranking-showcase-stat-value"
-          aria-hidden="true"
-        >🏆</div>
+        ></div>
       </div>
     </div>
 
@@ -14020,9 +14066,6 @@ google.script.run
       class="hsm-ranking-showcase-stats"
     ></div>
 
-    <div class="hsm-ranking-showcase-guide">
-      엠블럼을 눌러 크게 자랑해 보세요
-    </div>
   </div>
 </div>
 
