@@ -2609,8 +2609,10 @@
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
         getVocabularyBooks: 30 * 1000,
-        studentGetAssignedExams: 20 * 1000,
-        studentGetNotifications: 20 * 1000
+        studentGetAssignedExams: 60 * 1000,
+        studentGetNotifications: 60 * 1000,
+        getWrongNotebook: 2 * 60 * 1000,
+        getWrongNotebookCount: 2 * 60 * 1000
       };
 
       const CACHE_PREFIX = 'hsmApiCacheV2:';
@@ -4565,7 +4567,7 @@
         <input
           type="number"
           id="questionCount"
-          value="20"
+          value="30"
           min="1"
           max="500"
           step="1"
@@ -9325,7 +9327,27 @@
             '</div>' +
 
             '<div class="ranking-profile-row">' +
-              '<div class="hsm-ranking-emblem-wrap">' +
+              '<div class="hsm-ranking-emblem-wrap' +
+                (student.equippedEmblem && student.equippedEmblem.imagePath
+                  ? ' is-clickable'
+                  : '') +
+                '" role="' +
+                (student.equippedEmblem && student.equippedEmblem.imagePath
+                  ? 'button'
+                  : 'img') +
+                '" tabindex="' +
+                (student.equippedEmblem && student.equippedEmblem.imagePath
+                  ? '0'
+                  : '-1') +
+                '" aria-label="' +
+                escapeHtml(
+                  student.equippedEmblem && student.equippedEmblem.emblemName
+                    ? student.name + ' 학생의 ' +
+                      student.equippedEmblem.emblemName +
+                      ' 엠블럼 크게 보기'
+                    : '장착 엠블럼 없음'
+                ) +
+                '">' +
                 (student.equippedEmblem && student.equippedEmblem.imagePath
                   ? '<img class="hsm-ranking-emblem" src="' +
                       escapeHtml(student.equippedEmblem.imagePath) +
@@ -9354,8 +9376,168 @@
             '</div>' +
           '</div>';
 
+        const emblemButton =
+          item.querySelector(
+            '.hsm-ranking-emblem-wrap.is-clickable'
+          );
+
+        if (emblemButton) {
+          const openShowcase = function () {
+            openRankingEmblemShowcase_(
+              student
+            );
+          };
+
+          emblemButton.addEventListener(
+            'click',
+            openShowcase
+          );
+
+          emblemButton.addEventListener(
+            'keydown',
+            function (event) {
+              if (
+                event.key === 'Enter' ||
+                event.key === ' '
+              ) {
+                event.preventDefault();
+                openShowcase();
+              }
+            }
+          );
+        }
+
         rankingList.appendChild(item);
       });
+    }
+
+
+    function openRankingEmblemShowcase_(student) {
+      if (
+        !student ||
+        !student.equippedEmblem ||
+        !student.equippedEmblem.imagePath
+      ) {
+        return;
+      }
+
+      const modal =
+        document.getElementById(
+          'hsmRankingEmblemShowcase'
+        );
+
+      const image =
+        document.getElementById(
+          'hsmRankingShowcaseImage'
+        );
+
+      const emblemName =
+        document.getElementById(
+          'hsmRankingShowcaseEmblemName'
+        );
+
+      const studentName =
+        document.getElementById(
+          'hsmRankingShowcaseStudentName'
+        );
+
+      const levelTitle =
+        document.getElementById(
+          'hsmRankingShowcaseLevelTitle'
+        );
+
+      const rank =
+        document.getElementById(
+          'hsmRankingShowcaseRank'
+        );
+
+      const points =
+        document.getElementById(
+          'hsmRankingShowcasePoints'
+        );
+
+      const stats =
+        document.getElementById(
+          'hsmRankingShowcaseStats'
+        );
+
+      if (!modal || !image) {
+        return;
+      }
+
+      image.src =
+        student.equippedEmblem.imagePath;
+
+      image.alt =
+        String(
+          student.equippedEmblem.emblemName ||
+          '장착 엠블럼'
+        );
+
+      emblemName.textContent =
+        String(
+          student.equippedEmblem.emblemName ||
+          '장착 엠블럼'
+        );
+
+      studentName.textContent =
+        String(student.name || '학생');
+
+      levelTitle.textContent =
+        'Lv.' +
+        Number(student.level || 1) +
+        ' · ' +
+        String(
+          student.title ||
+          '단어병아리'
+        );
+
+      rank.textContent =
+        Number(student.rank || 0) +
+        '위';
+
+      points.textContent =
+        Number(student.points || 0) +
+        'P';
+
+      stats.textContent =
+        '포인트 획득 시험 ' +
+        Number(student.testCount || 0) +
+        '회 · PERFECT ' +
+        Number(student.perfectCount || 0) +
+        '회';
+
+      modal.classList.remove('hidden');
+      modal.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+      document.body.classList.add(
+        'hsm-ranking-showcase-open'
+      );
+    }
+
+
+    function closeRankingEmblemShowcase_() {
+      const modal =
+        document.getElementById(
+          'hsmRankingEmblemShowcase'
+        );
+
+      if (!modal) {
+        return;
+      }
+
+      modal.classList.add('hidden');
+      modal.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      document.body.classList.remove(
+        'hsm-ranking-showcase-open'
+      );
     }
 
 
@@ -13396,6 +13578,7 @@ google.script.run
     function (event) {
       if (event.key === 'Escape') {
         closePersonalBookPicker_();
+        closeRankingEmblemShowcase_();
       }
     }
   );
@@ -13464,6 +13647,180 @@ google.script.run
     font-size:16px;
     font-weight:800;
   }
+  .hsm-ranking-emblem-wrap.is-clickable{
+    cursor:pointer;
+    transition:
+      transform .18s ease,
+      box-shadow .18s ease,
+      border-color .18s ease;
+  }
+  .hsm-ranking-emblem-wrap.is-clickable:hover{
+    transform:translateY(-2px) scale(1.04);
+    border-color:#d898b9;
+    box-shadow:0 8px 18px rgba(111,20,75,.16);
+  }
+  .hsm-ranking-emblem-wrap.is-clickable:focus-visible{
+    outline:3px solid rgba(143,20,95,.25);
+    outline-offset:3px;
+  }
+  body.hsm-ranking-showcase-open{
+    overflow:hidden;
+  }
+  .hsm-ranking-showcase{
+    position:fixed;
+    inset:0;
+    z-index:100100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(38,18,31,.62);
+    backdrop-filter:blur(7px);
+  }
+  .hsm-ranking-showcase.hidden{
+    display:none!important;
+  }
+  .hsm-ranking-showcase-card{
+    position:relative;
+    width:min(92vw,430px);
+    max-height:88vh;
+    overflow:auto;
+    padding:28px 24px 24px;
+    border:1px solid rgba(221,169,198,.8);
+    border-radius:30px;
+    background:
+      radial-gradient(circle at 50% 0%,#fff8fc 0,#fff 48%),
+      #fff;
+    box-shadow:0 30px 80px rgba(39,8,29,.34);
+    text-align:center;
+    animation:hsmRankingShowcasePop .22s ease-out;
+  }
+  @keyframes hsmRankingShowcasePop{
+    from{
+      opacity:0;
+      transform:scale(.92) translateY(12px);
+    }
+    to{
+      opacity:1;
+      transform:scale(1) translateY(0);
+    }
+  }
+  .hsm-ranking-showcase-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:42px;
+    min-width:42px;
+    height:42px;
+    margin:0;
+    padding:0;
+    border-radius:50%;
+    background:#f6e8ef;
+    color:#6e174d;
+    font-size:25px;
+    line-height:1;
+    box-shadow:none;
+  }
+  .hsm-ranking-showcase-rank{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:72px;
+    padding:7px 13px;
+    border-radius:999px;
+    background:linear-gradient(135deg,#8f145f,#c73386);
+    color:#fff;
+    font-size:14px;
+    font-weight:900;
+    box-shadow:0 8px 18px rgba(143,20,95,.2);
+  }
+  .hsm-ranking-showcase-image-frame{
+    width:min(64vw,240px);
+    aspect-ratio:1/1;
+    margin:20px auto 15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    border:1px solid #efd5e2;
+    border-radius:28px;
+    background:linear-gradient(145deg,#fff,#fff3f8);
+    box-shadow:
+      inset 0 0 0 7px rgba(255,255,255,.65),
+      0 18px 38px rgba(105,19,72,.13);
+  }
+  .hsm-ranking-showcase-image{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+  .hsm-ranking-showcase-emblem-name{
+    color:#8f145f;
+    font-size:25px;
+    font-weight:950;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+  .hsm-ranking-showcase-student{
+    margin-top:10px;
+    color:#321626;
+    font-size:22px;
+    font-weight:900;
+    overflow-wrap:anywhere;
+  }
+  .hsm-ranking-showcase-level{
+    margin-top:5px;
+    color:#765f6c;
+    font-size:15px;
+    font-weight:750;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+  }
+  .hsm-ranking-showcase-summary{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:20px;
+  }
+  .hsm-ranking-showcase-stat{
+    min-width:0;
+    padding:13px 9px;
+    border:1px solid #efdbe5;
+    border-radius:16px;
+    background:#fff8fb;
+  }
+  .hsm-ranking-showcase-stat-label{
+    color:#8e7884;
+    font-size:12px;
+    font-weight:750;
+  }
+  .hsm-ranking-showcase-stat-value{
+    margin-top:4px;
+    color:#8f145f;
+    font-size:21px;
+    font-weight:950;
+    overflow-wrap:anywhere;
+  }
+  .hsm-ranking-showcase-stats{
+    margin-top:14px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:#f8f2f5;
+    color:#705966;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.6;
+    overflow-wrap:anywhere;
+  }
+  .hsm-ranking-showcase-guide{
+    margin-top:13px;
+    color:#a08493;
+    font-size:12px;
+    font-weight:700;
+  }
   .hsm-ranking-info{
     flex:1;
     min-width:0;
@@ -13480,15 +13837,82 @@ google.script.run
     word-break:keep-all;
   }
   @media(max-width:560px){
-    .ranking-item{gap:8px;padding:16px 14px}
-    .ranking-medal{width:40px;flex-basis:40px;padding-top:12px;font-size:25px}
-    .ranking-top-row .ranking-name{font-size:18px}
-    .ranking-top-row .ranking-point{font-size:20px}
-    .ranking-profile-row{gap:9px}
-    .hsm-ranking-emblem-wrap{width:40px;height:40px;flex-basis:40px;border-radius:12px}
-    .hsm-ranking-emblem{width:36px;height:36px}
-    .hsm-ranking-info .ranking-level-title{font-size:13px}
-    .hsm-ranking-info .ranking-detail{font-size:12.5px}
+    .ranking-item{
+      gap:8px;
+      padding:16px 12px;
+    }
+    .ranking-medal{
+      width:38px;
+      flex:0 0 38px;
+      padding-top:10px;
+      font-size:23px;
+    }
+    .ranking-main{
+      width:calc(100% - 46px);
+      min-width:0;
+    }
+    .ranking-top-row{
+      align-items:flex-start;
+      gap:8px;
+    }
+    .ranking-top-row .ranking-name{
+      flex:1;
+      min-width:0;
+      font-size:18px;
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+      overflow-wrap:anywhere;
+      line-height:1.3;
+    }
+    .ranking-top-row .ranking-point{
+      flex:0 0 auto;
+      max-width:40%;
+      font-size:19px;
+      text-align:right;
+      overflow-wrap:anywhere;
+    }
+    .ranking-profile-row{
+      align-items:flex-start;
+      gap:9px;
+    }
+    .hsm-ranking-emblem-wrap{
+      width:40px;
+      height:40px;
+      flex:0 0 40px;
+      border-radius:12px;
+    }
+    .hsm-ranking-emblem{
+      width:36px;
+      height:36px;
+    }
+    .hsm-ranking-info{
+      min-width:0;
+    }
+    .hsm-ranking-info .ranking-level-title{
+      font-size:13px;
+      overflow-wrap:anywhere;
+    }
+    .hsm-ranking-info .ranking-detail{
+      font-size:12.5px;
+      overflow-wrap:anywhere;
+    }
+    .hsm-ranking-showcase-card{
+      width:min(94vw,410px);
+      padding:25px 17px 21px;
+      border-radius:25px;
+    }
+    .hsm-ranking-showcase-image-frame{
+      width:min(66vw,220px);
+      padding:15px;
+      border-radius:24px;
+    }
+    .hsm-ranking-showcase-emblem-name{
+      font-size:23px;
+    }
+    .hsm-ranking-showcase-student{
+      font-size:20px;
+    }
   }
   .hsm-emblem-card{margin:0 0 22px;padding:20px;border:1px solid #ead7e1;border-radius:18px;background:linear-gradient(180deg,#fffafd,#fff3f8)}
   .hsm-emblem-current{display:flex;align-items:center;gap:16px}
@@ -13521,6 +13945,87 @@ google.script.run
   .hsm-emblem-new img{width:130px;height:130px;object-fit:contain}
   @media(max-width:560px){.hsm-emblem-grid{grid-template-columns:1fr}.hsm-emblem-current img{width:76px;height:76px}}
 </style>
+
+<div
+  id="hsmRankingEmblemShowcase"
+  class="hsm-ranking-showcase hidden"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-label="랭킹 엠블럼 크게 보기"
+  onclick="if(event.target===this)closeRankingEmblemShowcase_()"
+>
+  <div class="hsm-ranking-showcase-card">
+    <button
+      type="button"
+      class="hsm-ranking-showcase-close"
+      aria-label="닫기"
+      onclick="closeRankingEmblemShowcase_()"
+    >×</button>
+
+    <div
+      id="hsmRankingShowcaseRank"
+      class="hsm-ranking-showcase-rank"
+    >1위</div>
+
+    <div class="hsm-ranking-showcase-image-frame">
+      <img
+        id="hsmRankingShowcaseImage"
+        class="hsm-ranking-showcase-image"
+        src=""
+        alt=""
+        draggable="false"
+      >
+    </div>
+
+    <div
+      id="hsmRankingShowcaseEmblemName"
+      class="hsm-ranking-showcase-emblem-name"
+    ></div>
+
+    <div
+      id="hsmRankingShowcaseStudentName"
+      class="hsm-ranking-showcase-student"
+    ></div>
+
+    <div
+      id="hsmRankingShowcaseLevelTitle"
+      class="hsm-ranking-showcase-level"
+    ></div>
+
+    <div class="hsm-ranking-showcase-summary">
+      <div class="hsm-ranking-showcase-stat">
+        <div class="hsm-ranking-showcase-stat-label">
+          이번 달 포인트
+        </div>
+        <div
+          id="hsmRankingShowcasePoints"
+          class="hsm-ranking-showcase-stat-value"
+        ></div>
+      </div>
+
+      <div class="hsm-ranking-showcase-stat">
+        <div class="hsm-ranking-showcase-stat-label">
+          현재 순위
+        </div>
+        <div
+          class="hsm-ranking-showcase-stat-value"
+          aria-hidden="true"
+        >🏆</div>
+      </div>
+    </div>
+
+    <div
+      id="hsmRankingShowcaseStats"
+      class="hsm-ranking-showcase-stats"
+    ></div>
+
+    <div class="hsm-ranking-showcase-guide">
+      엠블럼을 눌러 크게 자랑해 보세요
+    </div>
+  </div>
+</div>
+
 
 <div id="hsmEmblemModal" class="hsm-emblem-modal hidden" aria-hidden="true">
   <div class="hsm-emblem-panel">
