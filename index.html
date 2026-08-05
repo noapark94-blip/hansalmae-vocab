@@ -2604,11 +2604,11 @@
         teacherGetSetupData: 5 * 60 * 1000,
         getWords: 10 * 60 * 1000,
         getVocabularyWords: 10 * 60 * 1000,
-        getSheetNames: 6 * 60 * 60 * 1000,
-        getDays: 6 * 60 * 60 * 1000,
+        getSheetNames: 10 * 60 * 1000,
+        getDays: 5 * 60 * 1000,
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
-        getVocabularyBooks: 2 * 60 * 1000,
+        getVocabularyBooks: 60 * 1000,
         studentGetAssignedExams: 60 * 1000,
         studentGetNotifications: 60 * 1000,
         getWrongNotebook: 2 * 60 * 1000,
@@ -6719,8 +6719,18 @@
           openMainApp(result.student);
           claimAttendanceBonusInBackground_();
         })
-        .withFailureHandler(function () {
-          clearLoginState();
+        .withFailureHandler(function (error) {
+          console.error('초기 로그인 상태 확인 통신 오류', error);
+
+          document
+            .getElementById('loginMessage')
+            .textContent =
+            '서버 연결이 불안정합니다. 잠시 후 새로고침해 주세요.';
+
+          /*
+           * 통신 오류와 세션 만료는 서로 다릅니다.
+           * 네트워크 오류만으로 저장된 로그인 정보를 삭제하지 않습니다.
+           */
         })
         .checkStudentSession(savedToken);
     };
@@ -9507,14 +9517,46 @@
         return;
       }
 
-      image.src =
-        student.equippedEmblem.imagePath;
+      const showcaseImagePath =
+        String(
+          student.equippedEmblem.imagePath || ''
+        ).trim();
+
+      /*
+       * 과거 한 번의 이미지 로딩 실패로 visibility:hidden이 남아
+       * 이후 큰 이미지까지 계속 안 보이는 문제를 방지합니다.
+       */
+      image.style.visibility = 'visible';
+      image.style.display = 'block';
+      image.style.opacity = '1';
+      delete image.dataset.fallbackApplied;
+
+      image.onload = function () {
+        image.style.visibility = 'visible';
+        image.style.display = 'block';
+        image.style.opacity = '1';
+        delete image.dataset.fallbackApplied;
+      };
+
+      image.onerror = function () {
+        console.error(
+          '랭킹 큰 엠블럼 이미지 로딩 실패:',
+          showcaseImagePath
+        );
+        image.style.visibility = 'hidden';
+      };
 
       image.alt =
         String(
           student.equippedEmblem.emblemName ||
           '장착 엠블럼'
         );
+
+      image.removeAttribute('src');
+
+      window.requestAnimationFrame(function () {
+        image.src = showcaseImagePath;
+      });
 
       emblemName.textContent =
         String(
@@ -14320,6 +14362,12 @@ google.script.run
     document.addEventListener('error', function (event) {
       const target = event.target;
       if (!target || target.tagName !== 'IMG' || target.dataset.fallbackApplied === '1') return;
+
+      /*
+       * 큰 랭킹 엠블럼은 모달 함수에서 상태를 초기화하고 직접 처리합니다.
+       */
+      if (target.id === 'hsmRankingShowcaseImage') return;
+
       target.dataset.fallbackApplied = '1';
       target.alt = target.alt || '이미지 없음';
       target.style.visibility = 'hidden';
