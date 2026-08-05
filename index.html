@@ -2604,7 +2604,7 @@
         teacherGetSetupData: 5 * 60 * 1000,
         getWords: 10 * 60 * 1000,
         getVocabularyWords: 10 * 60 * 1000,
-        getSheetNames: 6 * 60 * 60 * 1000,
+        getSheetNames: 30 * 60 * 1000,
         getDays: 5 * 60 * 1000,
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
@@ -2615,7 +2615,7 @@
         getWrongNotebookCount: 2 * 60 * 1000
       };
 
-      const CACHE_PREFIX = 'hsmApiCacheV2:';
+      const CACHE_PREFIX = 'hsmApiCacheV3:';
       const DEFAULT_REQUEST_TIMEOUT_MS = 45000;
 
       function getRequestTimeoutMs(functionName) {
@@ -2682,17 +2682,6 @@
             return { found: false, value: null };
           }
 
-          // Day 목록의 빈 배열은 잘못된 캐시일 수 있으므로 즉시 폐기합니다.
-          if (
-            functionName === 'getDays' &&
-            (!Array.isArray(saved.value) || saved.value.length === 0)
-          ) {
-            localStorage.removeItem(
-              CACHE_PREFIX + stableKey(functionName, args)
-            );
-            return { found: false, value: null };
-          }
-
           return {
             found: true,
             value: saved.value
@@ -2707,10 +2696,11 @@
           return;
         }
 
-        // 빈 Day 목록은 브라우저에 저장하지 않습니다.
+        /* DAY 조회 실패로 받은 빈 배열은 장시간 남기지 않습니다. */
         if (
           functionName === 'getDays' &&
-          (!Array.isArray(value) || value.length === 0)
+          Array.isArray(value) &&
+          value.length === 0
         ) {
           return;
         }
