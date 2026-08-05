@@ -2595,9 +2595,6 @@
     const APPS_SCRIPT_API_URL =
       'https://script.google.com/macros/s/AKfycbw0txceGnFvMyMkkWHJPnxLrVmgjlASQCcBuYc6IFn7TXd2KYc6yMqaKPzm3MYydrHWCg/exec';
 
-    let hsmInitialData_ = null;
-    let hsmInitialDaysBySheet_ = {};
-
     (function installGoogleScriptRunAdapter() {
       const inflightRequests = new Map();
 
@@ -2608,8 +2605,6 @@
         getWords: 10 * 60 * 1000,
         getVocabularyWords: 10 * 60 * 1000,
         getSheetNames: 6 * 60 * 60 * 1000,
-        getVocabularySetupData: 6 * 60 * 60 * 1000,
-        getStudentInitialData: 30 * 1000,
         getDays: 6 * 60 * 60 * 1000,
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
@@ -2715,49 +2710,52 @@
       }
 
       function clearRelatedCache(functionName) {
-        const invalidationMap = {
-          saveTestResult: ['getMyLearning', 'getMonthlyRanking', 'getWrongNotebook', 'getWrongNotebookCount', 'getStudentExperience'],
-          setWrongWordMastered: ['getWrongNotebook', 'getWrongNotebookCount', 'getMyLearning'],
-          deleteMasteredWrongWord: ['getWrongNotebook', 'getWrongNotebookCount', 'getMyLearning'],
-          deleteAllMasteredWrongWords: ['getWrongNotebook', 'getWrongNotebookCount', 'getMyLearning'],
-          deleteSelectedMasteredWrongWords: ['getWrongNotebook', 'getWrongNotebookCount', 'getMyLearning'],
-          addPersonalVocabulary: ['getPersonalVocabulary', 'getPersonalVocabularyCount', 'getPersonalVocabularyByBook', 'getVocabularyBooks'],
-          removePersonalVocabulary: ['getPersonalVocabulary', 'getPersonalVocabularyCount', 'getPersonalVocabularyByBook', 'getVocabularyBooks'],
-          setPersonalWordMastered: ['getPersonalVocabulary', 'getPersonalVocabularyByBook'],
-          createVocabularyBook: ['getVocabularyBooks'],
-          renameVocabularyBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook'],
-          deleteVocabularyBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook', 'getPersonalVocabularyCount'],
-          addPersonalVocabularyToBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook', 'getPersonalVocabularyCount'],
-          addPersonalVocabularyBatchToBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook', 'getPersonalVocabularyCount'],
-          movePersonalVocabularyToBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook'],
-          movePersonalVocabularyBatchToBook: ['getVocabularyBooks', 'getPersonalVocabularyByBook'],
-          deletePersonalVocabularyBatch: ['getVocabularyBooks', 'getPersonalVocabularyByBook', 'getPersonalVocabularyCount'],
-          studentSubmitTeacherExam: ['studentGetAssignedExams', 'getMyLearning', 'getMonthlyRanking', 'getStudentExperience'],
-          studentMarkNotificationRead: ['studentGetNotifications', 'getStudentInitialData'],
-          studentDeleteNotification: ['studentGetNotifications', 'getStudentInitialData'],
-          studentDeleteAllReadNotifications: ['studentGetNotifications', 'getStudentInitialData'],
-          studentStopTeacherExam: ['studentGetAssignedExams'],
-          studentDeleteTeacherExamProgress: ['studentGetAssignedExams']
-        };
+        const writeFunctions = [
+          'saveTestResult',
+          'setWrongWordMastered',
+          'deleteMasteredWrongWord',
+          'deleteAllMasteredWrongWords',
+          'deleteSelectedMasteredWrongWords',
+          'addPersonalVocabulary',
+          'removePersonalVocabulary',
+          'setPersonalWordMastered',
+          'createVocabularyBook',
+          'renameVocabularyBook',
+          'deleteVocabularyBook',
+          'addPersonalVocabularyToBook',
+          'addPersonalVocabularyBatchToBook',
+          'movePersonalVocabularyToBook',
+          'deletePersonalVocabularyBatch',
+          'movePersonalVocabularyBatchToBook',
+          'studentSubmitTeacherExam',
+          'studentMarkNotificationRead',
+          'studentDeleteNotification',
+          'studentDeleteAllReadNotifications',
+          'studentStopTeacherExam',
+          'studentDeleteTeacherExamProgress'
+        ];
 
-        const targets = invalidationMap[functionName];
-        if (!targets || !targets.length) return;
+        if (writeFunctions.indexOf(functionName) === -1) {
+          return;
+        }
 
         try {
           const keysToDelete = [];
+
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (!key || key.indexOf(CACHE_PREFIX) !== 0) continue;
-            if (targets.some(function (target) {
-              return key.indexOf(CACHE_PREFIX + target + '|') === 0;
-            })) {
+
+            if (key && key.indexOf(CACHE_PREFIX) === 0) {
               keysToDelete.push(key);
             }
           }
+
           keysToDelete.forEach(function (key) {
             localStorage.removeItem(key);
           });
-        } catch (_error) {}
+        } catch (_error) {
+          // 캐시 삭제 실패는 앱 사용에 영향을 주지 않습니다.
+        }
       }
 
       function callServer(functionName, args) {
@@ -6191,12 +6189,7 @@
             currentLoginToken
           );
 
-          // 로그인 응답에 초기 화면 데이터가 포함되므로
-          // 별도의 getStudentInitialData 호출 없이 바로 화면을 엽니다.
-          openMainApp(
-            currentStudent,
-            result.initialData || null
-          );
+          openMainApp(currentStudent);
           hsmHandleAttendanceAchievement_(result.attendanceBonus);
         })
         .withFailureHandler(showLoginError)
@@ -6376,7 +6369,7 @@
     });
 
 
-    function openMainApp(student, initialData) {
+    function openMainApp(student) {
       if (!student) {
         return;
       }
@@ -6389,11 +6382,6 @@
       }
 
       currentStudent = student;
-      hsmInitialData_ = initialData || null;
-      hsmInitialDaysBySheet_ =
-        initialData && initialData.vocabularySetup && initialData.vocabularySetup.daysBySheet
-          ? initialData.vocabularySetup.daysBySheet
-          : {};
       startStudentSessionMonitor_();
       refreshExperienceUi_();
 
@@ -6427,25 +6415,11 @@
         .classList
         .remove('hidden');
 
-      if (initialData && initialData.vocabularySetup) {
-        showSheetNames(initialData.vocabularySetup.sheetNames || []);
-      } else {
-        loadSheetNames();
-      }
+      loadSheetNames();
 
-      if (initialData && initialData.notifications) {
-        applyInitialNotificationData_(initialData.notifications);
-      } else {
-        setTimeout(function () {
-          showLoginNotificationPopup_();
-        }, 350);
-      }
-
-      if (initialData && initialData.assignedExams) {
-        teacherAssignedExams = initialData.assignedExams.exams || [];
-        teacherExamCache.exams = teacherAssignedExams;
-        teacherExamCache.examsAt = Date.now();
-      }
+      setTimeout(function () {
+        showLoginNotificationPopup_();
+      }, 350);
 
       setTimeout(function () {
         askToResumeSavedTest();
@@ -6458,29 +6432,6 @@
     /**
      * 로그인 직후 읽지 않은 알림이 있으면 한 번 안내합니다.
      */
-    function applyInitialNotificationData_(result) {
-      const count = Number(result && result.unreadCount || 0);
-      const badge = document.getElementById('studentNotificationBadge');
-      if (badge) {
-        badge.textContent = String(count);
-        badge.classList.toggle('hidden', count < 1);
-      }
-
-      if (count < 1 || !currentStudent) return;
-      const popupKey = 'hsmLoginNotificationPopup:' +
-        currentStudent.studentId + ':' + currentLoginToken;
-      if (sessionStorage.getItem(popupKey) === 'shown') return;
-
-      const notifications = Array.isArray(result.notifications) ? result.notifications : [];
-      const newest = notifications.find(function (item) { return !item.read; });
-      let message = '새로운 알림이 ' + count + '개 있습니다.';
-      if (newest && newest.title) message += '\n\n' + newest.title;
-      message += '\n\n지금 알림을 확인할까요?';
-      sessionStorage.setItem(popupKey, 'shown');
-      if (confirm(message)) showStudentNotifications();
-    }
-
-
     function showLoginNotificationPopup_() {
       if (
         !currentStudent ||
@@ -6579,7 +6530,7 @@
       // Apps Script 요청이 과도하게 발생하므로 3분 간격으로 확인합니다.
       studentSessionCheckTimer = window.setInterval(
         checkCurrentStudentSession_,
-        300000
+        180000
       );
     }
 
@@ -6597,7 +6548,7 @@
     function checkCurrentStudentSession_() {
       const token = currentLoginToken;
 
-      if (!token || studentSessionCheckInFlight || document.hidden) {
+      if (!token || studentSessionCheckInFlight) {
         return;
       }
 
@@ -6624,17 +6575,6 @@
         .checkStudentSession(token);
     }
 
-
-
-    document.addEventListener('visibilitychange', function () {
-      if (!currentLoginToken) return;
-      if (document.hidden) {
-        stopStudentSessionMonitor_();
-      } else {
-        startStudentSessionMonitor_();
-        checkCurrentStudentSession_();
-      }
-    });
 
     function clearLoginState() {
       stopStudentSessionMonitor_();
@@ -6757,13 +6697,13 @@
             return;
           }
 
-          openMainApp(result.student, result);
+          openMainApp(result.student);
           hsmHandleAttendanceAchievement_(result.attendanceBonus);
         })
         .withFailureHandler(function () {
           clearLoginState();
         })
-        .getStudentInitialData(savedToken);
+        .checkStudentSession(savedToken);
     };
 
 
@@ -6820,16 +6760,8 @@
         vocabSelect.appendChild(vocabOption);
       });
 
-      const selectedSheet = testSelect.value;
-      const initialDays = hsmInitialDaysBySheet_[selectedSheet];
-
-      if (Array.isArray(initialDays) && initialDays.length > 0) {
-        showTestDays(initialDays);
-        showVocabDays(initialDays);
-      } else {
-        loadTestDays();
-        loadVocabDays();
-      }
+      loadTestDays();
+      loadVocabDays();
     }
 
 
@@ -9212,29 +9144,12 @@
 
       google.script.run
         .withSuccessHandler(function (data) {
-          const now = new Date();
-          monthlyRankingData = {
-            year:
-              data && Number.isFinite(Number(data.year))
-                ? Number(data.year)
-                : now.getFullYear(),
-            month:
-              data && Number.isFinite(Number(data.month))
-                ? Number(data.month)
-                : now.getMonth() + 1,
-            middle:
-              data && Array.isArray(data.middle)
-                ? data.middle
-                : [],
-            high:
-              data && Array.isArray(data.high)
-                ? data.high
-                : [],
-            csat:
-              data && Array.isArray(data.csat)
-                ? data.csat
-                : []
-          };
+          monthlyRankingData =
+            data || {
+              middle: [],
+              high: [],
+              csat: []
+            };
 
           document
             .getElementById('rankingLoading')
@@ -9670,19 +9585,8 @@
       document.getElementById('loadingText').textContent =
         'Day 목록을 불러오는 중입니다.';
 
-      if (
-        Array.isArray(hsmInitialDaysBySheet_[sheetName]) &&
-        hsmInitialDaysBySheet_[sheetName].length > 0
-      ) {
-        showTestDays(hsmInitialDaysBySheet_[sheetName]);
-        return;
-      }
-
       google.script.run
-        .withSuccessHandler(function (days) {
-          hsmInitialDaysBySheet_[sheetName] = days || [];
-          showTestDays(days);
-        })
+        .withSuccessHandler(showTestDays)
         .withFailureHandler(showError)
         .getDays(sheetName);
     }
@@ -9743,19 +9647,8 @@
       document.getElementById('vocabLoading').textContent =
         'Day 목록을 불러오는 중입니다.';
 
-      if (
-        Array.isArray(hsmInitialDaysBySheet_[sheetName]) &&
-        hsmInitialDaysBySheet_[sheetName].length > 0
-      ) {
-        showVocabDays(hsmInitialDaysBySheet_[sheetName]);
-        return;
-      }
-
       google.script.run
-        .withSuccessHandler(function (days) {
-          hsmInitialDaysBySheet_[sheetName] = days || [];
-          showVocabDays(days);
-        })
+        .withSuccessHandler(showVocabDays)
         .withFailureHandler(showVocabError)
         .getDays(sheetName);
     }
