@@ -14178,38 +14178,23 @@ google.script.run
   }
 
   async function equip(id){
-    const previous=api.data?JSON.parse(JSON.stringify(api.data)):null;
     try{
       if(!currentLoginToken)throw new Error('로그인 정보가 없습니다. 다시 로그인해주세요.');
-
-      // 서버 응답을 기다리는 동안에도 화면은 즉시 장착 상태로 표시합니다.
-      if(api.data&&Array.isArray(api.data.emblems)){
-        api.data.emblems.forEach(function(e){e.equipped=e.emblemId===id});
-        api.data.equippedEmblem=api.data.emblems.find(function(e){return e.emblemId===id})||api.data.equippedEmblem;
-        apply(api.data);
-      }
-
       const r=await call('equipStudentEmblem',[currentLoginToken,id]);
       if(!r||!r.success)throw new Error(r&&r.message||'장착 실패');
-
-      // 전체 목록 재조회는 하지 않고 서버가 돌려준 장착 결과만 반영합니다.
-      if(api.data){
-        api.data.equippedEmblem=r;
-        apply(api.data);
-      }
+      await load(true);
       alert(r.message||'엠블럼을 장착했습니다.');
     }catch(e){
-      if(previous){api.data=previous;apply(previous)}
       alert(e&&e.message?e.message:String(e));
     }
   }
-  function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(false)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
+  function open(){document.getElementById('hsmEmblemModal').classList.remove('hidden');load(true)} function close(){document.getElementById('hsmEmblemModal').classList.add('hidden')}
   window.HSMEmblems={load,open,close,equip};
   document.addEventListener('DOMContentLoaded',()=>{ensureCard();setTimeout(()=>load(false),500)});
-  const oldMain=window.openMainApp;if(typeof oldMain==='function')window.openMainApp=function(){const r=oldMain.apply(this,arguments);setTimeout(()=>load(false),250);return r};
+  const oldMain=window.openMainApp;if(typeof oldMain==='function')window.openMainApp=function(){const r=oldMain.apply(this,arguments);setTimeout(()=>load(true),250);return r};
   const oldMy=window.showMyPage;if(typeof oldMy==='function')window.showMyPage=function(){const r=oldMy.apply(this,arguments);ensureCard();setTimeout(()=>load(false),150);return r};
-  const oldExp=window.renderExperienceSummary_;if(typeof oldExp==='function')window.renderExperienceSummary_=function(){const r=oldExp.apply(this,arguments);setTimeout(()=>load(false),100);return r};
-  const oldEarn=window.buildEarnedExperienceHtml_;if(typeof oldEarn==='function')window.buildEarnedExperienceHtml_=function(experience){let html=oldEarn.apply(this,arguments);const list=experience&&experience.newlyGrantedEmblems||[];if(list.length){const e=list[0];html+='<div class="hsm-emblem-new"><div style="font-weight:900;color:#8f145f">✨ 새로운 엠블럼 획득!</div><img src="'+esc(e.imagePath)+'" alt=""><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><button type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">바로 장착하기</button></div>';api.data=null;setTimeout(()=>load(false),250);}return html};
+  const oldExp=window.renderExperienceSummary_;if(typeof oldExp==='function')window.renderExperienceSummary_=function(){const r=oldExp.apply(this,arguments);setTimeout(()=>load(true),100);return r};
+  const oldEarn=window.buildEarnedExperienceHtml_;if(typeof oldEarn==='function')window.buildEarnedExperienceHtml_=function(experience){let html=oldEarn.apply(this,arguments);const list=experience&&experience.newlyGrantedEmblems||[];if(list.length){const e=list[0];html+='<div class="hsm-emblem-new"><div style="font-weight:900;color:#8f145f">✨ 새로운 엠블럼 획득!</div><img src="'+esc(e.imagePath)+'" alt=""><div class="hsm-emblem-name">'+esc(e.emblemName)+'</div><button type="button" onclick="HSMEmblems.equip(\''+esc(e.emblemId)+'\')">바로 장착하기</button></div>';setTimeout(()=>load(true),250);}return html};
 })();
 </script>
 
