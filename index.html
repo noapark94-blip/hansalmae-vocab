@@ -2604,8 +2604,8 @@
         teacherGetSetupData: 5 * 60 * 1000,
         getWords: 10 * 60 * 1000,
         getVocabularyWords: 10 * 60 * 1000,
-        getSheetNames: 30 * 60 * 1000,
-        getDays: 5 * 60 * 1000,
+        getSheetNames: 6 * 60 * 60 * 1000,
+        getDays: 6 * 60 * 60 * 1000,
         getMonthlyRanking: 3 * 60 * 1000,
         getPersonalVocabularyCount: 60 * 1000,
         getVocabularyBooks: 2 * 60 * 1000,
@@ -2615,7 +2615,7 @@
         getWrongNotebookCount: 2 * 60 * 1000
       };
 
-      const CACHE_PREFIX = 'hsmApiCacheV3:';
+      const CACHE_PREFIX = 'hsmApiCacheV2:';
       const DEFAULT_REQUEST_TIMEOUT_MS = 45000;
 
       function getRequestTimeoutMs(functionName) {
@@ -2693,15 +2693,6 @@
 
       function setCached(functionName, args, value) {
         if (!CACHE_RULES[functionName]) {
-          return;
-        }
-
-        /* DAY 조회 실패로 받은 빈 배열은 장시간 남기지 않습니다. */
-        if (
-          functionName === 'getDays' &&
-          Array.isArray(value) &&
-          value.length === 0
-        ) {
           return;
         }
 
@@ -6199,13 +6190,31 @@
           );
 
           openMainApp(currentStudent);
-          hsmHandleAttendanceAchievement_(result.attendanceBonus);
+          claimAttendanceBonusInBackground_();
         })
         .withFailureHandler(showLoginError)
         .studentLogin(
           studentId,
           password
         );
+    }
+
+
+    function claimAttendanceBonusInBackground_() {
+      if (!currentLoginToken) {
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (result && result.success !== false) {
+            hsmHandleAttendanceAchievement_(result);
+          }
+        })
+        .withFailureHandler(function (error) {
+          console.warn('출석 보너스 처리를 완료하지 못했습니다.', error);
+        })
+        .claimDailyAttendanceBonus(currentLoginToken);
     }
 
 
@@ -6706,8 +6715,9 @@
             return;
           }
 
+          currentStudent = result.student;
           openMainApp(result.student);
-          hsmHandleAttendanceAchievement_(result.attendanceBonus);
+          claimAttendanceBonusInBackground_();
         })
         .withFailureHandler(function () {
           clearLoginState();
@@ -14303,6 +14313,18 @@ google.script.run
       startProtection();
     }
   })();
+  </script>
+
+
+  <script>
+    document.addEventListener('error', function (event) {
+      const target = event.target;
+      if (!target || target.tagName !== 'IMG' || target.dataset.fallbackApplied === '1') return;
+      target.dataset.fallbackApplied = '1';
+      target.alt = target.alt || '이미지 없음';
+      target.style.visibility = 'hidden';
+      console.warn('이미지 파일을 찾을 수 없습니다:', target.getAttribute('src'));
+    }, true);
   </script>
 
 </body>
