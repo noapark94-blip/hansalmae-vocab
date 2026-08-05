@@ -6191,16 +6191,13 @@
             currentLoginToken
           );
 
-          google.script.run
-            .withSuccessHandler(function (initialData) {
-              openMainApp(currentStudent, initialData);
-              hsmHandleAttendanceAchievement_(result.attendanceBonus);
-            })
-            .withFailureHandler(function () {
-              openMainApp(currentStudent);
-              hsmHandleAttendanceAchievement_(result.attendanceBonus);
-            })
-            .getStudentInitialData(currentLoginToken);
+          // 로그인 응답에 초기 화면 데이터가 포함되므로
+          // 별도의 getStudentInitialData 호출 없이 바로 화면을 엽니다.
+          openMainApp(
+            currentStudent,
+            result.initialData || null
+          );
+          hsmHandleAttendanceAchievement_(result.attendanceBonus);
         })
         .withFailureHandler(showLoginError)
         .studentLogin(
