@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hansalmae-voca-v82';
+const CACHE_NAME = 'hansalmae-voca-v83';
 
 const REQUIRED_ASSETS = [
   './',
