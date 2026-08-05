@@ -6168,35 +6168,82 @@
             .textContent = '';
 
           if (!result || !result.success) {
-            document
-              .getElementById('studentPassword')
-              .value = '';
+            if (result && result.code === 'ACTIVE_SESSION_EXISTS') {
+              const replaceLogin = window.confirm(
+                '기존 기기에서 로그인 중입니다.\n\n' +
+                '새 기기에서 로그인하시겠습니까?\n\n' +
+                '[확인] 기존 기기 접속 종료 후 로그인\n' +
+                '[취소] 로그인 취소'
+              );
 
-            alert(
-              result && result.message
-                ? result.message
-                : '로그인하지 못했습니다.'
-            );
+              if (replaceLogin) {
+                loginStudentReplacingExisting_(studentId, password, loginButton);
+              } else {
+                document.getElementById('studentPassword').value = '';
+              }
+              return;
+            }
 
+            document.getElementById('studentPassword').value = '';
+            alert(result && result.message ? result.message : '로그인하지 못했습니다.');
             return;
           }
 
-          currentLoginToken = result.token;
-          currentStudent = result.student;
-
-          localStorage.setItem(
-            'hansalmaeStudentToken',
-            currentLoginToken
-          );
-
-          openMainApp(currentStudent);
-          claimAttendanceBonusInBackground_();
+          completeStudentLogin_(result);
         })
         .withFailureHandler(showLoginError)
         .studentLogin(
           studentId,
           password
         );
+    }
+
+
+    function completeStudentLogin_(result) {
+      currentLoginToken = result.token;
+      currentStudent = result.student;
+
+      localStorage.setItem(
+        'hansalmaeStudentToken',
+        currentLoginToken
+      );
+
+      openMainApp(currentStudent);
+      claimAttendanceBonusInBackground_();
+    }
+
+
+    function loginStudentReplacingExisting_(studentId, password, loginButton) {
+      if (loginButton) {
+        loginButton.disabled = true;
+      }
+
+      document.getElementById('loginMessage').textContent =
+        '기존 기기 접속을 종료하고 로그인하는 중입니다.';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (loginButton) {
+            loginButton.disabled = false;
+          }
+
+          document.getElementById('loginMessage').textContent = '';
+
+          if (!result || !result.success) {
+            document.getElementById('studentPassword').value = '';
+            alert(result && result.message ? result.message : '로그인하지 못했습니다.');
+            return;
+          }
+
+          completeStudentLogin_(result);
+        })
+        .withFailureHandler(function (error) {
+          if (loginButton) {
+            loginButton.disabled = false;
+          }
+          showLoginError(error);
+        })
+        .studentLogin(studentId, password, true);
     }
 
 
@@ -9171,6 +9218,34 @@
         .innerHTML =
         '';
 
+      const rankingCacheKey = 'hsmMonthlyRankingCacheV2';
+      let showedCachedRanking = false;
+
+      try {
+        const cachedRanking = JSON.parse(
+          localStorage.getItem(rankingCacheKey) || 'null'
+        );
+
+        const rankingNow = new Date();
+        const cachedData = cachedRanking && cachedRanking.data;
+        const cachedIsCurrentMonth =
+          cachedData &&
+          Number(cachedData.year) === rankingNow.getFullYear() &&
+          Number(cachedData.month) === rankingNow.getMonth() + 1;
+
+        if (cachedIsCurrentMonth) {
+          monthlyRankingData = cachedData;
+          showedCachedRanking = true;
+          document.getElementById('rankingLoading').textContent =
+            '저장된 순위를 먼저 표시했습니다. 최신 순위를 확인 중입니다.';
+          document.getElementById('rankingMonth').textContent =
+            monthlyRankingData.year + '년 ' + monthlyRankingData.month + '월 순위';
+          showRankingCategory(currentRankingCategory);
+        }
+      } catch (_rankingCacheError) {
+        localStorage.removeItem(rankingCacheKey);
+      }
+
       google.script.run
         .withSuccessHandler(function (data) {
           monthlyRankingData =
@@ -9179,6 +9254,16 @@
               high: [],
               csat: []
             };
+
+          try {
+            localStorage.setItem(
+              rankingCacheKey,
+              JSON.stringify({
+                savedAt: Date.now(),
+                data: monthlyRankingData
+              })
+            );
+          } catch (_rankingCacheSaveError) {}
 
           document
             .getElementById('rankingLoading')
@@ -9203,13 +9288,15 @@
             .textContent =
             '';
 
+          if (showedCachedRanking) {
+            document.getElementById('rankingLoading').textContent =
+              '최신 순위를 확인하지 못해 저장된 순위를 표시합니다.';
+            return;
+          }
+
           alert(
             '순위를 불러오는 중 오류가 발생했습니다.\n' +
-            (
-              error && error.message
-                ? error.message
-                : error
-            )
+            (error && error.message ? error.message : error)
           );
         })
         .getMonthlyRanking();
