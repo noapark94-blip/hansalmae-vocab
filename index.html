@@ -6823,7 +6823,7 @@
       const selectedSheet = testSelect.value;
       const initialDays = hsmInitialDaysBySheet_[selectedSheet];
 
-      if (Array.isArray(initialDays)) {
+      if (Array.isArray(initialDays) && initialDays.length > 0) {
         showTestDays(initialDays);
         showVocabDays(initialDays);
       } else {
@@ -9212,12 +9212,29 @@
 
       google.script.run
         .withSuccessHandler(function (data) {
-          monthlyRankingData =
-            data || {
-              middle: [],
-              high: [],
-              csat: []
-            };
+          const now = new Date();
+          monthlyRankingData = {
+            year:
+              data && Number.isFinite(Number(data.year))
+                ? Number(data.year)
+                : now.getFullYear(),
+            month:
+              data && Number.isFinite(Number(data.month))
+                ? Number(data.month)
+                : now.getMonth() + 1,
+            middle:
+              data && Array.isArray(data.middle)
+                ? data.middle
+                : [],
+            high:
+              data && Array.isArray(data.high)
+                ? data.high
+                : [],
+            csat:
+              data && Array.isArray(data.csat)
+                ? data.csat
+                : []
+          };
 
           document
             .getElementById('rankingLoading')
@@ -9653,7 +9670,10 @@
       document.getElementById('loadingText').textContent =
         'Day 목록을 불러오는 중입니다.';
 
-      if (Array.isArray(hsmInitialDaysBySheet_[sheetName])) {
+      if (
+        Array.isArray(hsmInitialDaysBySheet_[sheetName]) &&
+        hsmInitialDaysBySheet_[sheetName].length > 0
+      ) {
         showTestDays(hsmInitialDaysBySheet_[sheetName]);
         return;
       }
@@ -9723,7 +9743,10 @@
       document.getElementById('vocabLoading').textContent =
         'Day 목록을 불러오는 중입니다.';
 
-      if (Array.isArray(hsmInitialDaysBySheet_[sheetName])) {
+      if (
+        Array.isArray(hsmInitialDaysBySheet_[sheetName]) &&
+        hsmInitialDaysBySheet_[sheetName].length > 0
+      ) {
         showVocabDays(hsmInitialDaysBySheet_[sheetName]);
         return;
       }
