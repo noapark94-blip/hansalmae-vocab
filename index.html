@@ -6249,14 +6249,45 @@
     }
 
 
+    const HSM_STUDENT_TOKEN_KEY_ = 'hansalmaeStudentToken';
+    const HSM_STUDENT_INFO_KEY_ = 'hansalmaeStudentInfo';
+
+
+    function savePersistentStudentLogin_(token, student) {
+      localStorage.setItem(HSM_STUDENT_TOKEN_KEY_, String(token || ''));
+      localStorage.setItem(HSM_STUDENT_INFO_KEY_, JSON.stringify(student || {}));
+    }
+
+
+    function readPersistentStudent_() {
+      try {
+        const raw = localStorage.getItem(HSM_STUDENT_INFO_KEY_);
+        const student = raw ? JSON.parse(raw) : null;
+        return student && student.studentId ? student : null;
+      } catch (error) {
+        localStorage.removeItem(HSM_STUDENT_INFO_KEY_);
+        return null;
+      }
+    }
+
+
+    function shouldClearLoginForSessionResult_(result) {
+      if (!result || result.success !== false) return false;
+      return [
+        'NO_SESSION',
+        'INVALID_SESSION',
+        'SESSION_EXPIRED',
+        'LOGGED_IN_FROM_ANOTHER_DEVICE',
+        'ACCOUNT_DISABLED'
+      ].indexOf(String(result.code || '')) >= 0;
+    }
+
+
     function completeStudentLogin_(result) {
       currentLoginToken = result.token;
       currentStudent = result.student;
 
-      localStorage.setItem(
-        'hansalmaeStudentToken',
-        currentLoginToken
-      );
+      savePersistentStudentLogin_(currentLoginToken, currentStudent);
 
       openMainApp(currentStudent);
       claimAttendanceBonusInBackground_();
@@ -6645,7 +6676,7 @@
       // Apps Script 요청이 과도하게 발생하므로 3분 간격으로 확인합니다.
       studentSessionCheckTimer = window.setInterval(
         checkCurrentStudentSession_,
-        180000
+        600000
       );
     }
 
@@ -6673,12 +6704,8 @@
         .withSuccessHandler(function (result) {
           studentSessionCheckInFlight = false;
 
-          if (!result || !result.success) {
-            const message =
-              result && result.message
-                ? result.message
-                : '로그인 정보가 만료되었습니다.';
-
+          if (shouldClearLoginForSessionResult_(result)) {
+            const message = result.message || '로그인 정보가 만료되었습니다.';
             clearLoginState();
             alert(message);
           }
@@ -6714,9 +6741,8 @@
         );
       }
 
-      localStorage.removeItem(
-        'hansalmaeStudentToken'
-      );
+      localStorage.removeItem(HSM_STUDENT_TOKEN_KEY_);
+      localStorage.removeItem(HSM_STUDENT_INFO_KEY_);
 
       document
         .getElementById('mainApp')
@@ -6775,10 +6801,8 @@
 
 
     window.onload = function () {
-      const savedToken =
-        localStorage.getItem(
-          'hansalmaeStudentToken'
-        );
+      const savedToken = localStorage.getItem(HSM_STUDENT_TOKEN_KEY_);
+      const savedStudent = readPersistentStudent_();
 
       if (!savedToken) {
         return;
@@ -6786,50 +6810,54 @@
 
       currentLoginToken = savedToken;
 
-      document
-        .getElementById('loginMessage')
-        .textContent =
-        '로그인 상태를 확인하는 중입니다.';
+      /*
+       * 같은 기기에서는 저장된 학생 정보로 즉시 앱을 엽니다.
+       * 서버 세션 확인 때문에 로그인 화면에서 기다리지 않습니다.
+       */
+      if (savedStudent) {
+        currentStudent = savedStudent;
+        openMainApp(savedStudent);
+      } else {
+        document.getElementById('loginMessage').textContent =
+          '로그인 상태를 확인하는 중입니다.';
+      }
 
-      google.script.run
-        .withSuccessHandler(function (result) {
-          document
-            .getElementById('loginMessage')
-            .textContent = '';
+      /* 첫 화면 렌더링과 서버 요청이 겹치지 않도록 조금 뒤에 확인합니다. */
+      window.setTimeout(function () {
+        google.script.run
+          .withSuccessHandler(function (result) {
+            document.getElementById('loginMessage').textContent = '';
 
-          if (!result || !result.success) {
-            const message =
-              result && result.message
-                ? result.message
-                : '로그인 정보가 만료되었습니다.';
+            if (result && result.success) {
+              currentStudent = result.student;
+              savePersistentStudentLogin_(savedToken, result.student);
 
-            clearLoginState();
-
-            if (result && result.code === 'DUPLICATE_LOGIN') {
-              alert(message);
+              if (!savedStudent) {
+                openMainApp(result.student);
+                claimAttendanceBonusInBackground_();
+              } else {
+                /* 이름·학년이 바뀐 경우 화면의 기본 정보만 갱신합니다. */
+                document.getElementById('studentName').value =
+                  result.student.studentName || '';
+                document.getElementById('loggedInStudent').textContent =
+                  (result.student.studentName || '') +
+                  (result.student.grade ? ' · ' + result.student.grade : '');
+              }
+              return;
             }
 
-            return;
-          }
-
-          currentStudent = result.student;
-          openMainApp(result.student);
-          claimAttendanceBonusInBackground_();
-        })
-        .withFailureHandler(function (error) {
-          console.error('초기 로그인 상태 확인 통신 오류', error);
-
-          document
-            .getElementById('loginMessage')
-            .textContent =
-            '서버 연결이 불안정합니다. 잠시 후 새로고침해 주세요.';
-
-          /*
-           * 통신 오류와 세션 만료는 서로 다릅니다.
-           * 네트워크 오류만으로 저장된 로그인 정보를 삭제하지 않습니다.
-           */
-        })
-        .checkStudentSession(savedToken);
+            if (shouldClearLoginForSessionResult_(result)) {
+              const message = result.message || '로그인 정보가 만료되었습니다.';
+              clearLoginState();
+              alert(message);
+            }
+          })
+          .withFailureHandler(function (error) {
+            console.warn('백그라운드 로그인 상태 확인 실패', error);
+            /* 통신 오류만으로 저장된 로그인 정보를 지우지 않습니다. */
+          })
+          .checkStudentSession(savedToken);
+      }, savedStudent ? 2500 : 0);
     };
 
 
